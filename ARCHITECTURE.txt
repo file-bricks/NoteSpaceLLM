@@ -1,0 +1,45 @@
+NoteSpaceLLM/
+├── main.py                 # Startpunkt
+├── setup.py                # Setup-Skript
+├── run.bat                 # Windows-Starter
+├── requirements.txt        # Abhängigkeiten
+├── README.md               # Dokumentation
+├── src/
+│   ├── core/               # Kernfunktionalität
+│   │   ├── document_manager.py   # Dokumentenverwaltung (Drag&Drop, Selektion)
+│   │   ├── text_extractor.py     # Text aus PDF/DOCX/Excel/etc.
+│   │   ├── sub_query.py          # Detailrecherchen pro Dokument
+│   │   └── project.py            # Projektverwaltung, Profile
+│   ├── gui/                # PyQt6 Benutzeroberfläche
+│   │   ├── main_window.py        # Hauptfenster
+│   │   ├── document_panel.py     # Drag&Drop, Kontextmenü
+│   │   ├── workflow_panel.py     # Workflow-Visualisierung
+│   │   ├── chat_panel.py         # LLM-Chat über Dokumente
+│   │   └── output_panel.py       # Vorschau & Export
+│   ├── llm/                # Multi-LLM Integration
+│   │   ├── ollama_client.py      # Lokal via Ollama
+│   │   ├── openai_client.py      # OpenAI API
+│   │   └── anthropic_client.py   # Claude API
+│   └── reports/            # Berichterstellung
+│       ├── generator.py          # Pipeline-Orchestrierung
+│       ├── templates.py          # Berichtsvorlagen (6 Typen)
+│       └── exporter.py           # MD/PDF/DOCX/HTML/TXT Export
+└── [data, workflows, profiles, output, assets]/
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    RAG-ARCHITEKTUR                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐   │
+│  │   Dokument   │────▶│   Splitter   │────▶│  Embeddings  │   │
+│  │   (PDF,DOCX) │     │  (1000 chars │     │ nomic-embed  │   │
+│  └──────────────┘     │   overlap=200)│     └──────────────┘   │
+│                       └──────────────┘            │             │
+│                                                   ▼             │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐   │
+│  │   Antwort    │◀────│   LangChain  │◀────│   ChromaDB   │   │
+│  │  + Quellen   │     │   Ollama LLM │     │ Vector Store │   │
+│  └──────────────┘     └──────────────┘     └──────────────┘   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+

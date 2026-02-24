@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Daten & Output
+data/
+output/
+profiles/
+workflows/
+
+# ChromaDB Vektordatenbank
+chroma_db/
+*.db
+
+# Secrets
+.env
+*.key
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Web-Modul (SpaceNot) — wird erst nach Release weiterentwickelt
+webservice_SpaceNot/
+
+# Lokale Release-Builds
+releases/
+
+# Interne Planung
+AUFGABEN.txt
