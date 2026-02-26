@@ -34,4 +34,9 @@ webservice_SpaceNot/
 releases/
 
 # Interne Planung
+PLAN.txt
 AUFGABEN.txt
+
+# Private / Archive
+_archive/
+_private/
