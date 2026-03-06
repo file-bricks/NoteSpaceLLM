@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="NoteSpace_logo.jpg" alt="NoteSpaceLLM" width="700">
+</p>
+
 # NoteSpaceLLM
 
 Ein lokaler, datenschutzfreundlicher Ersatz für Google NotebookLM zur Dokumentenanalyse und Berichterstellung.
@@ -163,3 +167,29 @@ Dieses Projekt verwendet PyQt6 (GPL) und PyMuPDF (AGPL).
 ---
 
 Erstellt mit BACH v1.1 | 2026
+
+---
+
+## English
+
+A local replacement for Google NotebookLM with LLM integration and multi-format export.
+
+### Features
+
+- Local LLM integration
+- Multi-format document import
+- AI-powered summaries
+- Export to multiple formats
+
+### Installation
+
+```bash
+git clone https://github.com/lukisch/REL-PUB_NoteSpaceLLM_SOCIAL.git
+cd REL-PUB_NoteSpaceLLM_SOCIAL
+pip install -r requirements.txt
+python "main.py"
+```
+
+### License
+
+See [LICENSE](LICENSE) for details.
