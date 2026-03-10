@@ -31,6 +31,29 @@ except ImportError:
     PYQT_AVAILABLE = False
 
 
+if PYQT_AVAILABLE:
+    from PyQt6.QtCore import QThread, pyqtSignal
+
+    class AnalysisWorker(QThread):
+        """Worker thread for batch sub-query analysis."""
+        query_complete = pyqtSignal(str, str, str)  # query_id, response, error
+        all_complete = pyqtSignal()
+
+        def __init__(self, llm_client, tasks):
+            super().__init__()
+            self._llm_client = llm_client
+            self._tasks = tasks  # [(query_id, prompt), ...]
+
+        def run(self):
+            for query_id, prompt in self._tasks:
+                try:
+                    response = self._llm_client.chat(prompt, "")
+                    self.query_complete.emit(query_id, response, "")
+                except Exception as e:
+                    self.query_complete.emit(query_id, "", str(e))
+            self.all_complete.emit()
+
+
 class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
     """
     Main application window.
@@ -77,6 +100,8 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
         # Core services
         self._text_extractor = TextExtractor()
         self._llm_client = None
+        self._report_worker = None
+        self._analysis_worker = None
 
         # RAG Engine
         self._rag_engine = None
@@ -439,8 +464,11 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
         # Ollama
         try:
             from ..llm.ollama_client import OllamaClient
+            ollama_url = self._get_ollama_url()
+            ollama_key = self._current_project.settings.ollama_api_key if self._current_project else ""
             client = OllamaClient.__new__(OllamaClient)
-            client.base_url = "http://localhost:11434"
+            client.base_url = ollama_url
+            client.api_key = ollama_key
             client._is_available = False
             client.model = ""
             client._check_availability()
@@ -482,6 +510,32 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
             provider_combo.setCurrentIndex(idx)
 
         provider_layout.addRow("Provider:", provider_combo)
+
+        # Ollama URL
+        ollama_url_edit = QLineEdit()
+        current_ollama_url = self._get_ollama_url()
+        ollama_url_edit.setText(current_ollama_url)
+        ollama_url_edit.setPlaceholderText("http://localhost:11434")
+        provider_layout.addRow("Ollama URL:", ollama_url_edit)
+
+        ollama_key_edit = QLineEdit()
+        current_api_key = ""
+        if self._current_project:
+            current_api_key = self._current_project.settings.ollama_api_key
+        ollama_key_edit.setText(current_api_key)
+        ollama_key_edit.setPlaceholderText("Leer = keine Auth (lokal)")
+        ollama_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        provider_layout.addRow("API-Key:", ollama_key_edit)
+
+        # Show/hide Ollama fields based on provider
+        def _update_url_visibility(provider: str):
+            is_ollama = provider == "ollama"
+            ollama_url_edit.setVisible(is_ollama)
+            ollama_key_edit.setVisible(is_ollama)
+
+        provider_combo.currentTextChanged.connect(_update_url_visibility)
+        _update_url_visibility(current_provider)
+
         layout.addWidget(provider_group)
 
         # Model selection
@@ -540,8 +594,11 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
             if provider == "ollama":
                 try:
                     from ..llm.ollama_client import OllamaClient
+                    url = ollama_url_edit.text().strip() or OllamaClient.DEFAULT_URL
+                    key = ollama_key_edit.text().strip()
                     client = OllamaClient.__new__(OllamaClient)
-                    client.base_url = "http://localhost:11434"
+                    client.base_url = url
+                    client.api_key = key
                     client._is_available = False
                     client.model = ""
                     client._check_availability()
@@ -550,11 +607,11 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
                         models = client.get_models()
                         if models:
                             model_combo.addItems(models)
-                            status_label.setText(f"{len(models)} lokale Modelle gefunden")
+                            status_label.setText(f"{len(models)} Modelle auf {url}")
                         else:
                             status_label.setText("Ollama laeuft, aber keine Modelle installiert")
                     else:
-                        status_label.setText("Ollama nicht erreichbar (http://localhost:11434)")
+                        status_label.setText(f"Ollama nicht erreichbar ({url})")
                 except Exception as e:
                     status_label.setText(f"Fehler: {e}")
 
@@ -592,6 +649,10 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
             if self._current_project:
                 self._current_project.settings.llm_provider = new_provider
                 self._current_project.settings.llm_model = new_model
+                new_url = ollama_url_edit.text().strip()
+                if new_url:
+                    self._current_project.settings.ollama_base_url = new_url
+                self._current_project.settings.ollama_api_key = ollama_key_edit.text().strip()
 
             self._init_llm_client()
             self.statusbar.showMessage(f"LLM: {new_provider} / {new_model}")
@@ -748,6 +809,12 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
             return False
 
     # Core functionality
+    def _get_ollama_url(self) -> str:
+        """Get the Ollama base URL from current project or default."""
+        if self._current_project:
+            return self._current_project.settings.ollama_base_url
+        return "http://localhost:11434"
+
     def _init_llm_client(self):
         """Initialize the LLM client."""
         if not self._current_project:
@@ -757,9 +824,12 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
 
         provider = self._current_project.settings.llm_provider
         model = self._current_project.settings.llm_model
+        base_url = self._current_project.settings.ollama_base_url
+        api_key = self._current_project.settings.ollama_api_key
 
         try:
-            self._llm_client = create_llm_client(provider, model)
+            self._llm_client = create_llm_client(provider, model, base_url=base_url,
+                                                  api_key=api_key)
             self.chat_panel.set_llm_client(self._llm_client)
             self.statusbar.showMessage(f"LLM initialisiert: {provider}/{model}")
         except Exception as e:
@@ -813,7 +883,7 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
         self.statusbar.showMessage(f"Textextraktion abgeschlossen: {total} Dokumente")
 
     def _run_analysis(self):
-        """Run sub-query analyses."""
+        """Run sub-query analyses in background thread."""
         if not self._current_project or not self._llm_client:
             self._init_llm_client()
             if not self._llm_client:
@@ -825,37 +895,28 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
             self.statusbar.showMessage("Keine ausstehenden Analysen")
             return
 
-        total = len(queries)
-        progress = QProgressDialog("Fuehre Analysen durch...", "Abbrechen", 0, total, self)
-        progress.setWindowModality(Qt.WindowModality.WindowModal)
-
-        from ..core.sub_query import SubQueryStatus
-
-        for i, query in enumerate(queries):
-            if progress.wasCanceled():
-                break
-
-            progress.setValue(i)
-            progress.setLabelText(f"Analyse: {query.query_text[:30]}...")
-
-            # Get document text
+        # Build task list: [(query_id, prompt)] for the worker
+        tasks = []
+        for query in queries:
             doc = self._current_project.documents.get_document(query.document_id)
             if not doc or not doc.extracted_text:
                 self._current_project.subqueries.set_error(query.id, "Dokument nicht verfuegbar")
                 continue
-
             self._current_project.subqueries.set_running(query.id)
+            prompt = query.build_prompt(doc.extracted_text)
+            tasks.append((query.id, prompt))
 
-            try:
-                prompt = query.build_prompt(doc.extracted_text)
-                response = self._llm_client.chat(prompt, "")
-                self._current_project.subqueries.set_result(query.id, response)
+        if not tasks:
+            return
 
-            except Exception as e:
-                self._current_project.subqueries.set_error(query.id, str(e))
+        total = len(tasks)
+        self.statusbar.showMessage(f"Fuehre {total} Analysen durch...")
 
-        progress.setValue(total)
-        self.statusbar.showMessage(f"Analysen abgeschlossen: {total}")
+        self._analysis_worker = AnalysisWorker(self._llm_client, tasks)
+        self._analysis_worker.query_complete.connect(self._on_analysis_result)
+        self._analysis_worker.all_complete.connect(
+            lambda: self.statusbar.showMessage(f"Analysen abgeschlossen: {total}"))
+        self._analysis_worker.start()
 
     def _generate_report(self):
         """Generate the main report."""
@@ -930,28 +991,41 @@ Verwende Markdown-Formatierung."""
             for step in workflow.steps:
                 self.workflow_panel.update_step_status(step.id, "running")
 
-        # Generate report
+        # Generate report in background thread
         self.output_panel.clear_content()
         self.output_panel.set_status("Generiere Bericht...")
 
-        try:
-            # Stream the response
-            for chunk in self._llm_client.stream_chat(prompt, ""):
-                self.output_panel.append_content(chunk)
-                QApplication.processEvents()
+        from .chat_panel import LLMWorker
+        self._report_worker = LLMWorker(self._llm_client, prompt, "")
+        self._report_workflow = workflow
 
-            self.output_panel.set_status("Bericht erstellt")
+        self._report_worker.response_chunk.connect(
+            lambda chunk: self.output_panel.append_content(chunk))
+        self._report_worker.response_complete.connect(self._on_report_complete)
+        self._report_worker.error_occurred.connect(self._on_report_error)
+        self._report_worker.start()
 
-            # Update workflow status
-            if workflow:
-                for step in workflow.steps:
-                    self.workflow_panel.update_step_status(step.id, "completed")
+    def _on_analysis_result(self, query_id: str, response: str, error: str):
+        """Handle a single analysis result from the worker."""
+        if error:
+            self._current_project.subqueries.set_error(query_id, error)
+        else:
+            self._current_project.subqueries.set_result(query_id, response)
 
-            self.statusbar.showMessage("Bericht erfolgreich erstellt")
+    def _on_report_complete(self, full_response: str):
+        """Handle completed report generation."""
+        self.output_panel.set_status("Bericht erstellt")
+        if self._report_workflow:
+            for step in self._report_workflow.steps:
+                self.workflow_panel.update_step_status(step.id, "completed")
+        self.statusbar.showMessage("Bericht erfolgreich erstellt")
+        self._report_worker = None
 
-        except Exception as e:
-            self.output_panel.set_status(f"Fehler: {e}")
-            self.statusbar.showMessage(f"Fehler bei Berichterstellung: {e}")
+    def _on_report_error(self, error: str):
+        """Handle report generation error."""
+        self.output_panel.set_status(f"Fehler: {error}")
+        self.statusbar.showMessage(f"Fehler bei Berichterstellung: {error}")
+        self._report_worker = None
 
     def closeEvent(self, event):
         """Handle window close."""

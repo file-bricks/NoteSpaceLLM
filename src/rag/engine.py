@@ -54,11 +54,7 @@ class RAGEngine:
     DEFAULT_PERSIST_DIR = "./storage/chroma_db"
 
     # RAG Prompt Template
-    RAG_PROMPT_TEMPLATE = """Du bist ein hilfreicher Assistent, der Fragen basierend auf den bereitgestellten Dokumenten beantwortet.
-
-Verwende NUR die folgenden Kontextinformationen, um die Frage zu beantworten.
-Wenn du die Antwort nicht aus dem Kontext ableiten kannst, sage ehrlich, dass die Information nicht in den Dokumenten enthalten ist.
-Zitiere relevante Passagen aus den Dokumenten, wenn möglich.
+    RAG_PROMPT_TEMPLATE = """Beantworte die Frage NUR anhand des Kontexts. Zitiere relevante Stellen. Sage ehrlich wenn die Antwort nicht im Kontext steht. Antworte auf Deutsch.
 
 KONTEXT:
 {context}

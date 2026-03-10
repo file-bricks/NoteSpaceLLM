@@ -79,13 +79,15 @@ class LLMClient(ABC):
         return len(text) // 4
 
 
-def create_llm_client(provider: str, model: str = "") -> LLMClient:
+def create_llm_client(provider: str, model: str = "",
+                      base_url: str = "", **kwargs) -> LLMClient:
     """
     Factory function to create LLM clients.
 
     Args:
         provider: The LLM provider (ollama, openai, anthropic)
         model: The model to use
+        base_url: Server URL (only used for ollama)
 
     Returns:
         An LLMClient instance
@@ -97,7 +99,8 @@ def create_llm_client(provider: str, model: str = "") -> LLMClient:
 
     if provider == "ollama":
         from .ollama_client import OllamaClient
-        return OllamaClient(model or "llama3")
+        url = base_url or OllamaClient.DEFAULT_URL
+        return OllamaClient(model or "llama3", base_url=url, api_key=kwargs.get("api_key", ""))
 
     elif provider == "openai":
         from .openai_client import OpenAIClient

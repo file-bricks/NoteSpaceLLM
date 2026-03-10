@@ -45,6 +45,8 @@ class ProjectSettings:
     output_profile: str = "default"
     llm_provider: str = "ollama"  # ollama, openai, anthropic, local
     llm_model: str = "llama3"
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_api_key: str = ""
     max_context_tokens: int = 8000
     language: str = "de"
 
@@ -54,6 +56,8 @@ class ProjectSettings:
             "output_profile": self.output_profile,
             "llm_provider": self.llm_provider,
             "llm_model": self.llm_model,
+            "ollama_base_url": self.ollama_base_url,
+            "ollama_api_key": self.ollama_api_key,
             "max_context_tokens": self.max_context_tokens,
             "language": self.language
         }
@@ -65,6 +69,8 @@ class ProjectSettings:
             output_profile=data.get("output_profile", "default"),
             llm_provider=data.get("llm_provider", "ollama"),
             llm_model=data.get("llm_model", "llama3"),
+            ollama_base_url=data.get("ollama_base_url", "http://localhost:11434"),
+            ollama_api_key=data.get("ollama_api_key", ""),
             max_context_tokens=data.get("max_context_tokens", 8000),
             language=data.get("language", "de")
         )

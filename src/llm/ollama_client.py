@@ -24,22 +24,33 @@ class OllamaClient(LLMClient):
 
     DEFAULT_URL = "http://localhost:11434"
 
-    def __init__(self, model: str = "llama3", base_url: str = DEFAULT_URL):
+    def __init__(self, model: str = "llama3", base_url: str = DEFAULT_URL,
+                 api_key: str = ""):
         """
         Initialize the Ollama client.
 
         Args:
             model: The model to use (must be pulled in Ollama)
             base_url: Ollama server URL
+            api_key: Optional API key for authenticated proxy
         """
         super().__init__(model)
         self.base_url = base_url.rstrip("/")
+        self.api_key = api_key
         self._check_availability()
+
+    def _auth_headers(self) -> dict:
+        """Build request headers including auth if configured."""
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        return headers
 
     def _check_availability(self):
         """Check if Ollama is available."""
         try:
-            req = urllib.request.Request(f"{self.base_url}/api/tags")
+            req = urllib.request.Request(f"{self.base_url}/api/tags",
+                                        headers=self._auth_headers())
             with urllib.request.urlopen(req, timeout=5) as response:
                 self._is_available = response.status == 200
         except Exception:
@@ -64,7 +75,7 @@ class OllamaClient(LLMClient):
         req = urllib.request.Request(
             f"{self.base_url}/api/chat",
             data=json.dumps(data).encode("utf-8"),
-            headers={"Content-Type": "application/json"}
+            headers=self._auth_headers()
         )
 
         with urllib.request.urlopen(req, timeout=300) as response:
@@ -90,7 +101,7 @@ class OllamaClient(LLMClient):
         req = urllib.request.Request(
             f"{self.base_url}/api/chat",
             data=json.dumps(data).encode("utf-8"),
-            headers={"Content-Type": "application/json"}
+            headers=self._auth_headers()
         )
 
         with urllib.request.urlopen(req, timeout=300) as response:
@@ -110,7 +121,8 @@ class OllamaClient(LLMClient):
             return []
 
         try:
-            req = urllib.request.Request(f"{self.base_url}/api/tags")
+            req = urllib.request.Request(f"{self.base_url}/api/tags",
+                                        headers=self._auth_headers())
             with urllib.request.urlopen(req, timeout=10) as response:
                 data = json.loads(response.read().decode("utf-8"))
                 return [m["name"] for m in data.get("models", [])]
@@ -132,7 +144,7 @@ class OllamaClient(LLMClient):
             req = urllib.request.Request(
                 f"{self.base_url}/api/pull",
                 data=json.dumps(data).encode("utf-8"),
-                headers={"Content-Type": "application/json"}
+                headers=self._auth_headers()
             )
 
             with urllib.request.urlopen(req, timeout=600) as response:
@@ -170,7 +182,7 @@ class OllamaClient(LLMClient):
         req = urllib.request.Request(
             f"{self.base_url}/api/generate",
             data=json.dumps(data).encode("utf-8"),
-            headers={"Content-Type": "application/json"}
+            headers=self._auth_headers()
         )
 
         with urllib.request.urlopen(req, timeout=300) as response:

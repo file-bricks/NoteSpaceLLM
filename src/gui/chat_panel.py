@@ -467,18 +467,17 @@ class ChatPanel(QWidget if PYQT_AVAILABLE else object):
         streaming_msg = ChatMessage("assistant", "", datetime.now())
         self._streaming_widget = self._add_message(streaming_msg)
 
-        # Build context prompt
-        context_prompt = f"""Du bist ein hilfreicher Assistent fuer Dokumentenanalyse.
-Beantworte die Frage basierend auf dem folgenden Dokumentenkontext.
-Wenn die Antwort nicht im Kontext zu finden ist, sage das ehrlich.
+        # Build context prompt -- optimized for small models (qwen3:4b etc.)
+        context_prompt = f"""Du bist ein Dokumentenanalyse-Assistent.
+PRIORITAET: Beantworte die Nutzerfrage direkt und praezise.
+REGEL: Nur Informationen aus dem Kontext verwenden. Wenn nicht vorhanden, sage das.
+SPRACHE: Deutsch.
 
-=== DOKUMENTENKONTEXT ===
+=== KONTEXT ===
 {self._document_context[:50000]}
 
 === FRAGE ===
-{prompt}
-
-Antworte auf Deutsch, praezise und hilfreich."""
+{prompt}"""
 
         # Start worker
         self._current_worker = LLMWorker(self._llm_client, prompt, context_prompt)

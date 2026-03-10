@@ -43,6 +43,21 @@ python main.py --check
 2. Modell herunterladen: `ollama pull llama3`
 3. In der App: Menü > LLM > Ollama verwenden
 
+### Ollama (Remote-Server)
+
+NoteSpaceLLM kann einen entfernten Ollama-Server nutzen, z.B. über [ellmos-stack](https://github.com/ellmos-ai/ellmos-stack):
+
+1. In der App: Menü > LLM > Einstellungen
+2. **Ollama URL:** `http://your-server:11435` (oder eigener Port)
+3. **API-Key:** Falls der Server hinter einem Auth-Proxy liegt (empfohlen)
+
+Die Remote-Anbindung eignet sich für:
+- Stärkere Modelle auf dedizierter Hardware
+- Gemeinsame Nutzung eines LLM-Servers im Team
+- Desktop ohne GPU
+
+> **Tipp:** Ollama hat keine eingebaute Authentifizierung. Für Remote-Zugriff empfehlen wir einen Reverse-Proxy (z.B. Nginx) mit API-Key oder Basic Auth.
+
 ### OpenAI
 
 ```bash
@@ -113,9 +128,9 @@ NoteSpaceLLM/
 │   │   ├── workflow_panel.py     # Workflow-Panel
 │   │   ├── chat_panel.py         # Chat-Panel
 │   │   └── output_panel.py       # Ausgabe-Panel
-│   ├── llm/               # LLM-Integration
-│   │   ├── client.py             # Basis-Client
-│   │   ├── ollama_client.py      # Ollama
+│   ├── llm/               # LLM-Integration (lokal + remote)
+│   │   ├── client.py             # Basis-Client + Factory
+│   │   ├── ollama_client.py      # Ollama (lokal & remote, mit Auth)
 │   │   ├── openai_client.py      # OpenAI
 │   │   └── anthropic_client.py   # Anthropic
 │   └── reports/           # Berichterstellung
@@ -184,7 +199,7 @@ A local replacement for Google NotebookLM with LLM integration and multi-format 
 ### Installation
 
 ```bash
-git clone https://github.com/lukisch/REL-PUB_NoteSpaceLLM_SOCIAL.git
+git clone https://github.com/file-bricks/NoteSpaceLLM.git
 cd REL-PUB_NoteSpaceLLM_SOCIAL
 pip install -r requirements.txt
 python "main.py"
