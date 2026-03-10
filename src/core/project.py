@@ -57,20 +57,22 @@ class ProjectSettings:
             "llm_provider": self.llm_provider,
             "llm_model": self.llm_model,
             "ollama_base_url": self.ollama_base_url,
-            "ollama_api_key": self.ollama_api_key,
+            # ollama_api_key intentionally NOT saved to project.json (security)
             "max_context_tokens": self.max_context_tokens,
             "language": self.language
         }
 
     @classmethod
     def from_dict(cls, data: dict) -> "ProjectSettings":
+        from .app_config import get_app_config
+        app_cfg = get_app_config()
         return cls(
             output_directory=Path(data.get("output_directory", "./output")),
             output_profile=data.get("output_profile", "default"),
-            llm_provider=data.get("llm_provider", "ollama"),
-            llm_model=data.get("llm_model", "llama3"),
-            ollama_base_url=data.get("ollama_base_url", "http://localhost:11434"),
-            ollama_api_key=data.get("ollama_api_key", ""),
+            llm_provider=data.get("llm_provider", app_cfg.llm_provider),
+            llm_model=data.get("llm_model", app_cfg.llm_model),
+            ollama_base_url=data.get("ollama_base_url", app_cfg.ollama_base_url),
+            ollama_api_key=app_cfg.ollama_api_key,
             max_context_tokens=data.get("max_context_tokens", 8000),
             language=data.get("language", "de")
         )

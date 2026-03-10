@@ -498,12 +498,20 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
         provider_combo = QComboBox()
         provider_combo.addItems(["ollama", "openai", "anthropic"])
 
-        # Set current provider
-        current_provider = "ollama"
-        current_model = "llama3"
+        # Load current values from project or app config
+        from ..core.app_config import get_app_config
+        app_cfg = get_app_config()
+
         if self._current_project:
             current_provider = self._current_project.settings.llm_provider
             current_model = self._current_project.settings.llm_model
+            current_ollama_url = self._current_project.settings.ollama_base_url
+            current_api_key = self._current_project.settings.ollama_api_key
+        else:
+            current_provider = app_cfg.llm_provider
+            current_model = app_cfg.llm_model
+            current_ollama_url = app_cfg.ollama_base_url
+            current_api_key = app_cfg.ollama_api_key
 
         idx = provider_combo.findText(current_provider)
         if idx >= 0:
@@ -513,15 +521,11 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
 
         # Ollama URL
         ollama_url_edit = QLineEdit()
-        current_ollama_url = self._get_ollama_url()
         ollama_url_edit.setText(current_ollama_url)
         ollama_url_edit.setPlaceholderText("http://localhost:11434")
         provider_layout.addRow("Ollama URL:", ollama_url_edit)
 
         ollama_key_edit = QLineEdit()
-        current_api_key = ""
-        if self._current_project:
-            current_api_key = self._current_project.settings.ollama_api_key
         ollama_key_edit.setText(current_api_key)
         ollama_key_edit.setPlaceholderText("Leer = keine Auth (lokal)")
         ollama_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
@@ -646,13 +650,23 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
                 QMessageBox.warning(self, "LLM", "Kein Modell ausgewaehlt.")
                 return
 
+            new_url = ollama_url_edit.text().strip() or "http://localhost:11434"
+            new_key = ollama_key_edit.text().strip()
+
             if self._current_project:
                 self._current_project.settings.llm_provider = new_provider
                 self._current_project.settings.llm_model = new_model
-                new_url = ollama_url_edit.text().strip()
-                if new_url:
-                    self._current_project.settings.ollama_base_url = new_url
-                self._current_project.settings.ollama_api_key = ollama_key_edit.text().strip()
+                self._current_project.settings.ollama_base_url = new_url
+                self._current_project.settings.ollama_api_key = new_key
+
+            # Persist to local app config (survives across sessions)
+            from ..core.app_config import get_app_config
+            app_cfg = get_app_config()
+            app_cfg.llm_provider = new_provider
+            app_cfg.llm_model = new_model
+            app_cfg.ollama_base_url = new_url
+            app_cfg.ollama_api_key = new_key
+            app_cfg.save()
 
             self._init_llm_client()
             self.statusbar.showMessage(f"LLM: {new_provider} / {new_model}")
@@ -810,10 +824,11 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
 
     # Core functionality
     def _get_ollama_url(self) -> str:
-        """Get the Ollama base URL from current project or default."""
+        """Get the Ollama base URL from current project or app config."""
         if self._current_project:
             return self._current_project.settings.ollama_base_url
-        return "http://localhost:11434"
+        from ..core.app_config import get_app_config
+        return get_app_config().ollama_base_url
 
     def _init_llm_client(self):
         """Initialize the LLM client."""
