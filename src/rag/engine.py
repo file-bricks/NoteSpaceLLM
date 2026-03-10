@@ -11,8 +11,7 @@ from dataclasses import dataclass
 from langchain_chroma import Chroma
 from langchain_core.documents import Document as LangChainDocument
 from langchain_ollama import ChatOllama
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 from .embeddings import EmbeddingsManager
 from .splitter import DocumentSplitter, TextChunk

@@ -3,7 +3,7 @@ Document Splitter - RecursiveCharacterTextSplitter für optimale Chunk-Erstellun
 """
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document as LangChainDocument
 import logging
 
