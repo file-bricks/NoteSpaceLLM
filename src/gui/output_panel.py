@@ -92,6 +92,7 @@ class OutputPanel(QWidget if PYQT_AVAILABLE else object):
 
     if PYQT_AVAILABLE:
         export_requested = pyqtSignal(list, str)  # formats, directory
+        prompt_export_requested = pyqtSignal()  # Prompt als .md exportieren
 
     def __init__(self, parent=None):
         if not PYQT_AVAILABLE:
@@ -219,6 +220,25 @@ class OutputPanel(QWidget if PYQT_AVAILABLE else object):
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
 
+        self.prompt_export_btn = QPushButton("Prompt exportieren")
+        self.prompt_export_btn.setToolTip(
+            "Exportiert den Analyse-Prompt als .md Datei\n"
+            "(zum manuellen Einspeisen in ein LLM)"
+        )
+        self.prompt_export_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #8e44ad;
+                color: white;
+                font-weight: bold;
+                padding: 12px 15px;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #7d3c98;
+            }
+        """)
+        self.prompt_export_btn.clicked.connect(self._on_prompt_export)
+
         self.export_btn = QPushButton("Exportieren")
         self.export_btn.setStyleSheet("""
             QPushButton {
@@ -235,6 +255,7 @@ class OutputPanel(QWidget if PYQT_AVAILABLE else object):
         self.export_btn.clicked.connect(self._on_export)
 
         export_bar.addWidget(self.progress_bar, stretch=1)
+        export_bar.addWidget(self.prompt_export_btn)
         export_bar.addWidget(self.export_btn)
 
         layout.addLayout(export_bar)
@@ -345,6 +366,10 @@ class OutputPanel(QWidget if PYQT_AVAILABLE else object):
     def get_selected_formats(self) -> List[str]:
         """Get selected output formats."""
         return [fmt for fmt, cb in self.format_checks.items() if cb.isChecked()]
+
+    def _on_prompt_export(self):
+        """Handle prompt export button click."""
+        self.prompt_export_requested.emit()
 
     def set_status(self, text: str):
         """Set the status text."""

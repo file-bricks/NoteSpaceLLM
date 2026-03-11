@@ -176,6 +176,8 @@ class DocumentManager:
         self._on_change_callbacks: List[Callable] = []
         self._rag_engine: Optional['RAGEngine'] = rag_engine
         self._auto_index: bool = True  # Automatisch indexieren wenn Text extrahiert
+        self._auto_extract: bool = True  # Automatisch Text extrahieren bei add_file
+        self._text_extractor = None  # Lazy-loaded
 
         if project_path:
             self._cache_dir = project_path / ".cache"
@@ -232,6 +234,11 @@ class DocumentManager:
         doc = DocumentItem.from_path(filepath, parent_id)
         self._documents[doc.id] = doc
         self._notify_change("add", doc)
+
+        # Auto-Extraktion
+        if self._auto_extract and not doc.is_directory:
+            self._try_auto_extract(doc)
+
         return doc
 
     def add_directory(self, dirpath: Path, recursive: bool = True) -> List[DocumentItem]:
@@ -463,6 +470,33 @@ class DocumentManager:
         self._notify_change("clear", None)
 
     # ==================== RAG Integration ====================
+
+    def _try_auto_extract(self, doc: DocumentItem) -> None:
+        """Versucht automatische Textextraktion fuer ein Dokument."""
+        try:
+            if self._text_extractor is None:
+                from .text_extractor import TextExtractor
+                self._text_extractor = TextExtractor()
+
+            doc.status = DocumentStatus.EXTRACTING
+            self._notify_change("update", doc)
+
+            result = self._text_extractor.extract(doc.path)
+
+            if result.success:
+                self.update_content(doc.id, result.text)
+                logger.info(f"Auto-Extraktion: {doc.name} ({result.word_count} Woerter)")
+            else:
+                doc.status = DocumentStatus.ERROR
+                doc.error_message = result.error
+                self._notify_change("update", doc)
+                logger.warning(f"Auto-Extraktion fehlgeschlagen: {doc.name}: {result.error}")
+
+        except Exception as e:
+            doc.status = DocumentStatus.ERROR
+            doc.error_message = str(e)
+            self._notify_change("update", doc)
+            logger.error(f"Auto-Extraktion Fehler: {doc.name}: {e}")
 
     def set_rag_engine(self, rag_engine: 'RAGEngine') -> None:
         """

@@ -233,19 +233,27 @@ class DocumentPanel(QWidget if PYQT_AVAILABLE else object):
 
     def _on_item_clicked(self, item, column):
         """Handle item click."""
-        doc_id = item.data(0, Qt.ItemDataRole.UserRole)
-        if doc_id:
-            self.document_selected.emit(doc_id)
+        try:
+            doc_id = item.data(0, Qt.ItemDataRole.UserRole)
+            if doc_id:
+                self.document_selected.emit(doc_id)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Fehler bei Item-Klick: {e}")
 
     def _on_item_changed(self, item, column):
         """Handle item checkbox change."""
         if column == 0:
-            doc_id = item.data(0, Qt.ItemDataRole.UserRole)
-            if doc_id and self._document_manager:
-                checked = item.checkState(0) == Qt.CheckState.Checked
-                self._document_manager.set_selection(doc_id, checked)
-                self._update_status()
-                self.selection_changed.emit()
+            try:
+                doc_id = item.data(0, Qt.ItemDataRole.UserRole)
+                if doc_id and self._document_manager:
+                    checked = item.checkState(0) == Qt.CheckState.Checked
+                    self._document_manager.set_selection(doc_id, checked)
+                    self._update_status()
+                    self.selection_changed.emit()
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Fehler bei Checkbox-Aenderung: {e}")
 
     def _show_context_menu(self, position):
         """Show context menu on right-click."""
@@ -346,7 +354,7 @@ class DocumentPanel(QWidget if PYQT_AVAILABLE else object):
             self,
             "Dateien hinzufuegen",
             "",
-            "Alle unterstuetzten (*.pdf *.docx *.doc *.txt *.md *.xlsx);;Alle Dateien (*)"
+            "Alle unterstuetzten (*.pdf *.docx *.doc *.rtf *.txt *.md *.xlsx *.xls *.pptx *.py *.csv *.json *.xml *.eml *.msg);;Dokumente (*.pdf *.docx *.doc *.rtf *.txt *.md);;Tabellen (*.xlsx *.xls *.csv);;Code (*.py *.js *.java *.cpp *.c *.h);;Alle Dateien (*)"
         )
 
         if files and self._document_manager:
@@ -385,11 +393,15 @@ class DocumentPanel(QWidget if PYQT_AVAILABLE else object):
 
         urls = event.mimeData().urls()
         for url in urls:
-            path = Path(url.toLocalFile())
-            if path.is_dir():
-                self._document_manager.add_directory(path)
-            elif path.is_file():
-                self._document_manager.add_file(path)
+            try:
+                path = Path(url.toLocalFile())
+                if path.is_dir():
+                    self._document_manager.add_directory(path)
+                elif path.is_file():
+                    self._document_manager.add_file(path)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Fehler beim Hinzufuegen von {url.toLocalFile()}: {e}")
 
         event.acceptProposedAction()
 

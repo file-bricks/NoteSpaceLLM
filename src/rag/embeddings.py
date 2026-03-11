@@ -67,10 +67,22 @@ class EmbeddingsManager:
             "model": self.model_name,
             "base_url": self.base_url,
         }
-        if self._headers:
-            kwargs["headers"] = self._headers
 
-        return OllamaEmbeddings(**kwargs)
+        # langchain-ollama >=0.2.0 akzeptiert 'headers' nicht mehr direkt.
+        # Auth-Headers muessen ueber client_kwargs (httpx) uebergeben werden.
+        if self._headers:
+            kwargs["client_kwargs"] = {"headers": self._headers}
+
+        try:
+            return OllamaEmbeddings(**kwargs)
+        except Exception as e:
+            # Fallback ohne client_kwargs falls Version zu alt/neu
+            logger.warning(f"OllamaEmbeddings mit client_kwargs fehlgeschlagen: {e}")
+            kwargs.pop("client_kwargs", None)
+            return OllamaEmbeddings(
+                model=self.model_name,
+                base_url=self.base_url,
+            )
 
     def embed_query(self, text: str) -> List[float]:
         """

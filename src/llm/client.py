@@ -110,6 +110,11 @@ def create_llm_client(provider: str, model: str = "",
         from .anthropic_client import AnthropicClient
         return AnthropicClient(model or "claude-3-haiku-20240307")
 
+    elif provider == "claude-code":
+        from .claude_code_client import ClaudeCodeClient
+        mode = kwargs.get("claude_code_mode", "api")
+        return ClaudeCodeClient(model or "sonnet", mode=mode)
+
     else:
         raise ValueError(f"Unsupported provider: {provider}. "
-                        f"Supported: ollama, openai, anthropic")
+                        f"Supported: ollama, openai, anthropic, claude-code")

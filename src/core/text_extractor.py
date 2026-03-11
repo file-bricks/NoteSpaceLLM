@@ -130,6 +130,14 @@ class TextExtractor:
             elif suffix == ".doc":
                 return self._extract_doc(filepath)
 
+            # RTF (treat as plain text after stripping control codes)
+            elif suffix == ".rtf":
+                return self._extract_rtf(filepath)
+
+            # PowerPoint
+            elif suffix == ".pptx":
+                return self._extract_pptx(filepath)
+
             # Excel
             elif suffix in {".xlsx", ".xls"}:
                 return self._extract_excel(filepath)
@@ -343,6 +351,67 @@ class TextExtractor:
             False, "",
             error=".doc extraction requires antiword or LibreOffice"
         )
+
+    def _extract_rtf(self, filepath: Path) -> ExtractionResult:
+        """Extract text from RTF files by stripping control codes."""
+        try:
+            raw = filepath.read_bytes()
+            # Simple RTF text extraction: strip control words
+            import re
+            text = raw.decode("utf-8", errors="replace")
+            # Remove RTF header/control groups
+            text = re.sub(r'\\[a-z]+\d*\s?', ' ', text)
+            text = re.sub(r'[{}]', '', text)
+            text = re.sub(r'\s+', ' ', text).strip()
+
+            if not text:
+                return ExtractionResult(False, "", error="RTF enthielt keinen extrahierbaren Text")
+
+            return ExtractionResult(
+                success=True,
+                text=text,
+                word_count=len(text.split()),
+                method="native"
+            )
+        except Exception as e:
+            return ExtractionResult(False, "", error=f"RTF error: {e}")
+
+    def _extract_pptx(self, filepath: Path) -> ExtractionResult:
+        """Extract text from PowerPoint (.pptx) files."""
+        try:
+            from zipfile import ZipFile
+            import xml.etree.ElementTree as ET
+
+            parts = []
+            with ZipFile(str(filepath)) as z:
+                # pptx slides are in ppt/slides/slide*.xml
+                slide_names = sorted([
+                    n for n in z.namelist()
+                    if n.startswith("ppt/slides/slide") and n.endswith(".xml")
+                ])
+
+                ns = {"a": "http://schemas.openxmlformats.org/drawingml/2006/main"}
+
+                for i, slide_name in enumerate(slide_names, 1):
+                    with z.open(slide_name) as f:
+                        tree = ET.parse(f)
+                    texts = [t.text for t in tree.iter("{http://schemas.openxmlformats.org/drawingml/2006/main}t") if t.text]
+                    if texts:
+                        parts.append(f"--- Slide {i} ---")
+                        parts.append("\n".join(texts))
+
+            if not parts:
+                return ExtractionResult(False, "", error="Keine Textinhalte in PPTX gefunden")
+
+            text = "\n\n".join(parts)
+            return ExtractionResult(
+                success=True,
+                text=text,
+                word_count=len(text.split()),
+                method="native"
+            )
+        except Exception as e:
+            return ExtractionResult(False, "", error=f"PPTX error: {e}")
 
     def _extract_excel(self, filepath: Path) -> ExtractionResult:
         """Extract text from Excel files."""

@@ -109,9 +109,19 @@ ANTWORT:"""
             "base_url": ollama_base_url,
             "temperature": 0.3,
         }
+        # langchain-ollama >=0.2.0: Auth-Headers ueber client_kwargs
         if headers:
-            llm_kwargs["headers"] = headers
-        self.llm = ChatOllama(**llm_kwargs)
+            llm_kwargs["client_kwargs"] = {"headers": headers}
+
+        try:
+            self.llm = ChatOllama(**llm_kwargs)
+        except Exception as e:
+            logger.warning(f"ChatOllama mit client_kwargs fehlgeschlagen: {e}")
+            self.llm = ChatOllama(
+                model=llm_model,
+                base_url=ollama_base_url,
+                temperature=0.3,
+            )
 
         # ChromaDB Vector Store
         self._vectorstore: Optional[Chroma] = None
