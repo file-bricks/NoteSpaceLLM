@@ -375,6 +375,7 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
         # Document panel signals
         self.document_panel.selection_changed.connect(self._on_selection_changed)
         self.document_panel.subquery_requested.connect(self._on_subquery_requested)
+        self.document_panel.files_added.connect(self._on_files_added)
 
         # Workflow panel signals
         self.workflow_panel.start_requested.connect(self._generate_report)
@@ -862,6 +863,45 @@ class MainWindow(QMainWindow if PYQT_AVAILABLE else object):
     def _on_selection_changed(self):
         """Handle document selection change."""
         self._update_document_context()
+
+    def _on_files_added(self):
+        """Handle files added — start async extraction for pending docs."""
+        if not self._current_project:
+            return
+        pending = self._current_project.documents.pop_pending_extractions()
+        if not pending:
+            return
+
+        # Skip if extraction already running — queue will be picked up next time
+        if self._extraction_worker and self._extraction_worker.isRunning():
+            return
+
+        self.statusbar.showMessage(f"Extrahiere Text aus {len(pending)} Dokumenten...")
+
+        from ..core.text_extractor import TextExtractor
+        if not hasattr(self, '_text_extractor') or self._text_extractor is None:
+            self._text_extractor = TextExtractor()
+
+        self._extraction_worker = ExtractionWorker(self._text_extractor, pending)
+
+        def _on_doc_extracted(doc_id, text, error):
+            from ..core.document_manager import DocumentStatus
+            if error:
+                self._current_project.documents.set_status(doc_id, DocumentStatus.ERROR, error)
+            else:
+                self._current_project.documents.update_content(doc_id, text)
+
+        def _on_extraction_complete():
+            self._extraction_worker = None
+            self._update_document_context()
+            self.statusbar.showMessage(f"Extraktion abgeschlossen: {len(pending)} Dokumente")
+
+        self._extraction_worker.doc_extracted.connect(_on_doc_extracted)
+        self._extraction_worker.progress.connect(
+            lambda cur, total, name: self.statusbar.showMessage(
+                f"Extrahiere ({cur+1}/{total}): {name}") if name else None)
+        self._extraction_worker.all_complete.connect(_on_extraction_complete)
+        self._extraction_worker.start()
 
     def _on_subquery_requested(self, doc_id: str, query_type: str, query_text: str):
         """Handle sub-query request."""

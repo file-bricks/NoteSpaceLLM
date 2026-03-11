@@ -47,6 +47,7 @@ class DocumentPanel(QWidget if PYQT_AVAILABLE else object):
         document_selected = pyqtSignal(str)  # document_id
         selection_changed = pyqtSignal()
         subquery_requested = pyqtSignal(str, str, str)  # doc_id, query_type, query_text
+        files_added = pyqtSignal()  # Emitted after files were added (for async extraction)
 
     def __init__(self, parent=None):
         if not PYQT_AVAILABLE:
@@ -360,6 +361,7 @@ class DocumentPanel(QWidget if PYQT_AVAILABLE else object):
         if files and self._document_manager:
             for filepath in files:
                 self._document_manager.add_file(Path(filepath))
+            self.files_added.emit()
 
     def _on_add_folder(self):
         """Handle add folder button."""
@@ -404,6 +406,7 @@ class DocumentPanel(QWidget if PYQT_AVAILABLE else object):
                 logging.getLogger(__name__).error(f"Fehler beim Hinzufuegen von {url.toLocalFile()}: {e}")
 
         event.acceptProposedAction()
+        self.files_added.emit()
 
     def set_progress(self, value: int, maximum: int = 100):
         """Set progress bar value."""

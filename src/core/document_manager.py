@@ -178,6 +178,7 @@ class DocumentManager:
         self._auto_index: bool = True  # Automatisch indexieren wenn Text extrahiert
         self._auto_extract: bool = True  # Automatisch Text extrahieren bei add_file
         self._text_extractor = None  # Lazy-loaded
+        self._pending_extractions: List[str] = []  # doc_ids waiting for async extraction
 
         if project_path:
             self._cache_dir = project_path / ".cache"
@@ -235,9 +236,12 @@ class DocumentManager:
         self._documents[doc.id] = doc
         self._notify_change("add", doc)
 
-        # Auto-Extraktion
+        # Auto-Extraktion wird NICHT mehr synchron ausgefuehrt.
+        # Stattdessen signalisiert pending_extraction, dass die GUI
+        # einen ExtractionWorker starten soll.
         if self._auto_extract and not doc.is_directory:
-            self._try_auto_extract(doc)
+            doc.status = DocumentStatus.EXTRACTING
+            self._pending_extractions.append(doc.id)
 
         return doc
 
@@ -507,6 +511,20 @@ class DocumentManager:
         """
         self._rag_engine = rag_engine
         logger.info("RAG Engine verbunden")
+
+    def pop_pending_extractions(self) -> List[tuple]:
+        """Gibt ausstehende Extraktionen zurueck und leert die Queue.
+
+        Returns:
+            Liste von (doc_id, doc_path, doc_name) Tupeln
+        """
+        result = []
+        for doc_id in self._pending_extractions:
+            doc = self._documents.get(doc_id)
+            if doc and not doc.is_directory:
+                result.append((doc.id, doc.path, doc.name))
+        self._pending_extractions.clear()
+        return result
 
     def set_auto_index(self, enabled: bool) -> None:
         """Aktiviert/Deaktiviert automatische Indexierung."""
