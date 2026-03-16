@@ -16,19 +16,19 @@ from pathlib import Path
 from typing import List, Optional
 
 try:
-    from PyQt6.QtWidgets import (
+    from PySide6.QtWidgets import (
         QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QLabel,
         QPushButton, QComboBox, QFileDialog, QGroupBox, QCheckBox,
         QLineEdit, QFormLayout, QProgressBar, QTabWidget,
         QMessageBox, QSplitter
     )
-    from PyQt6.QtCore import Qt, pyqtSignal
-    from PyQt6.QtGui import QFont, QTextCharFormat, QSyntaxHighlighter
+    from PySide6.QtCore import Qt, Signal
+    from PySide6.QtGui import QFont, QTextCharFormat, QSyntaxHighlighter
     PYQT_AVAILABLE = True
 except ImportError:
     PYQT_AVAILABLE = False
     class QWidget: pass
-    class pyqtSignal:
+    class Signal:
         def __init__(self, *args): pass
 
 
@@ -42,7 +42,7 @@ class MarkdownHighlighter(QSyntaxHighlighter if PYQT_AVAILABLE else object):
         self._setup_formats()
 
     def _setup_formats(self):
-        from PyQt6.QtGui import QTextCharFormat, QColor, QFont
+        from PySide6.QtGui import QTextCharFormat, QColor, QFont
 
         # Headers
         self.header_format = QTextCharFormat()
@@ -91,8 +91,8 @@ class OutputPanel(QWidget if PYQT_AVAILABLE else object):
     """
 
     if PYQT_AVAILABLE:
-        export_requested = pyqtSignal(list, str)  # formats, directory
-        prompt_export_requested = pyqtSignal()  # Prompt als .md exportieren
+        export_requested = Signal(list, str)  # formats, directory
+        prompt_export_requested = Signal()  # Prompt als .md exportieren
 
     def __init__(self, parent=None):
         if not PYQT_AVAILABLE:
@@ -291,7 +291,7 @@ class OutputPanel(QWidget if PYQT_AVAILABLE else object):
 
     def _copy_to_clipboard(self):
         """Copy content to clipboard."""
-        from PyQt6.QtWidgets import QApplication
+        from PySide6.QtWidgets import QApplication
         QApplication.clipboard().setText(self._current_content)
         self.status_label.setText("In Zwischenablage kopiert")
 
@@ -324,7 +324,7 @@ class OutputPanel(QWidget if PYQT_AVAILABLE else object):
 
     def _save_profile(self):
         """Save current format selection as profile."""
-        from PyQt6.QtWidgets import QInputDialog
+        from PySide6.QtWidgets import QInputDialog
 
         name, ok = QInputDialog.getText(self, "Profil speichern", "Profilname:")
         if ok and name:

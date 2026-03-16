@@ -16,7 +16,7 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 try:
-    from PyQt6.QtWidgets import (
+    from PySide6.QtWidgets import (
         QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
         QMenuBar, QMenu, QToolBar, QStatusBar, QMessageBox,
         QFileDialog, QInputDialog, QApplication, QProgressDialog,
@@ -24,20 +24,20 @@ try:
         QDialogButtonBox, QFormLayout, QGroupBox, QLineEdit,
         QPushButton
     )
-    from PyQt6.QtCore import Qt, QSize, QTimer, pyqtSlot
-    from PyQt6.QtGui import QAction, QIcon, QKeySequence
+    from PySide6.QtCore import Qt, QSize, QTimer, Slot
+    from PySide6.QtGui import QAction, QIcon, QKeySequence
     PYQT_AVAILABLE = True
 except ImportError:
     PYQT_AVAILABLE = False
 
 
 if PYQT_AVAILABLE:
-    from PyQt6.QtCore import QThread, pyqtSignal
+    from PySide6.QtCore import QThread, Signal
 
     class AnalysisWorker(QThread):
         """Worker thread for batch sub-query analysis."""
-        query_complete = pyqtSignal(str, str, str)  # query_id, response, error
-        all_complete = pyqtSignal()
+        query_complete = Signal(str, str, str)  # query_id, response, error
+        all_complete = Signal()
 
         def __init__(self, llm_client, tasks):
             super().__init__()
@@ -55,9 +55,9 @@ if PYQT_AVAILABLE:
 
     class ExtractionWorker(QThread):
         """Worker thread for text extraction (prevents GUI freeze)."""
-        progress = pyqtSignal(int, int, str)  # current, total, filename
-        doc_extracted = pyqtSignal(str, str, str)  # doc_id, text, error
-        all_complete = pyqtSignal()
+        progress = Signal(int, int, str)  # current, total, filename
+        doc_extracted = Signal(str, str, str)  # doc_id, text, error
+        all_complete = Signal()
 
         def __init__(self, extractor, docs):
             super().__init__()
@@ -81,9 +81,9 @@ if PYQT_AVAILABLE:
 
     class IndexWorker(QThread):
         """Worker thread for RAG indexing (prevents GUI freeze)."""
-        progress = pyqtSignal(int, int, str)  # current, total, doc_name
-        doc_indexed = pyqtSignal(str, bool)  # doc_id, success
-        all_complete = pyqtSignal(int, int)  # indexed_count, total_count
+        progress = Signal(int, int, str)  # current, total, doc_name
+        doc_indexed = Signal(str, bool)  # doc_id, success
+        all_complete = Signal(int, int)  # indexed_count, total_count
 
         def __init__(self, doc_manager, doc_ids_and_names):
             super().__init__()

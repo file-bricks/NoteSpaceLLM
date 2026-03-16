@@ -17,19 +17,19 @@ from typing import Dict, List, Optional, Callable
 from dataclasses import dataclass, field
 
 try:
-    from PyQt6.QtWidgets import (
+    from PySide6.QtWidgets import (
         QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
         QPushButton, QFrame, QScrollArea, QGroupBox, QTextEdit,
         QSplitter, QListWidget, QListWidgetItem, QDialog,
         QFormLayout, QLineEdit, QSpinBox, QCheckBox, QDialogButtonBox
     )
-    from PyQt6.QtCore import Qt, pyqtSignal, QSize
-    from PyQt6.QtGui import QPainter, QColor, QPen, QFont
+    from PySide6.QtCore import Qt, Signal, QSize
+    from PySide6.QtGui import QPainter, QColor, QPen, QFont
     PYQT_AVAILABLE = True
 except ImportError:
     PYQT_AVAILABLE = False
     class QWidget: pass
-    class pyqtSignal:
+    class Signal:
         def __init__(self, *args): pass
 
 
@@ -168,7 +168,7 @@ class WorkflowStepWidget(QFrame if PYQT_AVAILABLE else object):
     """Widget representing a single workflow step."""
 
     if PYQT_AVAILABLE:
-        clicked = pyqtSignal(str)  # step_id
+        clicked = Signal(str)  # step_id
 
     def __init__(self, step: WorkflowStep, parent=None):
         if not PYQT_AVAILABLE:
@@ -272,9 +272,9 @@ class WorkflowPanel(QWidget if PYQT_AVAILABLE else object):
     """
 
     if PYQT_AVAILABLE:
-        workflow_changed = pyqtSignal(str)  # workflow_id
-        step_clicked = pyqtSignal(str)  # step_id
-        start_requested = pyqtSignal()
+        workflow_changed = Signal(str)  # workflow_id
+        step_clicked = Signal(str)  # step_id
+        start_requested = Signal()
 
     def __init__(self, parent=None):
         if not PYQT_AVAILABLE:

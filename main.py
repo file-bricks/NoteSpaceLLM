@@ -25,7 +25,7 @@ def check_dependencies():
     missing = []
 
     try:
-        from PyQt6.QtWidgets import QApplication
+        from PySide6.QtWidgets import QApplication
     except ImportError:
         missing.append("PyQt6 (pip install PyQt6)")
 
@@ -88,8 +88,8 @@ def main():
         sys.exit(1)
 
     # Start GUI
-    from PyQt6.QtWidgets import QApplication
-    from PyQt6.QtCore import Qt
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtCore import Qt
     from src.gui.main_window import MainWindow
 
     # High DPI support

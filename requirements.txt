@@ -2,7 +2,7 @@
 # =========================
 
 # Core GUI (required)
-PyQt6>=6.4.0
+PySide6>=6.5.0
 
 # Document Processing
 PyMuPDF>=1.23.0      # PDF reading

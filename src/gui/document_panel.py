@@ -16,20 +16,20 @@ from pathlib import Path
 from typing import Optional, List, Callable
 
 try:
-    from PyQt6.QtWidgets import (
+    from PySide6.QtWidgets import (
         QWidget, QVBoxLayout, QHBoxLayout, QTreeWidget, QTreeWidgetItem,
         QPushButton, QMenu, QFileDialog, QLabel, QProgressBar,
         QInputDialog, QMessageBox, QHeaderView, QAbstractItemView
     )
-    from PyQt6.QtCore import Qt, QMimeData, pyqtSignal
-    from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QAction, QIcon
+    from PySide6.QtCore import Qt, QMimeData, Signal
+    from PySide6.QtGui import QDragEnterEvent, QDropEvent, QAction, QIcon
     PYQT_AVAILABLE = True
 except ImportError:
     PYQT_AVAILABLE = False
     # Stub classes for import
     class QWidget:
         pass
-    class pyqtSignal:
+    class Signal:
         def __init__(self, *args): pass
 
 
@@ -44,10 +44,10 @@ class DocumentPanel(QWidget if PYQT_AVAILABLE else object):
     """
 
     if PYQT_AVAILABLE:
-        document_selected = pyqtSignal(str)  # document_id
-        selection_changed = pyqtSignal()
-        subquery_requested = pyqtSignal(str, str, str)  # doc_id, query_type, query_text
-        files_added = pyqtSignal()  # Emitted after files were added (for async extraction)
+        document_selected = Signal(str)  # document_id
+        selection_changed = Signal()
+        subquery_requested = Signal(str, str, str)  # doc_id, query_type, query_text
+        files_added = Signal()  # Emitted after files were added (for async extraction)
 
     def __init__(self, parent=None):
         if not PYQT_AVAILABLE:

@@ -24,18 +24,18 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 try:
-    from PyQt6.QtWidgets import (
+    from PySide6.QtWidgets import (
         QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QLineEdit,
         QPushButton, QLabel, QScrollArea, QFrame, QSplitter
     )
-    from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
-    from PyQt6.QtGui import QTextCursor, QFont
+    from PySide6.QtCore import Qt, Signal, QThread, QTimer
+    from PySide6.QtGui import QTextCursor, QFont
     PYQT_AVAILABLE = True
 except ImportError:
     PYQT_AVAILABLE = False
     class QWidget: pass
     class QThread: pass
-    class pyqtSignal:
+    class Signal:
         def __init__(self, *args): pass
 
 
@@ -160,9 +160,9 @@ class LLMWorker(QThread if PYQT_AVAILABLE else object):
     """Worker thread for LLM API calls."""
 
     if PYQT_AVAILABLE:
-        response_chunk = pyqtSignal(str)
-        response_complete = pyqtSignal(str)
-        error_occurred = pyqtSignal(str)
+        response_chunk = Signal(str)
+        response_complete = Signal(str)
+        error_occurred = Signal(str)
 
     def __init__(self, llm_client, prompt: str, context: str):
         if not PYQT_AVAILABLE:
@@ -199,8 +199,8 @@ class RAGWorker(QThread if PYQT_AVAILABLE else object):
     """Worker thread for RAG queries."""
 
     if PYQT_AVAILABLE:
-        response_ready = pyqtSignal(dict)
-        error_occurred = pyqtSignal(str)
+        response_ready = Signal(dict)
+        error_occurred = Signal(str)
 
     def __init__(self, rag_engine: 'RAGEngine', question: str, document_ids: List[str] = None, k: int = 5):
         if not PYQT_AVAILABLE:
@@ -241,7 +241,7 @@ class ChatPanel(QWidget if PYQT_AVAILABLE else object):
     """
 
     if PYQT_AVAILABLE:
-        message_sent = pyqtSignal(str)
+        message_sent = Signal(str)
 
     def __init__(self, parent=None):
         if not PYQT_AVAILABLE:

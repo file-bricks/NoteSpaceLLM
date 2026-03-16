@@ -122,7 +122,7 @@ NoteSpaceLLM/
 │   │   ├── text_extractor.py     # Textextraktion
 │   │   ├── sub_query.py          # Detailrecherchen
 │   │   └── project.py            # Projektverwaltung
-│   ├── gui/               # PyQt6 Benutzeroberfläche
+│   ├── gui/               # PySide6 Benutzeroberfläche
 │   │   ├── main_window.py        # Hauptfenster
 │   │   ├── document_panel.py     # Dokument-Panel
 │   │   ├── workflow_panel.py     # Workflow-Panel
@@ -177,7 +177,7 @@ Basiert auf dem BACH-System (Personal Agentic OS) und nutzt dessen:
 
 AGPL v3 - Siehe [LICENSE](LICENSE)
 
-Dieses Projekt verwendet PyQt6 (GPL) und PyMuPDF (AGPL).
+Dieses Projekt verwendet PySide6 (LGPL) und PyMuPDF (AGPL).
 
 ---
 
