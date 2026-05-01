@@ -109,7 +109,7 @@ DEFAULT_WORKFLOWS = {
         report_type="analysis",
         steps=[
             WorkflowStep("1", "Textextraktion", "Extrahiere Text aus allen Dokumenten", "extract", order=1),
-            WorkflowStep("2", "Einzelanalysen", "Fuehre Detailrecherchen durch", "analyze", order=2),
+            WorkflowStep("2", "Einzelanalysen", "Führe Detailrecherchen durch", "analyze", order=2),
             WorkflowStep("3", "Synthese", "Kombiniere Erkenntnisse", "synthesize", order=3),
             WorkflowStep("4", "Berichterstellung", "Erstelle strukturierten Bericht", "format", order=4),
             WorkflowStep("5", "Ausgabe", "Exportiere in Zielformate", "export", order=5)
@@ -131,12 +131,12 @@ DEFAULT_WORKFLOWS = {
     "research": Workflow(
         id="research",
         name="Forschungsbericht",
-        description="Ausfuehrliche Analyse mit Quellenverweisen",
+        description="Ausführliche Analyse mit Quellenverweisen",
         report_type="research",
         steps=[
             WorkflowStep("1", "Textextraktion", "Extrahiere alle Dokumente", "extract", order=1),
             WorkflowStep("2", "Einzelanalysen", "Analysiere jedes Dokument", "analyze", order=2),
-            WorkflowStep("3", "Querverweise", "Identifiziere Zusammenhaenge", "analyze",
+            WorkflowStep("3", "Querverweise", "Identifiziere Zusammenhänge", "analyze",
                         config={"mode": "cross_reference"}, order=3),
             WorkflowStep("4", "Literaturverzeichnis", "Erstelle Quellenverzeichnis", "format",
                         config={"include_citations": True}, order=4),
@@ -340,7 +340,7 @@ class WorkflowPanel(QWidget if PYSIDE_AVAILABLE else object):
 
         self.question_edit = QTextEdit()
         self.question_edit.setPlaceholderText(
-            "Definiere die zentrale Fragestellung fuer den Bericht...\n\n"
+            "Definiere die zentrale Fragestellung für den Bericht...\n\n"
             "Beispiel: 'Welche Faktoren beeinflussten die Entwicklung im Jahr 2025?'"
         )
         self.question_edit.setMaximumHeight(100)

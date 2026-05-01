@@ -5,8 +5,8 @@ Claude Code Client - LLM via Claude Code CLI (subprocess)
 ==========================================================
 
 Zwei Modi:
-1. API-Like-Modus: Claude Code im Hintergrund, Ergebnis zurueck
-2. Chat-Modus: Konsole oeffnet sich, Nutzer kann weiter chatten
+1. API-Like-Modus: Claude Code im Hintergrund, Ergebnis zurück
+2. Chat-Modus: Konsole öffnet sich, Nutzer kann weiter chatten
 
 Voraussetzung: `claude` CLI muss im PATH sein.
 """
@@ -31,8 +31,8 @@ class ClaudeCodeClient(LLMClient):
     LLM Client der Claude Code CLI als Backend nutzt.
 
     Modi:
-    - "api": Hintergrund-Ausfuehrung, Ergebnis wird zurueckgegeben
-    - "chat": Konsole oeffnet sich fuer interaktives Chatten
+    - "api": Hintergrund-Ausführung, Ergebnis wird zurückgegeben
+    - "chat": Konsole öffnet sich für interaktives Chatten
     """
 
     CLAUDE_CMD = "claude"  # muss im PATH sein
@@ -42,7 +42,7 @@ class ClaudeCodeClient(LLMClient):
         """
         Args:
             model: Claude-Modell (sonnet, opus, haiku)
-            mode: "api" (Hintergrund) oder "chat" (Konsole oeffnet sich)
+            mode: "api" (Hintergrund) oder "chat" (Konsole öffnet sich)
         """
         if model not in self.ALLOWED_MODELS:
             raise ValueError(f"Unbekanntes Modell: {model!r}. Erlaubt: {self.ALLOWED_MODELS}")
@@ -51,7 +51,7 @@ class ClaudeCodeClient(LLMClient):
         self._check_availability()
 
     def _check_availability(self):
-        """Pruefen ob claude CLI verfuegbar ist."""
+        """Prüfen ob claude CLI verfügbar ist."""
         self._is_available = shutil.which(self.CLAUDE_CMD) is not None
         if not self._is_available:
             logger.warning("Claude Code CLI nicht gefunden. Bitte installieren: npm install -g @anthropic-ai/claude-code")
@@ -60,26 +60,26 @@ class ClaudeCodeClient(LLMClient):
         """
         Sende Prompt an Claude Code und erhalte Antwort.
 
-        Im API-Modus: Hintergrund-Ausfuehrung mit --print Flag.
-        Im Chat-Modus: Oeffnet Konsole, gibt leeren String zurueck.
+        Im API-Modus: Hintergrund-Ausführung mit --print Flag.
+        Im Chat-Modus: öffnet Konsole, gibt leeren String zurück.
         """
         if not self._is_available:
-            raise ConnectionError("Claude Code CLI nicht verfuegbar")
+            raise ConnectionError("Claude Code CLI nicht verfügbar")
 
         if self.mode == "chat":
             self._open_chat_console(prompt, context)
-            return "(Chat-Modus: Konsole wurde geoeffnet)"
+            return "(Chat-Modus: Konsole wurde geöffnet)"
 
         return self._api_call(prompt, context)
 
     def stream_chat(self, prompt: str, context: str = "") -> Iterator[str]:
         """Streaming-Antwort von Claude Code."""
         if not self._is_available:
-            raise ConnectionError("Claude Code CLI nicht verfuegbar")
+            raise ConnectionError("Claude Code CLI nicht verfügbar")
 
         if self.mode == "chat":
             self._open_chat_console(prompt, context)
-            yield "(Chat-Modus: Konsole wurde geoeffnet)"
+            yield "(Chat-Modus: Konsole wurde geöffnet)"
             return
 
         # API-Modus mit Streaming
@@ -117,11 +117,11 @@ class ClaudeCodeClient(LLMClient):
             yield f"\n[Fehler: {e}]"
 
     def get_models(self) -> list:
-        """Verfuegbare Claude-Modelle."""
+        """Verfügbare Claude-Modelle."""
         return ["sonnet", "opus", "haiku"]
 
     def _build_prompt(self, prompt: str, context: str) -> str:
-        """Baut den vollstaendigen Prompt zusammen."""
+        """Baut den vollständigen Prompt zusammen."""
         if context:
             return f"{context}\n\n{prompt}"
         return prompt
@@ -153,11 +153,11 @@ class ClaudeCodeClient(LLMClient):
             raise RuntimeError("Claude Code: Timeout nach 10 Minuten")
 
     def _open_chat_console(self, prompt: str, context: str):
-        """Oeffnet eine Konsole mit Claude Code im Chat-Modus."""
+        """öffnet eine Konsole mit Claude Code im Chat-Modus."""
         # Prompt-Datei erstellen (wird von Claude Code gelesen)
         prompt_file = self._create_prompt_file(prompt, context)
 
-        # Konsole oeffnen mit initialem Prompt
+        # Konsole öffnen mit initialem Prompt
         import sys
 
         # Defense-in-depth: Model-String sanitizen bevor er in Shell-Code eingebettet wird
@@ -193,10 +193,10 @@ pause
                  f'cat "{prompt_file}" | claude --model {safe_model} --resume; exec bash'],
             )
 
-        logger.info(f"Chat-Konsole geoeffnet mit Prompt-Datei: {prompt_file}")
+        logger.info(f"Chat-Konsole geöffnet mit Prompt-Datei: {prompt_file}")
 
     def _create_prompt_file(self, prompt: str, context: str) -> Path:
-        """Erstellt eine Prompt-Datei fuer den Chat-Modus."""
+        """Erstellt eine Prompt-Datei für den Chat-Modus."""
         full_prompt = self._build_prompt(prompt, context)
 
         prompt_dir = Path(tempfile.gettempdir()) / "notespacellm_prompts"

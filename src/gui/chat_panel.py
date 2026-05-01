@@ -273,7 +273,7 @@ class ChatPanel(QWidget if PYSIDE_AVAILABLE else object):
         title = QLabel("Dokumenten-Chat")
         title.setStyleSheet("font-weight: bold; font-size: 14px;")
 
-        self.clear_btn = QPushButton("Verlauf loeschen")
+        self.clear_btn = QPushButton("Verlauf löschen")
         self.clear_btn.clicked.connect(self._clear_history)
 
         # RAG Toggle
@@ -375,7 +375,7 @@ class ChatPanel(QWidget if PYSIDE_AVAILABLE else object):
         # Add welcome message
         self._add_system_message(
             "Willkommen! Ich kann Fragen zu den geladenen Dokumenten beantworten. "
-            "Waehle Dokumente aus und stelle Fragen zum Inhalt."
+            "Wähle Dokumente aus und stelle Fragen zum Inhalt."
         )
 
     def set_llm_client(self, client):
@@ -451,7 +451,7 @@ class ChatPanel(QWidget if PYSIDE_AVAILABLE else object):
         elif self._llm_client:
             self._request_response(text)
         else:
-            self._add_system_message("Kein LLM-Client oder RAG-Engine konfiguriert. Bitte Einstellungen pruefen.")
+            self._add_system_message("Kein LLM-Client oder RAG-Engine konfiguriert. Bitte Einstellungen prüfen.")
 
     def _request_response(self, prompt: str):
         """Request a response from the LLM."""
@@ -621,7 +621,7 @@ SPRACHE: Deutsch.
         self._messages.clear()
         self._message_widgets.clear()
 
-        self._add_system_message("Verlauf geloescht. Stelle eine neue Frage.")
+        self._add_system_message("Verlauf gelöscht. Stelle eine neue Frage.")
 
     def stop_generation(self):
         """Stop the current generation."""

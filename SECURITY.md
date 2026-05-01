@@ -16,9 +16,8 @@ If you discover a security vulnerability, please report it via GitHub's private 
 
 **Please do not open public issues for security vulnerabilities.**
 
-We will respond within 48 hours and work with you to understand and address the issue.
+We will review reports as soon as practical and work with you to understand and address the issue.
 
 ## Security Updates
 
 Security updates will be released as soon as possible after a vulnerability is confirmed. Updates will be documented in the release notes.
-

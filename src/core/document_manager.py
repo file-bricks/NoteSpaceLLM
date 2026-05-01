@@ -236,7 +236,7 @@ class DocumentManager:
         self._documents[doc.id] = doc
         self._notify_change("add", doc)
 
-        # Auto-Extraktion wird NICHT mehr synchron ausgefuehrt.
+        # Auto-Extraktion wird NICHT mehr synchron ausgeführt.
         # Stattdessen signalisiert pending_extraction, dass die GUI
         # einen ExtractionWorker starten soll.
         if self._auto_extract and not doc.is_directory:
@@ -466,7 +466,7 @@ class DocumentManager:
     # ==================== RAG Integration ====================
 
     def _try_auto_extract(self, doc: DocumentItem) -> None:
-        """Versucht automatische Textextraktion fuer ein Dokument."""
+        """Versucht automatische Textextraktion für ein Dokument."""
         try:
             if self._text_extractor is None:
                 from .text_extractor import TextExtractor
@@ -503,7 +503,7 @@ class DocumentManager:
         logger.info("RAG Engine verbunden")
 
     def pop_pending_extractions(self) -> List[tuple]:
-        """Gibt ausstehende Extraktionen zurueck und leert die Queue.
+        """Gibt ausstehende Extraktionen zurück und leert die Queue.
 
         Returns:
             Liste von (doc_id, doc_path, doc_name) Tupeln

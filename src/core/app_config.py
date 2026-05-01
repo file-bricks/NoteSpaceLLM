@@ -15,7 +15,7 @@ import json
 from pathlib import Path
 from typing import Optional, Dict, List
 
-# Config lives outside OneDrive/synced folders
+# Config lives outside synced project folders
 CONFIG_DIR = Path.home() / ".notespacellm"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
@@ -166,9 +166,9 @@ class AppConfig:
         return True
 
     def delete_profile(self, name: str) -> bool:
-        """Loescht ein benutzerdefiniertes Profil."""
+        """Löscht ein benutzerdefiniertes Profil."""
         if name in self.BUILTIN_PROFILES:
-            return False  # Built-ins nicht loeschbar
+            return False  # Built-ins nicht löschbar
         profiles = self._data.get("profiles", {})
         if name in profiles:
             del profiles[name]
@@ -179,7 +179,7 @@ class AppConfig:
         return False
 
     def list_profile_names(self) -> List[str]:
-        """Gibt alle Profilnamen zurueck."""
+        """Gibt alle Profilnamen zurück."""
         return list(self.profiles.keys())
 
 

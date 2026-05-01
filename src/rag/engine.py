@@ -109,7 +109,7 @@ ANTWORT:"""
             "base_url": ollama_base_url,
             "temperature": 0.3,
         }
-        # langchain-ollama >=0.2.0: Auth-Headers ueber client_kwargs
+        # langchain-ollama >=0.2.0: Auth-Headers über client_kwargs
         if headers:
             llm_kwargs["client_kwargs"] = {"headers": headers}
 

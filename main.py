@@ -48,14 +48,14 @@ def check_dependencies():
         optional_missing.append("openpyxl (for Excel support)")
 
     if missing:
-        print("FEHLER: Fehlende Abhaengigkeiten:")
+        print("FEHLER: Fehlende Abhängigkeiten:")
         for dep in missing:
             print(f"  - {dep}")
         print("\nInstalliere mit: pip install -r requirements.txt")
         return False
 
     if optional_missing:
-        print("HINWEIS: Optionale Abhaengigkeiten nicht installiert:")
+        print("HINWEIS: Optionale Abhängigkeiten nicht installiert:")
         for dep in optional_missing:
             print(f"  - {dep}")
         print()
@@ -71,7 +71,7 @@ def main():
         print("\nOptionen:")
         print("  --help, -h     Diese Hilfe anzeigen")
         print("  --version      Version anzeigen")
-        print("  --check        Abhaengigkeiten pruefen")
+        print("  --check        Abhängigkeiten prüfen")
         return
 
     if "--version" in sys.argv:
@@ -90,6 +90,7 @@ def main():
     # Start GUI
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import Qt
+    from PySide6.QtGui import QIcon
     from src.gui.main_window import MainWindow
 
     # High DPI support
@@ -105,8 +106,14 @@ def main():
     # Set style
     app.setStyle("Fusion")
 
+    icon_path = Path(__file__).parent / "NoteSpaceLLM.ico"
+    if icon_path.exists():
+        app.setWindowIcon(QIcon(str(icon_path)))
+
     # Create and show main window
     window = MainWindow()
+    if icon_path.exists():
+        window.setWindowIcon(QIcon(str(icon_path)))
     window.show()
 
     sys.exit(app.exec())

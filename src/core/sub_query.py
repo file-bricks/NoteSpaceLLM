@@ -163,7 +163,7 @@ AUFGABE:
 
 Antworte strukturiert mit Abschnitten und Stichpunkten.""",
 
-            SubQueryType.EXTRACT: """Analysiere das folgende Dokument und extrahiere die gewuenschten Informationen.
+            SubQueryType.EXTRACT: """Analysiere das folgende Dokument und extrahiere die gewünschten Informationen.
 
 DOKUMENT:
 {document}
@@ -173,7 +173,7 @@ EXTRAKTIONSAUFGABE:
 
 Liste die gefundenen Informationen klar auf.""",
 
-            SubQueryType.ANALYZE: """Fuehre eine detaillierte Analyse des folgenden Dokuments durch.
+            SubQueryType.ANALYZE: """Führe eine detaillierte Analyse des folgenden Dokuments durch.
 
 DOKUMENT:
 {document}
@@ -203,7 +203,7 @@ FRAGE:
 
 Antworte praezise und beziehe dich auf konkrete Stellen im Dokument.""",
 
-            SubQueryType.CUSTOM: """Fuehre die folgende Aufgabe am Dokument aus.
+            SubQueryType.CUSTOM: """Führe die folgende Aufgabe am Dokument aus.
 
 DOKUMENT:
 {document}
@@ -458,7 +458,7 @@ class SubQueryTemplates:
         return SubQuery.create(
             document_id,
             SubQueryType.ANALYZE,
-            "Bewerte die Qualitaet und Vollstaendigkeit der im Dokument enthaltenen Daten."
+            "Bewerte die Qualität und Vollständigkeit der im Dokument enthaltenen Daten."
         )
 
     @staticmethod
@@ -467,5 +467,5 @@ class SubQueryTemplates:
         return SubQuery.create(
             document_id,
             SubQueryType.ANALYZE,
-            "Identifiziere moegliche Widersprueche oder inkonsistente Aussagen."
+            "Identifiziere mögliche Widersprüche oder inkonsistente Aussagen."
         )

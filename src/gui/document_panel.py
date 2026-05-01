@@ -91,7 +91,7 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
 
         # Document tree
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Dokument", "Status", "Groesse"])
+        self.tree.setHeaderLabels(["Dokument", "Status", "Größe"])
         self.tree.setColumnCount(3)
 
         # Enable drag & drop
@@ -254,7 +254,7 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
                     self.selection_changed.emit()
             except Exception as e:
                 import logging
-                logging.getLogger(__name__).error(f"Fehler bei Checkbox-Aenderung: {e}")
+                logging.getLogger(__name__).error(f"Fehler bei Checkbox-Änderung: {e}")
 
     def _show_context_menu(self, position):
         """Show context menu on right-click."""
@@ -353,7 +353,7 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
         """Handle add files button."""
         files, _ = QFileDialog.getOpenFileNames(
             self,
-            "Dateien hinzufuegen",
+            "Dateien hinzufügen",
             "",
             "Alle unterstuetzten (*.pdf *.docx *.doc *.rtf *.txt *.md *.xlsx *.xls *.pptx *.py *.csv *.json *.xml *.eml *.msg);;Dokumente (*.pdf *.docx *.doc *.rtf *.txt *.md);;Tabellen (*.xlsx *.xls *.csv);;Code (*.py *.js *.java *.cpp *.c *.h);;Alle Dateien (*)"
         )
@@ -365,7 +365,7 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
 
     def _on_add_folder(self):
         """Handle add folder button."""
-        folder = QFileDialog.getExistingDirectory(self, "Ordner hinzufuegen")
+        folder = QFileDialog.getExistingDirectory(self, "Ordner hinzufügen")
 
         if folder and self._document_manager:
             self._document_manager.add_directory(Path(folder))
@@ -403,7 +403,7 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
                     self._document_manager.add_file(path)
             except Exception as e:
                 import logging
-                logging.getLogger(__name__).error(f"Fehler beim Hinzufuegen von {url.toLocalFile()}: {e}")
+                logging.getLogger(__name__).error(f"Fehler beim Hinzufügen von {url.toLocalFile()}: {e}")
 
         event.acceptProposedAction()
         self.files_added.emit()

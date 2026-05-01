@@ -9,12 +9,20 @@ Ein lokaler, datenschutzfreundlicher Ersatz für Google NotebookLM zur Dokumente
 ## Features
 
 - **Dokumentenverwaltung**: Dateien und Verzeichnisse per Drag & Drop hinzufügen
+- **Automatische Extraktion & Auto-Indexierung**: Neue Dokumente werden direkt verarbeitet und für RAG vorbereitet
 - **Selektive Auswahl**: Dokumente für Berichterstellung auswählen/abwählen
 - **Detailrecherchen**: Rechtsklick für dokumentspezifische Analysen (Sub-Queries)
 - **Workflow-Visualisierung**: Grafische Darstellung des Berichtsprozesses
 - **Chat-Interface**: Interaktives Chatten über die Dokumente mit LLM
+- **Claude Code Integration**: Wahlweise strukturierte API-Antworten oder Übergabe an eine interaktive Claude-Code-Session
 - **Multi-Format-Export**: Ausgabe in MD, PDF, DOCX, HTML, TXT
+- **Prompt-Export**: Berichtskontext als Markdown-Prompt für externe LLM-Workflows exportieren
+- **Remote-Ollama pro Projekt**: Eigene Base-URL und API-Key für lokale oder entfernte Ollama-Server
 - **Profile**: Wiederverwendbare Ausgabeformat-Kombinationen
+
+## Screenshot
+
+![NoteSpaceLLM Hauptfenster](README/screenshots/main.png)
 
 ## Installation
 
@@ -28,6 +36,18 @@ pip install -r requirements.txt
 # Anwendung starten
 python main.py
 ```
+
+Unter Windows kann die App alternativ per `start.bat` gestartet werden.
+
+Für einen lokalen Windows-Launcher kann zusätzlich folgender Build ausgeführt
+werden:
+
+```bat
+build_exe.bat
+```
+
+Der Build erzeugt `NoteSpaceLLM.exe` als schlanken Starter für die lokale
+Python-Umgebung und die Projekt-Abhängigkeiten.
 
 ## Abhängigkeiten prüfen
 
@@ -61,14 +81,26 @@ Die Remote-Anbindung eignet sich für:
 ### OpenAI
 
 ```bash
-export OPENAI_API_KEY="sk-..."
+export OPENAI_API_KEY="<your-openai-api-key>"
 ```
 
 ### Anthropic (Claude)
 
 ```bash
-export ANTHROPIC_API_KEY="sk-ant-..."
+export ANTHROPIC_API_KEY="<your-anthropic-api-key>"
 ```
+
+### Claude Code
+
+Für den Provider `claude-code` wird die lokale CLI benötigt:
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+In der App stehen zwei Modi bereit:
+- **API-Modus**: strukturierte Antwort direkt zurück in NoteSpaceLLM
+- **Chat-Modus**: Übergabe des Prompts an eine interaktive Claude-Code-Konsole
 
 ## Verwendung
 
@@ -108,6 +140,10 @@ Klick auf "Bericht erstellen" - die Ausgabe erscheint im rechten Panel.
 ### 7. Exportieren
 
 Ausgabeformate wählen und "Exportieren" klicken.
+
+### 8. Prompt exportieren
+
+Über **"Prompt exportieren"** wird der aktuelle Arbeitskontext als Markdown-Datei gespeichert, um ihn in Claude Code oder anderen LLM-Workflows weiterzuverwenden.
 
 ## Projektstruktur
 
@@ -166,22 +202,21 @@ NoteSpaceLLM/
 3. **Ollama**: Für Datenschutz und Offline-Nutzung empfohlen
 4. **Workflow anpassen**: Schritte können umgeordnet werden
 
+## Datenschutz
+
+NoteSpaceLLM verarbeitet Projekte, Dokumentindexe und Exporte standardmäßig lokal in den Projektordnern `data/`, `profiles/`, `workflows/`, `output/` und `chroma_db/`. Diese Ordner sind bewusst nicht für Git vorgesehen.
+
+Wenn externe oder entfernte LLM-Provider wie OpenAI, Anthropic, Claude Code oder ein Remote-Ollama-Server gewählt werden, können Prompts und ausgewählte Dokumentauszüge an diese Dienste oder Server übertragen werden. Verwende für vertrauliche Dokumente bevorzugt lokale Modelle und prüfe vor dem Teilen eines Projektordners die enthaltenen Daten.
+
 ## Entwicklung
 
-Basiert auf dem BACH-System (Personal Agentic OS) und nutzt dessen:
-- Document Collector Service
-- Report Workflow Service
-- Text Extractor Patterns
+Die Anwendung ist modular aufgebaut und trennt Dokumentverwaltung, Text-Extraktion, RAG-Index, LLM-Provider und Report-Export.
 
 ## Lizenz
 
 AGPL v3 - Siehe [LICENSE](LICENSE)
 
 Dieses Projekt verwendet PySide6 (LGPL) und PyMuPDF (AGPL).
-
----
-
-Erstellt mit BACH v1.1 | 2026
 
 ---
 
@@ -192,28 +227,43 @@ A local replacement for Google NotebookLM with LLM integration and multi-format 
 ### Features
 
 - Local LLM integration
+- Automatic extraction and auto-indexing for newly added documents
 - Multi-format document import
 - AI-powered summaries
+- Claude Code provider with API and interactive chat modes
+- Prompt export for external LLM workflows
 - Export to multiple formats
+
+### Screenshot
+
+![NoteSpaceLLM main window](README/screenshots/main.png)
 
 ### Installation
 
 ```bash
 git clone https://github.com/file-bricks/NoteSpaceLLM.git
-cd REL-PUB_NoteSpaceLLM_SOCIAL
+cd NoteSpaceLLM
 pip install -r requirements.txt
 python "main.py"
 ```
+
+On Windows, you can also launch the app via `start.bat`.
+
+A local Windows launcher can also be built with `build_exe.bat`.
 
 ### License
 
 See [LICENSE](LICENSE) for details.
 
+### Privacy
+
+Project data, indexes, profiles, workflow settings, and exports are local by default and intentionally excluded from Git. External or remote LLM providers may receive prompts and selected document excerpts when enabled.
+
 ---
 
 ## Haftung / Liability
 
-Dieses Projekt ist eine **unentgeltliche Open-Source-Schenkung** im Sinne der §§ 516 ff. BGB. Die Haftung des Urhebers ist gemäß **§ 521 BGB** auf **Vorsatz und grobe Fahrlässigkeit** beschränkt. Ergänzend gelten die Haftungsausschlüsse aus GPL-3.0 / MIT / Apache-2.0 §§ 15–16 (je nach gewählter Lizenz).
+Dieses Projekt ist eine **unentgeltliche Open-Source-Schenkung** im Sinne der §§ 516 ff. BGB. Die Haftung des Urhebers ist gemäß **§ 521 BGB** auf **Vorsatz und grobe Fahrlässigkeit** beschränkt. Ergänzend gelten die Haftungsausschlüsse der GNU Affero General Public License v3.0, insbesondere §§ 15–16.
 
 Nutzung auf eigenes Risiko. Keine Wartungszusage, keine Verfügbarkeitsgarantie, keine Gewähr für Fehlerfreiheit oder Eignung für einen bestimmten Zweck.
 

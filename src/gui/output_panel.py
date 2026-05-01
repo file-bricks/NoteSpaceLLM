@@ -197,7 +197,7 @@ class OutputPanel(QWidget if PYSIDE_AVAILABLE else object):
         profile_layout = QFormLayout(profile_group)
 
         self.profile_combo = QComboBox()
-        self.profile_combo.addItems(["Standard", "Vollstaendig", "Nur Markdown", "Nur PDF", "Akademisch"])
+        self.profile_combo.addItems(["Standard", "Vollständig", "Nur Markdown", "Nur PDF", "Akademisch"])
         self.profile_combo.currentTextChanged.connect(self._on_profile_changed)
 
         self.save_profile_btn = QPushButton("Als Profil speichern")
@@ -299,7 +299,7 @@ class OutputPanel(QWidget if PYSIDE_AVAILABLE else object):
         """Browse for output directory."""
         directory = QFileDialog.getExistingDirectory(
             self,
-            "Ausgabeordner waehlen",
+            "Ausgabeordner wählen",
             str(self._output_directory)
         )
 
@@ -311,7 +311,7 @@ class OutputPanel(QWidget if PYSIDE_AVAILABLE else object):
         """Handle profile selection change."""
         profiles = {
             "Standard": ["md", "pdf"],
-            "Vollstaendig": ["md", "pdf", "docx", "html"],
+            "Vollständig": ["md", "pdf", "docx", "html"],
             "Nur Markdown": ["md"],
             "Nur PDF": ["pdf"],
             "Akademisch": ["md", "pdf", "docx"]
@@ -343,7 +343,7 @@ class OutputPanel(QWidget if PYSIDE_AVAILABLE else object):
         formats = [fmt for fmt, cb in self.format_checks.items() if cb.isChecked()]
 
         if not formats:
-            QMessageBox.warning(self, "Export", "Bitte mindestens ein Ausgabeformat waehlen.")
+            QMessageBox.warning(self, "Export", "Bitte mindestens ein Ausgabeformat wählen.")
             return
 
         self.export_requested.emit(formats, str(self._output_directory))

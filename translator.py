@@ -1,5 +1,5 @@
 """
-TranslationSystem - Multi-Language Support fuer Anwendungen
+TranslationSystem - Multi-Language Support für Anwendungen
 ============================================================
 Version: 1.0.0 (isoliert aus _LANG)
 Quelle: ARC_EntwicklungsschleifeAdvanced/TranslationSystem.py v2.4
@@ -9,7 +9,7 @@ Verwendung:
 from translator import TranslationSystem
 
 translator = TranslationSystem('de')
-label.setText(translator.t('Datei oeffnen'))
+label.setText(translator.t('Datei öffnen'))
 translator.set_language('en')
 """
 
@@ -49,8 +49,8 @@ class TranslationSystem:
         ]
 
         self.german_hints = [
-            "datei", "bearbeiten", "ansicht", "hilfe", "oeffnen", "speichern",
-            "schliessen", "einstellungen", "abbrechen", "ok", "ja", "nein",
+            "datei", "bearbeiten", "ansicht", "hilfe", "öffnen", "speichern",
+            "schließen", "einstellungen", "abbrechen", "ok", "ja", "nein",
             "start", "stop", "pause", "fortsetzen", "laden", "aktualisieren",
             "filter", "fehler", "export", "import", "optionen", "anzeigen",
         ]
@@ -75,13 +75,13 @@ class TranslationSystem:
 
     def t(self, key: str) -> str:
         """
-        Uebersetzt einen Key in die aktuelle Sprache.
+        übersetzt einen Key in die aktuelle Sprache.
 
         Args:
             key: Translation-Key (oft der deutsche Originaltext)
 
         Returns:
-            Uebersetzter Text oder Key als Fallback
+            übersetzter Text oder Key als Fallback
         """
         if key in self.translations:
             return self.translations[key].get(self.current_lang, key)

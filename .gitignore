@@ -5,38 +5,69 @@ __pycache__/
 .venv/
 venv/
 *.egg-info/
+dist/
+build/
+*.spec
 
 # Daten & Output
-data/
-output/
-profiles/
-workflows/
+/data/
+/output/
+/profiles/
+/workflows/
 
 # ChromaDB Vektordatenbank
-chroma_db/
+/chroma_db/
 *.db
 
 # Secrets
 .env
+.env.*
+credentials.json
+client_secret*.json
+token.json
+*.pem
 *.key
+keyring/
 
 # Logs
 *.log
 
+# Interne Steuerungsdateien (NIEMALS in Git!)
+TEST.txt
+TESTS.txt
+TESTERGEBNISSE.txt
+BUGREPORT.md
+DIAGNOSE_REPORT.md
+
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
+ehthumbs.db
 
 # Web-Modul (SpaceNot) — wird erst nach Release weiterentwickelt
-webservice_SpaceNot/
+/webservice_SpaceNot/
 
 # Lokale Release-Builds
-releases/
+/releases/
+*.exe
+*.msi
+*.msix
+*.appx
+/DesktopIcon.ico
 
 # Interne Planung
 PLAN.txt
 AUFGABEN.txt
 
 # Private / Archive
-_archive/
-_private/
+/_archive/
+/_private/
+
+# IDE
+/.claude/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

@@ -47,12 +47,12 @@ TEMPLATES: Dict[str, ReportTemplate] = {
         name="Analysebericht",
         description="Strukturierter Analysebericht mit Erkenntnissen und Empfehlungen",
         sections=[
-            ReportSection("summary", "Zusammenfassung", "Kernerkenntnisse in 3-5 Saetzen", True, 1),
+            ReportSection("summary", "Zusammenfassung", "Kernerkenntnisse in 3-5 Sätzen", True, 1),
             ReportSection("intro", "Einleitung", "Kontext, Hintergrund und Fragestellung", True, 2),
             ReportSection("analysis", "Analyse", "Detaillierte Untersuchung der Kernthemen", True, 3),
             ReportSection("findings", "Erkenntnisse", "Wichtige Befunde und Muster", True, 4),
             ReportSection("conclusions", "Schlussfolgerungen", "Beantwortung der Hauptfrage", True, 5),
-            ReportSection("recommendations", "Empfehlungen", "Handlungsvorschlaege", False, 6)
+            ReportSection("recommendations", "Empfehlungen", "Handlungsvorschläge", False, 6)
         ],
         style_hints="Professionell, sachlich, gut strukturiert"
     ),
@@ -60,13 +60,13 @@ TEMPLATES: Dict[str, ReportTemplate] = {
     "summary": ReportTemplate(
         id="summary",
         name="Zusammenfassung",
-        description="Kurze, praegnante Zusammenfassung der Dokumente",
+        description="Kurze, prägnante Zusammenfassung der Dokumente",
         sections=[
-            ReportSection("overview", "Ueberblick", "Was behandeln die Dokumente?", True, 1),
+            ReportSection("overview", "Überblick", "Was behandeln die Dokumente?", True, 1),
             ReportSection("keypoints", "Kernpunkte", "Die wichtigsten Aussagen als Stichpunkte", True, 2),
-            ReportSection("conclusion", "Fazit", "Gesamtbild in 2-3 Saetzen", True, 3)
+            ReportSection("conclusion", "Fazit", "Gesamtbild in 2-3 Sätzen", True, 3)
         ],
-        style_hints="Kurz, praegnant, auf das Wesentliche fokussiert",
+        style_hints="Kurz, prägnant, auf das Wesentliche fokussiert",
         output_formats=["md"]
     ),
 
@@ -81,7 +81,7 @@ TEMPLATES: Dict[str, ReportTemplate] = {
             ReportSection("results", "Ergebnisse", "Detaillierte Befunde", True, 4),
             ReportSection("discussion", "Diskussion", "Interpretation und Einordnung", True, 5),
             ReportSection("conclusion", "Schlussfolgerungen", "Beantwortung der Forschungsfrage", True, 6),
-            ReportSection("references", "Quellenverweise", "Bezuege zu den Dokumenten", False, 7)
+            ReportSection("references", "Quellenverweise", "Bezüge zu den Dokumenten", False, 7)
         ],
         style_hints="Akademisch, objektiv, mit Quellenverweisen",
         output_formats=["md", "pdf", "docx"]
@@ -92,11 +92,11 @@ TEMPLATES: Dict[str, ReportTemplate] = {
         name="Vergleichsbericht",
         description="Systematischer Vergleich mehrerer Dokumente",
         sections=[
-            ReportSection("overview", "Ueberblick", "Was wird verglichen?", True, 1),
-            ReportSection("similarities", "Gemeinsamkeiten", "Uebereinstimmungen zwischen Dokumenten", True, 2),
+            ReportSection("overview", "Überblick", "Was wird verglichen?", True, 1),
+            ReportSection("similarities", "Gemeinsamkeiten", "Übereinstimmungen zwischen Dokumenten", True, 2),
             ReportSection("differences", "Unterschiede", "Abweichungen und Kontraste", True, 3),
-            ReportSection("matrix", "Vergleichsmatrix", "Tabellarische Gegenueberstelling", False, 4),
-            ReportSection("evaluation", "Bewertung", "Staerken und Schwaechen", True, 5),
+            ReportSection("matrix", "Vergleichsmatrix", "Tabellarische Gegenüberstellung", False, 4),
+            ReportSection("evaluation", "Bewertung", "Stärken und Schwächen", True, 5),
             ReportSection("conclusion", "Fazit", "Gesamtbewertung des Vergleichs", True, 6)
         ],
         style_hints="Systematisch, neutral, mit klaren Kriterien",
@@ -106,14 +106,14 @@ TEMPLATES: Dict[str, ReportTemplate] = {
     "executive": ReportTemplate(
         id="executive",
         name="Executive Summary",
-        description="Kompakte Zusammenfassung fuer Entscheidungstraeger",
+        description="Kompakte Zusammenfassung für Entscheidungsträger",
         sections=[
             ReportSection("situation", "Situation", "Aktueller Stand und Kontext", True, 1),
             ReportSection("findings", "Kernbefunde", "Die 3-5 wichtigsten Erkenntnisse", True, 2),
             ReportSection("implications", "Implikationen", "Was bedeutet das?", True, 3),
-            ReportSection("actions", "Handlungsoptionen", "Moegliche naechste Schritte", True, 4)
+            ReportSection("actions", "Handlungsoptionen", "Mögliche nächste Schritte", True, 4)
         ],
-        style_hints="Praegnant, handlungsorientiert, fuer schnelle Erfassung",
+        style_hints="Prägnant, handlungsorientiert, für schnelle Erfassung",
         output_formats=["md", "pdf"]
     ),
 
@@ -122,15 +122,15 @@ TEMPLATES: Dict[str, ReportTemplate] = {
         name="Technischer Bericht",
         description="Detaillierter technischer Analysebericht",
         sections=[
-            ReportSection("executive", "Executive Summary", "Kurzfassung fuer Management", True, 1),
+            ReportSection("executive", "Executive Summary", "Kurzfassung für Management", True, 1),
             ReportSection("intro", "Einleitung", "Technischer Kontext und Ziele", True, 2),
             ReportSection("architecture", "Architektur/Struktur", "Technische Struktur", False, 3),
             ReportSection("analysis", "Technische Analyse", "Detaillierte technische Untersuchung", True, 4),
             ReportSection("issues", "Probleme/Risiken", "Identifizierte Issues", True, 5),
-            ReportSection("solutions", "Loesungsvorschlaege", "Technische Empfehlungen", True, 6),
-            ReportSection("appendix", "Anhang", "Zusaetzliche technische Details", False, 7)
+            ReportSection("solutions", "Lösungsvorschläge", "Technische Empfehlungen", True, 6),
+            ReportSection("appendix", "Anhang", "Zusätzliche technische Details", False, 7)
         ],
-        style_hints="Technisch praezise, mit Fachbegriffen, strukturiert",
+        style_hints="Technisch präzise, mit Fachbegriffen, strukturiert",
         output_formats=["md", "pdf", "docx"]
     )
 }

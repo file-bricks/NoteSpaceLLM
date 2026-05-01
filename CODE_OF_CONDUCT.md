@@ -5,29 +5,30 @@
 ### Unser Versprechen
 
 Wir als Mitglieder, Beitragende und Leitende verpflichten uns, die Teilnahme an unserer
-Community zu einer belaetigungsfreien Erfahrung fuer alle zu machen, unabhaengig von
-Alter, Koerpergroesse, sichtbarer oder unsichtbarer Behinderung, ethnischer Zugehoerigkeit,
+Community zu einer belästigungsfreien Erfahrung für alle zu machen, unabhängig von
+Alter, Körpergröße, sichtbarer oder unsichtbarer Behinderung, ethnischer Zugehörigkeit,
 Geschlechtsmerkmalen, Geschlechtsidentitaet und -ausdruck, Erfahrungsgrad, Bildung,
 sozio-oekonomischem Status, Nationalitaet, persoenlichem Aussehen, Herkunft, Religion
 oder sexueller Identitaet und Orientierung.
 
 ### Unsere Standards
 
-Beispiele fuer Verhalten, das zu einem positiven Umfeld beitraegt:
+Beispiele für Verhalten, das zu einem positiven Umfeld beiträgt:
 - Verwendung einladender und inklusiver Sprache
 - Respektvoller Umgang mit unterschiedlichen Standpunkten und Erfahrungen
 - Konstruktive Kritik hoeflich annehmen
-- Fokus auf das Beste fuer die Community
+- Fokus auf das Beste für die Community
 
 Inakzeptables Verhalten umfasst:
 - Trolling, beleidigende Kommentare und persoenliche oder politische Angriffe
 - Oeffentliche oder private Belaestigung
-- Veroeffentlichung privater Informationen anderer ohne ausdrueckliche Erlaubnis
+- Veröffentlichung privater Informationen anderer ohne ausdrückliche Erlaubnis
 
 ### Durchsetzung
 
-Faelle von missbräuchlichem Verhalten koennen dem Projektteam unter
-**lukas@geiger.sh** gemeldet werden. Alle Beschwerden werden geprueft und untersucht.
+Fälle von missbräuchlichem Verhalten können über die GitHub-Meldewege des
+Repositories an das Projektteam gemeldet werden. Bitte veröffentlichen Sie
+keine privaten Informationen in öffentlichen Issues.
 
 ---
 
@@ -56,8 +57,9 @@ Unacceptable behavior includes:
 
 ### Enforcement
 
-Instances of abusive behavior may be reported to the project team at
-**lukas@geiger.sh**. All complaints will be reviewed and investigated.
+Instances of abusive behavior may be reported through this repository's
+GitHub reporting channels. Please do not publish private information in
+public issues.
 
 ---
 

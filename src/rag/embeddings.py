@@ -69,7 +69,7 @@ class EmbeddingsManager:
         }
 
         # langchain-ollama >=0.2.0 akzeptiert 'headers' nicht mehr direkt.
-        # Auth-Headers muessen ueber client_kwargs (httpx) uebergeben werden.
+        # Auth-Headers müssen über client_kwargs (httpx) übergeben werden.
         if self._headers:
             kwargs["client_kwargs"] = {"headers": self._headers}
 

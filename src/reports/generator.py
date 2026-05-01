@@ -131,7 +131,7 @@ class ReportGenerator:
 
             # Step 2: Run sub-queries
             if include_subqueries:
-                self._report_progress("Detailanalysen", 2, total_steps, "Fuehre Einzelanalysen durch...")
+                self._report_progress("Detailanalysen", 2, total_steps, "Führe Einzelanalysen durch...")
                 self._run_subqueries()
 
             if self._cancel_requested:
@@ -234,7 +234,7 @@ class ReportGenerator:
 
             doc = self.documents.get_document(query.document_id)
             if not doc or not doc.extracted_text:
-                self.subqueries.set_error(query.id, "Dokument nicht verfuegbar")
+                self.subqueries.set_error(query.id, "Dokument nicht verfügbar")
                 continue
 
             self.subqueries.set_running(query.id)
@@ -315,18 +315,18 @@ AUFGABE:
 Erstelle einen strukturierten Analysebericht, der die Hauptfragestellung beantwortet.
 
 Strukturiere den Bericht wie folgt:
-1. **Zusammenfassung** - Kernerkenntnisse in 3-5 Saetzen
+1. **Zusammenfassung** - Kernerkenntnisse in 3-5 Sätzen
 2. **Einleitung** - Kontext und Fragestellung
 3. **Analyse** - Detaillierte Untersuchung der Kernthemen
 4. **Erkenntnisse** - Wichtige Befunde und Muster
 5. **Schlussfolgerungen** - Beantwortung der Hauptfrage
-6. **Empfehlungen** - Handlungsvorschlaege (falls relevant)
+6. **Empfehlungen** - Handlungsvorschläge (falls relevant)
 
-Verwende Markdown-Formatierung fuer Struktur und Lesbarkeit."""
+Verwende Markdown-Formatierung für Struktur und Lesbarkeit."""
 
     def _summary_template(self, question: str, context: str) -> str:
         """Template for summary report."""
-        return f"""Du bist ein Experte fuer Textzusammenfassungen.
+        return f"""Du bist ein Experte für Textzusammenfassungen.
 
 FOKUS:
 {question}
@@ -335,12 +335,12 @@ DOKUMENTENKONTEXT:
 {context}
 
 AUFGABE:
-Erstelle eine praegnante Zusammenfassung der Dokumente.
+Erstelle eine prägnante Zusammenfassung der Dokumente.
 
 Strukturiere wie folgt:
-1. **Ueberblick** - Was behandeln die Dokumente?
+1. **Überblick** - Was behandeln die Dokumente?
 2. **Kernpunkte** - Die wichtigsten Aussagen (Stichpunkte)
-3. **Fazit** - Gesamtbild in 2-3 Saetzen
+3. **Fazit** - Gesamtbild in 2-3 Sätzen
 
 Halte die Zusammenfassung kurz und fokussiert. Verwende Markdown."""
 
@@ -364,13 +364,13 @@ Strukturiere wie folgt:
 4. **Ergebnisse** - Detaillierte Befunde
 5. **Diskussion** - Interpretation und Einordnung
 6. **Schlussfolgerungen** - Beantwortung der Forschungsfrage
-7. **Quellenverweise** - Bezuege zu den Dokumenten
+7. **Quellenverweise** - Bezüge zu den Dokumenten
 
 Verwende akademischen Stil und Markdown-Formatierung."""
 
     def _comparison_template(self, question: str, context: str) -> str:
         """Template for comparison report."""
-        return f"""Du bist ein Experte fuer vergleichende Analysen.
+        return f"""Du bist ein Experte für vergleichende Analysen.
 
 VERGLEICHSFRAGE:
 {question}
@@ -382,11 +382,11 @@ AUFGABE:
 Erstelle einen systematischen Vergleichsbericht.
 
 Strukturiere wie folgt:
-1. **Ueberblick** - Was wird verglichen?
+1. **Überblick** - Was wird verglichen?
 2. **Gemeinsamkeiten** - Was haben die Dokumente gemeinsam?
 3. **Unterschiede** - Wo unterscheiden sie sich?
-4. **Vergleichsmatrix** - Tabellarische Gegenueberstelling (falls sinnvoll)
-5. **Bewertung** - Staerken und Schwaechen
+4. **Vergleichsmatrix** - Tabellarische Gegenüberstellung (falls sinnvoll)
+5. **Bewertung** - Stärken und Schwächen
 6. **Fazit** - Gesamtbewertung
 
 Verwende Tabellen wo sinnvoll und Markdown-Formatierung."""

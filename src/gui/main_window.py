@@ -198,7 +198,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         new_action.triggered.connect(self._new_project)
         file_menu.addAction(new_action)
 
-        open_action = QAction("Projekt &oeffnen...", self)
+        open_action = QAction("Projekt &Öffnen...", self)
         open_action.setShortcut(QKeySequence.StandardKey.Open)
         open_action.triggered.connect(self._open_project)
         file_menu.addAction(open_action)
@@ -210,11 +210,11 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
 
         file_menu.addSeparator()
 
-        add_files_action = QAction("Dateien hinzufuegen...", self)
+        add_files_action = QAction("Dateien hinzufügen...", self)
         add_files_action.triggered.connect(self._add_files)
         file_menu.addAction(add_files_action)
 
-        add_folder_action = QAction("Ordner hinzufuegen...", self)
+        add_folder_action = QAction("Ordner hinzufügen...", self)
         add_folder_action.triggered.connect(self._add_folder)
         file_menu.addAction(add_folder_action)
 
@@ -235,11 +235,11 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         # Edit menu
         edit_menu = menubar.addMenu("&Bearbeiten")
 
-        select_all_action = QAction("Alle auswaehlen", self)
+        select_all_action = QAction("Alle auswählen", self)
         select_all_action.triggered.connect(self._select_all_docs)
         edit_menu.addAction(select_all_action)
 
-        deselect_all_action = QAction("Alle abwaehlen", self)
+        deselect_all_action = QAction("Alle abwählen", self)
         deselect_all_action.triggered.connect(self._deselect_all_docs)
         edit_menu.addAction(deselect_all_action)
 
@@ -264,7 +264,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         index_all_action.triggered.connect(self._index_all_documents)
         rag_menu.addAction(index_all_action)
 
-        index_selected_action = QAction("Ausgewaehlte indexieren", self)
+        index_selected_action = QAction("Ausgewählte indexieren", self)
         index_selected_action.triggered.connect(self._index_selected_documents)
         rag_menu.addAction(index_selected_action)
 
@@ -283,7 +283,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         # Help menu
         help_menu = menubar.addMenu("&Hilfe")
 
-        about_action = QAction("Ueber NoteSpaceLLM", self)
+        about_action = QAction("über NoteSpaceLLM", self)
         about_action.triggered.connect(self._show_about)
         help_menu.addAction(about_action)
 
@@ -434,12 +434,12 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         """Open an existing project."""
         projects = self._project_manager.list_projects()
         if not projects:
-            QMessageBox.information(self, "Projekt oeffnen", "Keine Projekte vorhanden.")
+            QMessageBox.information(self, "Projekt öffnen", "Keine Projekte vorhanden.")
             return
 
         names = [p["name"] for p in projects]
         name, ok = QInputDialog.getItem(
-            self, "Projekt oeffnen", "Projekt waehlen:", names, editable=False
+            self, "Projekt öffnen", "Projekt wählen:", names, editable=False
         )
 
         if ok and name:
@@ -458,7 +458,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
                     self.chat_panel.set_rag_engine(self._rag_engine)
                     self.chat_panel.set_document_manager(project.documents)
 
-                self.statusbar.showMessage(f"Projekt '{name}' geoeffnet")
+                self.statusbar.showMessage(f"Projekt '{name}' geöffnet")
 
     def _save_project(self):
         """Save the current project."""
@@ -474,7 +474,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
 
         files, _ = QFileDialog.getOpenFileNames(
             self,
-            "Dateien hinzufuegen",
+            "Dateien hinzufügen",
             "",
             "Alle unterstuetzten (*.pdf *.docx *.doc *.rtf *.txt *.md *.xlsx *.xls *.pptx *.py *.csv *.json *.xml *.eml *.msg);;Dokumente (*.pdf *.docx *.doc *.rtf *.txt *.md);;Tabellen (*.xlsx *.xls *.csv);;Code (*.py *.js *.java *.cpp *.c *.h);;Alle Dateien (*)"
         )
@@ -482,17 +482,17 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         if files:
             for f in files:
                 self._current_project.documents.add_file(Path(f))
-            self.statusbar.showMessage(f"{len(files)} Dateien hinzugefuegt")
+            self.statusbar.showMessage(f"{len(files)} Dateien hinzugefügt")
 
     def _add_folder(self):
         """Add a folder to the project."""
         if not self._current_project:
             return
 
-        folder = QFileDialog.getExistingDirectory(self, "Ordner hinzufuegen")
+        folder = QFileDialog.getExistingDirectory(self, "Ordner hinzufügen")
         if folder:
             docs = self._current_project.documents.add_directory(Path(folder))
-            self.statusbar.showMessage(f"{len(docs)} Elemente hinzugefuegt")
+            self.statusbar.showMessage(f"{len(docs)} Elemente hinzugefügt")
 
     def _export(self):
         """Export the report."""
@@ -558,7 +558,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         profile_combo.setMinimumWidth(200)
 
         save_profile_btn = QPushButton("Speichern als...")
-        delete_profile_btn = QPushButton("Loeschen")
+        delete_profile_btn = QPushButton("Löschen")
 
         profile_layout.addWidget(QLabel("Profil:"))
         profile_layout.addWidget(profile_combo, stretch=1)
@@ -598,8 +598,8 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         provider_layout.addRow("Claude Code Modus:", claude_mode_combo)
 
         claude_mode_hint = QLabel(
-            "api = Hintergrund (Ergebnis zurueck in App)\n"
-            "chat = Konsole oeffnet sich zum Weiter-Chatten"
+            "api = Hintergrund (Ergebnis zurück in App)\n"
+            "chat = Konsole öffnet sich zum Weiter-Chatten"
         )
         claude_mode_hint.setStyleSheet("color: #888; font-size: 10px;")
         provider_layout.addRow("", claude_mode_hint)
@@ -631,7 +631,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
 
         refresh_btn = QPushButton("Modelle laden")
 
-        model_layout.addWidget(QLabel("Verfuegbare Modelle:"))
+        model_layout.addWidget(QLabel("Verfügbare Modelle:"))
         model_layout.addWidget(model_combo)
 
         btn_row = QHBoxLayout()
@@ -643,7 +643,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         layout.addWidget(model_group)
 
         api_hint = QLabel(
-            "Fuer OpenAI/Anthropic: API-Key muss als Umgebungsvariable gesetzt sein\n"
+            "Für OpenAI/Anthropic: API-Key muss als Umgebungsvariable gesetzt sein\n"
             "(OPENAI_API_KEY bzw. ANTHROPIC_API_KEY)"
         )
         api_hint.setStyleSheet("color: #888; font-size: 10px;")
@@ -722,7 +722,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
                 return
             if app_cfg.delete_profile(name):
                 _refresh_profiles()
-                status_label.setText(f"Profil '{name}' geloescht")
+                status_label.setText(f"Profil '{name}' gelöscht")
 
         profile_combo.currentTextChanged.connect(_on_profile_selected)
         save_profile_btn.clicked.connect(_save_profile_dialog)
@@ -758,7 +758,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
                             model_combo.addItems(models)
                             status_label.setText(f"{len(models)} Modelle auf {url}")
                         else:
-                            status_label.setText("Ollama laeuft, aber keine Modelle installiert")
+                            status_label.setText("Ollama läuft, aber keine Modelle installiert")
                     else:
                         status_label.setText(f"Ollama nicht erreichbar ({url})")
                 except Exception as e:
@@ -807,7 +807,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             new_model = model_combo.currentText().strip()
 
             if not new_model:
-                QMessageBox.warning(self, "LLM", "Kein Modell ausgewaehlt.")
+                QMessageBox.warning(self, "LLM", "Kein Modell ausgewählt.")
                 return
 
             new_url = ollama_url_edit.text().strip() or "http://localhost:11434"
@@ -847,9 +847,9 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         """Show about dialog."""
         QMessageBox.about(
             self,
-            "Ueber NoteSpaceLLM",
+            "über NoteSpaceLLM",
             "NoteSpaceLLM v1.0.0\n\n"
-            "Ein privater NotebookLM-Clone fuer lokale Dokumentenanalyse "
+            "Ein privater NotebookLM-Clone für lokale Dokumentenanalyse "
             "und Berichterstellung.\n\n"
             "Features:\n"
             "- Drag & Drop Dokumentenverwaltung\n"
@@ -905,7 +905,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
 
     def _on_subquery_requested(self, doc_id: str, query_type: str, query_text: str):
         """Handle sub-query request."""
-        self.statusbar.showMessage(f"Detailrecherche hinzugefuegt: {query_text[:50]}...")
+        self.statusbar.showMessage(f"Detailrecherche hinzugefügt: {query_text[:50]}...")
 
     def _on_chat_message(self, message: str):
         """Handle chat message."""
@@ -1135,15 +1135,15 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
 
     def _run_analysis(self):
         """Run sub-query analyses in background thread."""
-        # Pruefen ob bereits eine Analyse laeuft
+        # Prüfen ob bereits eine Analyse läuft
         if self._analysis_worker and self._analysis_worker.isRunning():
-            self.statusbar.showMessage("Analyse laeuft bereits...")
+            self.statusbar.showMessage("Analyse läuft bereits...")
             return
 
         if not self._current_project or not self._llm_client:
             self._init_llm_client()
             if not self._llm_client:
-                QMessageBox.warning(self, "Analyse", "Kein LLM-Client verfuegbar.")
+                QMessageBox.warning(self, "Analyse", "Kein LLM-Client verfügbar.")
                 return
 
         queries = self._current_project.subqueries.pending_queries
@@ -1156,7 +1156,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         for query in queries:
             doc = self._current_project.documents.get_document(query.document_id)
             if not doc or not doc.extracted_text:
-                self._current_project.subqueries.set_error(query.id, "Dokument nicht verfuegbar")
+                self._current_project.subqueries.set_error(query.id, "Dokument nicht verfügbar")
                 continue
             self._current_project.subqueries.set_running(query.id)
             prompt = query.build_prompt(doc.extracted_text)
@@ -1179,7 +1179,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         if not self._current_project:
             return
 
-        # Pruefen ob bereits ein Bericht generiert wird
+        # Prüfen ob bereits ein Bericht generiert wird
         if hasattr(self, '_report_worker') and self._report_worker and self._report_worker.isRunning():
             QMessageBox.information(
                 self, "Bericht",
@@ -1191,7 +1191,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         if not self._llm_client:
             self._init_llm_client()
             if not self._llm_client:
-                QMessageBox.warning(self, "Bericht", "Kein LLM-Client verfuegbar.")
+                QMessageBox.warning(self, "Bericht", "Kein LLM-Client verfügbar.")
                 return
 
         self.output_panel.clear_content()
@@ -1216,7 +1216,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         ])
 
         if not doc_content.strip():
-            self.output_panel.set_status("Keine Dokumenteninhalte verfuegbar.")
+            self.output_panel.set_status("Keine Dokumenteninhalte verfügbar.")
             QMessageBox.warning(self, "Bericht", "Keine extrahierten Texte vorhanden.")
             return
 
@@ -1313,7 +1313,7 @@ Verwende Markdown-Formatierung."""
         if not doc_content:
             QMessageBox.warning(self, "Prompt-Export",
                                 "Keine Dokumente mit extrahiertem Text vorhanden.\n"
-                                "Bitte zuerst Dokumente hinzufuegen.")
+                                "Bitte zuerst Dokumente hinzufügen.")
             return
 
         main_question = self.workflow_panel.get_main_question()
@@ -1399,7 +1399,7 @@ Verwende Markdown-Formatierung."""
             # RAG nur initialisieren wenn Provider ollama ist
             # (Embeddings brauchen Ollama)
             if app_cfg.llm_provider not in ("ollama",):
-                logger.info("RAG Engine uebersprungen (Provider ist nicht Ollama)")
+                logger.info("RAG Engine übersprungen (Provider ist nicht Ollama)")
                 self._rag_engine = None
                 return
 
@@ -1425,11 +1425,11 @@ Verwende Markdown-Formatierung."""
     def _index_all_documents(self):
         """Index all documents with extracted text (async)."""
         if not self._current_project or not self._rag_engine:
-            QMessageBox.warning(self, "RAG", "RAG Engine nicht verfuegbar.")
+            QMessageBox.warning(self, "RAG", "RAG Engine nicht verfügbar.")
             return
 
         if hasattr(self, '_index_worker') and self._index_worker and self._index_worker.isRunning():
-            QMessageBox.information(self, "RAG", "Indexierung laeuft bereits.")
+            QMessageBox.information(self, "RAG", "Indexierung läuft bereits.")
             return
 
         docs = self._current_project.documents.documents
@@ -1444,18 +1444,18 @@ Verwende Markdown-Formatierung."""
     def _index_selected_documents(self):
         """Index only selected documents (async)."""
         if not self._current_project or not self._rag_engine:
-            QMessageBox.warning(self, "RAG", "RAG Engine nicht verfuegbar.")
+            QMessageBox.warning(self, "RAG", "RAG Engine nicht verfügbar.")
             return
 
         if hasattr(self, '_index_worker') and self._index_worker and self._index_worker.isRunning():
-            QMessageBox.information(self, "RAG", "Indexierung laeuft bereits.")
+            QMessageBox.information(self, "RAG", "Indexierung läuft bereits.")
             return
 
         docs = self._current_project.documents.selected_documents
         docs_with_text = [d for d in docs if d.extracted_text and not d.is_directory]
 
         if not docs_with_text:
-            QMessageBox.information(self, "RAG", "Keine ausgewaehlten Dokumente mit Text gefunden.")
+            QMessageBox.information(self, "RAG", "Keine ausgewählten Dokumente mit Text gefunden.")
             return
 
         self._start_index_worker([(d.id, d.name) for d in docs_with_text])
@@ -1485,8 +1485,8 @@ Verwende Markdown-Formatierung."""
 
         reply = QMessageBox.question(
             self, "Index leeren",
-            "Moechtest du den gesamten RAG-Index leeren?\n"
-            "Alle Embeddings werden geloescht.",
+            "Möchtest du den gesamten RAG-Index leeren?\n"
+            "Alle Embeddings werden gelöscht.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
 
@@ -1506,7 +1506,7 @@ Verwende Markdown-Formatierung."""
     def _show_rag_stats(self):
         """Show RAG statistics dialog."""
         if not self._rag_engine:
-            QMessageBox.warning(self, "RAG", "RAG Engine nicht verfuegbar.")
+            QMessageBox.warning(self, "RAG", "RAG Engine nicht verfügbar.")
             return
 
         stats = self._rag_engine.get_statistics()
