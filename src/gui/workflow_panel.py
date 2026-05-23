@@ -224,7 +224,7 @@ class WorkflowStepWidget(QFrame if PYSIDE_AVAILABLE else object):
     def _status_text(self) -> str:
         status_map = {
             "pending": "Ausstehend",
-            "running": "Lauft...",
+            "running": "Läuft...",
             "completed": "Fertig",
             "error": "Fehler"
         }

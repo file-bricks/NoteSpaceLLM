@@ -222,7 +222,7 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
 
         stats = self._document_manager.get_statistics()
         self.status_label.setText(
-            f"{stats['selected_documents']} von {stats['total_documents']} ausgewahlt"
+            f"{stats['selected_documents']} von {stats['total_documents']} ausgewählt"
         )
 
     def _on_document_change(self, action: str, document):
@@ -355,7 +355,7 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
             self,
             "Dateien hinzufügen",
             "",
-            "Alle unterstuetzten (*.pdf *.docx *.doc *.rtf *.txt *.md *.xlsx *.xls *.pptx *.py *.csv *.json *.xml *.eml *.msg);;Dokumente (*.pdf *.docx *.doc *.rtf *.txt *.md);;Tabellen (*.xlsx *.xls *.csv);;Code (*.py *.js *.java *.cpp *.c *.h);;Alle Dateien (*)"
+            "Alle unterstützten (*.pdf *.docx *.doc *.rtf *.txt *.md *.xlsx *.xls *.pptx *.py *.csv *.json *.xml *.eml *.msg);;Dokumente (*.pdf *.docx *.doc *.rtf *.txt *.md);;Tabellen (*.xlsx *.xls *.csv);;Code (*.py *.js *.java *.cpp *.c *.h);;Alle Dateien (*)"
         )
 
         if files and self._document_manager:

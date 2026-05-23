@@ -18,6 +18,7 @@ Ein lokaler, datenschutzfreundlicher Ersatz für Google NotebookLM zur Dokumente
 - **Multi-Format-Export**: Ausgabe in MD, PDF, DOCX, HTML, TXT
 - **Prompt-Export**: Berichtskontext als Markdown-Prompt für externe LLM-Workflows exportieren
 - **Remote-Ollama pro Projekt**: Eigene Base-URL und API-Key für lokale oder entfernte Ollama-Server
+- **Umlaut-sichere Oberfläche**: Deutsche UI-Texte verwenden echte Umlaute; der Übersetzungs-Scan vermeidet englische False Positives
 - **Profile**: Wiederverwendbare Ausgabeformat-Kombinationen
 
 ## Screenshot
@@ -53,6 +54,13 @@ Python-Umgebung und die Projekt-Abhängigkeiten.
 
 ```bash
 python main.py --check
+```
+
+## Tests
+
+```bash
+python -m unittest discover -s tests -v
+python -m compileall -q main.py manage_translations.py translator.py src
 ```
 
 ## LLM-Konfiguration
@@ -232,6 +240,7 @@ A local replacement for Google NotebookLM with LLM integration and multi-format 
 - AI-powered summaries
 - Claude Code provider with API and interactive chat modes
 - Prompt export for external LLM workflows
+- German UI strings use native umlauts, while the translation scanner avoids English false positives
 - Export to multiple formats
 
 ### Screenshot

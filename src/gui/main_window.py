@@ -476,7 +476,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             self,
             "Dateien hinzufügen",
             "",
-            "Alle unterstuetzten (*.pdf *.docx *.doc *.rtf *.txt *.md *.xlsx *.xls *.pptx *.py *.csv *.json *.xml *.eml *.msg);;Dokumente (*.pdf *.docx *.doc *.rtf *.txt *.md);;Tabellen (*.xlsx *.xls *.csv);;Code (*.py *.js *.java *.cpp *.c *.h);;Alle Dateien (*)"
+            "Alle unterstützten (*.pdf *.docx *.doc *.rtf *.txt *.md *.xlsx *.xls *.pptx *.py *.csv *.json *.xml *.eml *.msg);;Dokumente (*.pdf *.docx *.doc *.rtf *.txt *.md);;Tabellen (*.xlsx *.xls *.csv);;Code (*.py *.js *.java *.cpp *.c *.h);;Alle Dateien (*)"
         )
 
         if files:
@@ -855,7 +855,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             "- Drag & Drop Dokumentenverwaltung\n"
             "- Detailrecherchen pro Dokument\n"
             "- Visuelle Workflow-Steuerung\n"
-            "- LLM-gestuetzter Dokumenten-Chat\n"
+            "- LLM-gestützter Dokumenten-Chat\n"
             "- Multi-Format-Export"
         )
 
@@ -1166,7 +1166,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             return
 
         total = len(tasks)
-        self.statusbar.showMessage(f"Fuehre {total} Analysen durch...")
+        self.statusbar.showMessage(f"Führe {total} Analysen durch...")
 
         self._analysis_worker = AnalysisWorker(self._llm_client, tasks)
         self._analysis_worker.query_complete.connect(self._on_analysis_result)

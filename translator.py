@@ -144,7 +144,8 @@ class TranslationSystem:
         return german_strings
 
     def _is_german(self, text: str) -> bool:
-        if any(ch in text for ch in "aeoeueAeOeUess"):
+        # Echte deutsche Sonderzeichen oder klare deutsche Schlüsselwörter.
+        if any(ch in text for ch in "\u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df"):
             return True
         text_lower = text.lower()
         return any(hint in text_lower for hint in self.german_hints)

@@ -7,21 +7,21 @@
 Wir als Mitglieder, Beitragende und Leitende verpflichten uns, die Teilnahme an unserer
 Community zu einer belästigungsfreien Erfahrung für alle zu machen, unabhängig von
 Alter, Körpergröße, sichtbarer oder unsichtbarer Behinderung, ethnischer Zugehörigkeit,
-Geschlechtsmerkmalen, Geschlechtsidentitaet und -ausdruck, Erfahrungsgrad, Bildung,
-sozio-oekonomischem Status, Nationalitaet, persoenlichem Aussehen, Herkunft, Religion
-oder sexueller Identitaet und Orientierung.
+Geschlechtsmerkmalen, Geschlechtsidentität und -ausdruck, Erfahrungsgrad, Bildung,
+sozio-ökonomischem Status, Nationalität, persönlichem Aussehen, Herkunft, Religion
+oder sexueller Identität und Orientierung.
 
 ### Unsere Standards
 
 Beispiele für Verhalten, das zu einem positiven Umfeld beiträgt:
 - Verwendung einladender und inklusiver Sprache
 - Respektvoller Umgang mit unterschiedlichen Standpunkten und Erfahrungen
-- Konstruktive Kritik hoeflich annehmen
+- Konstruktive Kritik höflich annehmen
 - Fokus auf das Beste für die Community
 
 Inakzeptables Verhalten umfasst:
-- Trolling, beleidigende Kommentare und persoenliche oder politische Angriffe
-- Oeffentliche oder private Belaestigung
+- Trolling, beleidigende Kommentare und persönliche oder politische Angriffe
+- Öffentliche oder private Belästigung
 - Veröffentlichung privater Informationen anderer ohne ausdrückliche Erlaubnis
 
 ### Durchsetzung
