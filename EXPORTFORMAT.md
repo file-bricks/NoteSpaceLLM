@@ -1,10 +1,12 @@
 # Exportformat -- notespacellm-workspace-v1
 
-Stand: 2026-05-26
+Stand: 2026-05-28
 
 ## Zweck
 
-`notespacellm-workspace-v1.json` ist der geplante Austauschvertrag zwischen der Desktop-App und späteren Web-/PWA-/Mobile-Companions. Das Format soll mobile Recherche- und Review-Workflows ermöglichen, ohne lokale Rohdatenordner, Vektordatenbanken oder API-Schlüssel zu kopieren.
+`notespacellm-workspace-v1.json` ist der geplante Austauschvertrag zwischen der Desktop-App und Web-/PWA-/Mobile-Companions. Das Format soll mobile Recherche- und Review-Workflows ermöglichen, ohne lokale Rohdatenordner, Vektordatenbanken oder API-Schlüssel zu kopieren.
+
+Der erste Consumer liegt unter `web_companion/`: ein read-only PWA-Reader, der Workspace-JSON lokal im Browser importiert, Bericht und Dokumentmetadaten anzeigt und eigene Review-Notizen als Markdown exportiert.
 
 ## Datenschutzregeln
 
@@ -70,6 +72,8 @@ Stand: 2026-05-26
 - Breaking Changes erhöhen den Schema-Namen auf `notespacellm-workspace-v2`.
 - Große Binärdateien bleiben außerhalb des JSON und werden nur über optionale Manifeste referenziert.
 
-## Erste Implementierungsaufgabe
+## Aktuelle Implementierungsaufgaben
 
 Die Desktop-App soll eine Funktion `build_workspace_export_payload()` erhalten, die aus aktuellem Projekt, Dokumentauswahl, Workflow, Bericht und optionalem Chat-Verlauf dieses Schema erzeugt. Danach kann eine Schreibfunktion das JSON atomar als UTF-8-Datei speichern.
+
+Der Web/PWA-Companion kann das Schema bereits lesen und validiert es mit `node --test tests/library.test.mjs`. Bis der Desktop-Export implementiert ist, dient die Demo-Workspace-Funktion in `web_companion/library.js` als Testdatenquelle.
