@@ -105,6 +105,246 @@ if PYSIDE_AVAILABLE:
             self.progress.emit(total, total, "")
             self.all_complete.emit(indexed, total)
 
+    class ModelLoadWorker(QThread):
+        """Worker thread for Ollama model discovery (prevents GUI freeze on network call)."""
+        models_loaded = Signal(list, str)  # models, status_message
+
+        def __init__(self, url: str, api_key: str = ""):
+            super().__init__()
+            self._url = url
+            self._api_key = api_key
+
+        def run(self):
+            try:
+                from ..llm.ollama_client import OllamaClient
+                client = OllamaClient.__new__(OllamaClient)
+                client.base_url = self._url.rstrip("/")
+                client.api_key = self._api_key
+                client._is_available = False
+                client.model = ""
+                client._check_availability()
+                if client._is_available:
+                    models = client.get_models()
+                    self.models_loaded.emit(models, f"{len(models)} Modelle auf {self._url}")
+                else:
+                    self.models_loaded.emit([], f"Ollama nicht erreichbar ({self._url})")
+            except Exception as e:
+                self.models_loaded.emit([], f"Fehler: {e}")
+
+
+if PYSIDE_AVAILABLE:
+    from PySide6.QtWidgets import QScrollArea, QFrame
+
+    class _PipelineHelpDialog(QDialog):
+        """Visueller Pipeline-Hilfe-Dialog — erklärt alle Analyse-Schritte."""
+
+        STEPS = [
+            {
+                "number": "1",
+                "title": "Dokumente hinzufügen",
+                "icon": "📁",
+                "color": "#3498db",
+                "desc": (
+                    "<b>+ Dateien</b> oder <b>+ Ordner</b> in der Toolbar klicken.\n\n"
+                    "Unterstützte Formate: PDF, DOCX, TXT, MD, XLSX, PPTX, RTF, "
+                    "CSV, JSON, XML, EML …\n\n"
+                    "Die Textextraktion startet automatisch im Hintergrund."
+                ),
+                "optional": False,
+            },
+            {
+                "number": "2",
+                "title": "Text extrahieren",
+                "icon": "🔤",
+                "color": "#9b59b6",
+                "desc": (
+                    "Läuft <b>automatisch</b> nach dem Hinzufügen.\n\n"
+                    "Alternativ: <b>Text extrahieren</b> in der Toolbar, "
+                    "um alle ausgewählten Dokumente manuell zu verarbeiten.\n\n"
+                    "Der Fortschritt wird in der Statusleiste angezeigt."
+                ),
+                "optional": False,
+            },
+            {
+                "number": "3",
+                "title": "Detailanalysen (optional)",
+                "icon": "🔍",
+                "color": "#f39c12",
+                "desc": (
+                    "Rechtsklick auf ein Dokument → Sub-Query hinzufügen.\n\n"
+                    "Dann <b>Analysieren</b> in der Toolbar drücken.\n\n"
+                    "Das LLM beantwortet die Sub-Queries pro Dokument "
+                    "und die Ergebnisse fließen in den Bericht ein.\n\n"
+                    "<i>Optional — der Bericht funktioniert auch ohne diesen Schritt.</i>"
+                ),
+                "optional": True,
+            },
+            {
+                "number": "4",
+                "title": "Bericht erstellen",
+                "icon": "📝",
+                "color": "#27ae60",
+                "desc": (
+                    "<b>Bericht erstellen</b> in der Toolbar klicken.\n\n"
+                    "Das LLM kombiniert alle Dokumentinhalte und "
+                    "Detailanalysen zu einem strukturierten Bericht.\n\n"
+                    "Fehlende Textextraktion wird <b>automatisch</b> "
+                    "ausgelöst.\n\n"
+                    "Der Bericht erscheint im Ausgabe-Panel rechts."
+                ),
+                "optional": False,
+            },
+            {
+                "number": "5",
+                "title": "Exportieren",
+                "icon": "💾",
+                "color": "#e74c3c",
+                "desc": (
+                    "Im <b>Ausgabe-Panel</b> rechts: Format wählen "
+                    "(Markdown, PDF, DOCX …) und <b>Exportieren</b>.\n\n"
+                    "<b>LLM-Prompt exportieren</b>: Exportiert den an das LLM "
+                    "gesendeten Prompt als .md Datei — nützlich für andere LLMs.\n\n"
+                    "<b>Workspace exportieren</b> (Datei-Menü): Speichert Projekt, "
+                    "Dokument-Metadaten, Auszüge und Bericht als JSON "
+                    "für Web/Companion-Apps."
+                ),
+                "optional": False,
+            },
+        ]
+
+        def __init__(self, parent=None):
+            super().__init__(parent)
+            self.setWindowTitle("Pipeline-Übersicht")
+            self.setMinimumSize(560, 560)
+            self.resize(620, 640)
+            self._setup_ui()
+
+        def _setup_ui(self):
+            layout = QVBoxLayout(self)
+            layout.setSpacing(0)
+            layout.setContentsMargins(0, 0, 0, 0)
+
+            # Header
+            header = QWidget()
+            header.setStyleSheet("background: #1a1a2e; padding: 16px 20px 14px;")
+            hlay = QVBoxLayout(header)
+            hlay.setSpacing(4)
+            title = QLabel("Analyse-Pipeline")
+            title.setStyleSheet("font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.5px;")
+            subtitle = QLabel("So funktioniert NoteSpaceLLM in 5 Schritten")
+            subtitle.setStyleSheet("font-size: 12px; color: #7f8c9a;")
+            hlay.addWidget(title)
+            hlay.addWidget(subtitle)
+            layout.addWidget(header)
+
+            # Scrollbarer Inhalt
+            scroll = QScrollArea()
+            scroll.setWidgetResizable(True)
+            scroll.setFrameShape(QFrame.Shape.NoFrame)
+            scroll.setStyleSheet("QScrollArea { background: #f8f9fa; border: none; }")
+
+            content = QWidget()
+            content.setStyleSheet("background: #f8f9fa;")
+            clay = QVBoxLayout(content)
+            clay.setContentsMargins(16, 16, 16, 16)
+            clay.setSpacing(8)
+
+            for i, step in enumerate(self.STEPS):
+                card = self._make_step_card(step, is_last=(i == len(self.STEPS) - 1))
+                clay.addWidget(card)
+
+            clay.addStretch()
+            scroll.setWidget(content)
+            layout.addWidget(scroll, stretch=1)
+
+            # Footer
+            footer = QWidget()
+            footer.setStyleSheet("background: #fff; border-top: 1px solid #e0e0e0; padding: 10px 16px;")
+            flay = QHBoxLayout(footer)
+            tip = QLabel("💡 Tipp: Bewege den Mauszeiger über die Toolbar-Buttons für Kurzerklärungen.")
+            tip.setStyleSheet("font-size: 11px; color: #7f8c9a;")
+            close_btn = QPushButton("Schließen")
+            close_btn.setStyleSheet(
+                "QPushButton { padding: 6px 18px; background: #2c3e50; color: #fff; "
+                "border: none; border-radius: 4px; font-weight: 600; font-size: 12px; }"
+                "QPushButton:hover { background: #34495e; }"
+            )
+            close_btn.clicked.connect(self.accept)
+            flay.addWidget(tip, stretch=1)
+            flay.addWidget(close_btn)
+            layout.addWidget(footer)
+
+        def _make_step_card(self, step: dict, is_last: bool) -> QWidget:
+            card = QFrame()
+            card.setFrameShape(QFrame.Shape.NoFrame)
+            card.setStyleSheet(
+                "QFrame { background: #fff; border: 1px solid #e8ecf0; "
+                "border-radius: 8px; }"
+            )
+
+            row = QHBoxLayout(card)
+            row.setContentsMargins(14, 12, 14, 12)
+            row.setSpacing(12)
+
+            # Step indicator (number circle + vertical connector)
+            indicator = QWidget()
+            indicator.setFixedWidth(36)
+            ilay = QVBoxLayout(indicator)
+            ilay.setContentsMargins(0, 0, 0, 0)
+            ilay.setSpacing(2)
+
+            circle = QLabel(step["number"])
+            circle.setFixedSize(32, 32)
+            circle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            circle.setStyleSheet(
+                f"background: {step['color']}; color: #fff; "
+                "border-radius: 16px; font-weight: 800; font-size: 13px;"
+            )
+            ilay.addWidget(circle, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+            if not is_last:
+                connector = QFrame()
+                connector.setFrameShape(QFrame.Shape.VLine)
+                connector.setStyleSheet(f"color: {step['color']}; opacity: 0.3;")
+                connector.setFixedWidth(2)
+                connector.setFixedHeight(12)
+                ilay.addWidget(connector, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+            row.addWidget(indicator, alignment=Qt.AlignmentFlag.AlignTop)
+
+            # Content
+            content = QWidget()
+            clay = QVBoxLayout(content)
+            clay.setContentsMargins(0, 0, 0, 0)
+            clay.setSpacing(4)
+
+            # Title row
+            title_row = QHBoxLayout()
+            icon_label = QLabel(f"{step['icon']} {step['title']}")
+            icon_label.setStyleSheet(
+                f"font-weight: 700; font-size: 13px; color: #1a1a2e;"
+            )
+            title_row.addWidget(icon_label)
+            if step["optional"]:
+                badge = QLabel("optional")
+                badge.setStyleSheet(
+                    "background: #fff3cd; color: #856404; padding: 1px 7px; "
+                    "border-radius: 10px; font-size: 10px; font-weight: 600;"
+                )
+                title_row.addWidget(badge)
+            title_row.addStretch()
+            clay.addLayout(title_row)
+
+            # Description
+            desc = QLabel(step["desc"])
+            desc.setWordWrap(True)
+            desc.setTextFormat(Qt.TextFormat.RichText)
+            desc.setStyleSheet("font-size: 12px; color: #4a5568; line-height: 1.5;")
+            clay.addWidget(desc)
+
+            row.addWidget(content, stretch=1)
+            return card
+
 
 class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
     """
@@ -157,9 +397,11 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         self._extraction_worker = None
         self._index_worker = None
 
-        # RAG Engine
+        # RAG Engine — lazy init nach erstem GUI-Render (verhindert Startup-Freeze
+        # bei Remote-Ollama oder langsamer Netzwerkverbindung)
         self._rag_engine = None
-        self._init_rag_engine()
+        self._rag_engine_ready = False
+        QTimer.singleShot(0, self._init_rag_engine)
 
         # Setup UI
         self._setup_window()
@@ -224,6 +466,15 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         export_action.setShortcut("Ctrl+E")
         export_action.triggered.connect(self._export)
         file_menu.addAction(export_action)
+
+        workspace_export_action = QAction("Workspace exportieren (JSON)...", self)
+        workspace_export_action.setShortcut("Ctrl+Shift+E")
+        workspace_export_action.setToolTip(
+            "Exportiert Projekt, Dokumente, Bericht und Chat als\n"
+            "notespacellm-workspace-v1.json (datenschutzkonform)"
+        )
+        workspace_export_action.triggered.connect(self._export_workspace)
+        file_menu.addAction(workspace_export_action)
 
         file_menu.addSeparator()
 
@@ -293,34 +544,56 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         toolbar.setMovable(False)
         self.addToolBar(toolbar)
 
-        # Add file
         add_btn = QAction("+ Dateien", self)
+        add_btn.setToolTip(
+            "Dokumente hinzufügen\n"
+            "Unterstützte Formate: PDF, DOCX, TXT, MD, XLSX, PPTX, ..."
+        )
         add_btn.triggered.connect(self._add_files)
         toolbar.addAction(add_btn)
 
-        # Add folder
         folder_btn = QAction("+ Ordner", self)
+        folder_btn.setToolTip("Ganzen Ordner rekursiv hinzufügen (alle unterstützten Dateitypen)")
         folder_btn.triggered.connect(self._add_folder)
         toolbar.addAction(folder_btn)
 
         toolbar.addSeparator()
 
-        # Extract text
         extract_btn = QAction("Text extrahieren", self)
+        extract_btn.setToolTip(
+            "Schritt 1 — Text aus Dokumenten extrahieren\n"
+            "Läuft im Hintergrund, die GUI bleibt reaktionsfähig.\n"
+            "Notwendig vor Analyse und Bericht-Erstellung."
+        )
         extract_btn.triggered.connect(self._extract_all_text)
         toolbar.addAction(extract_btn)
 
-        # Run analysis
         analyze_btn = QAction("Analysieren", self)
+        analyze_btn.setToolTip(
+            "Schritt 2 (optional) — Detailrecherchen per LLM\n"
+            "Beantwortet die sub-queries pro Dokument (Rechtsklick auf Dokument).\n"
+            "Kann lange dauern — läuft im Hintergrund."
+        )
         analyze_btn.triggered.connect(self._run_analysis)
         toolbar.addAction(analyze_btn)
 
         toolbar.addSeparator()
 
-        # Generate report
         report_btn = QAction("Bericht erstellen", self)
+        report_btn.setToolTip(
+            "Schritt 3 — Bericht per LLM generieren\n"
+            "Löst fehlende Textextraktion automatisch aus.\n"
+            "Nutzt Hauptfragestellung + Detailanalysen aus dem Workflow-Panel."
+        )
         report_btn.triggered.connect(self._generate_report)
         toolbar.addAction(report_btn)
+
+        toolbar.addSeparator()
+
+        help_btn = QAction("?", self)
+        help_btn.setToolTip("Pipeline-Übersicht — Erklärt alle Schritte")
+        help_btn.triggered.connect(self._show_pipeline_help)
+        toolbar.addAction(help_btn)
 
     def _setup_panels(self):
         """Set up the main panels."""
@@ -369,6 +642,18 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         self.statusbar = QStatusBar()
         self.setStatusBar(self.statusbar)
         self.statusbar.showMessage("Bereit")
+
+        # Permanent pipeline phase indicator (right side of statusbar)
+        self._pipeline_label = QLabel("📄 Keine Dokumente")
+        self._pipeline_label.setStyleSheet("color: #888; font-size: 10px; padding: 0 8px;")
+        self._pipeline_label.setToolTip(
+            "Aktuelle Pipeline-Phase:\n"
+            "📄 Keine Dokumente → Dateien hinzufügen\n"
+            "🔤 Dokumente geladen → Text extrahieren (Schritt 1)\n"
+            "✅ Extrahiert → Analysieren (opt.) oder Bericht erstellen (Schritt 3)\n"
+            "🎯 Bereit → Bericht erstellen"
+        )
+        self.statusbar.addPermanentWidget(self._pipeline_label)
 
     def _connect_signals(self):
         """Connect panel signals."""
@@ -483,6 +768,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             for f in files:
                 self._current_project.documents.add_file(Path(f))
             self.statusbar.showMessage(f"{len(files)} Dateien hinzugefügt")
+            self._update_pipeline_phase()
 
     def _add_folder(self):
         """Add a folder to the project."""
@@ -512,32 +798,22 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             self._current_project.documents.deselect_all()
 
     def _refresh_models(self):
-        """Refresh the list of available models from all providers."""
+        """Refresh the list of available models (async — no GUI freeze)."""
+        if hasattr(self, '_model_load_worker') and self._model_load_worker and self._model_load_worker.isRunning():
+            return
+
         self.statusbar.showMessage("Modelle werden abgefragt...")
-        QApplication.processEvents()
+        url = self._get_ollama_url()
+        api_key = self._current_project.settings.ollama_api_key if self._current_project else ""
 
-        available = {}
-        # Ollama
-        try:
-            from ..llm.ollama_client import OllamaClient
-            ollama_url = self._get_ollama_url()
-            ollama_key = self._current_project.settings.ollama_api_key if self._current_project else ""
-            client = OllamaClient.__new__(OllamaClient)
-            client.base_url = ollama_url
-            client.api_key = ollama_key
-            client._is_available = False
-            client.model = ""
-            client._check_availability()
-            if client.is_available:
-                models = client.get_models()
-                available["ollama"] = models
-                self.statusbar.showMessage(f"Ollama: {len(models)} Modelle gefunden")
-            else:
-                self.statusbar.showMessage("Ollama nicht erreichbar")
-        except Exception as e:
-            self.statusbar.showMessage(f"Ollama-Fehler: {e}")
+        self._model_load_worker = ModelLoadWorker(url, api_key)
 
-        return available
+        def _on_models(models, msg):
+            self.statusbar.showMessage(f"Ollama: {msg}")
+            self._model_load_worker = None
+
+        self._model_load_worker.models_loaded.connect(_on_models)
+        self._model_load_worker.start()
 
     def _llm_settings(self):
         """Show LLM settings dialog with provider, model, profiles and embedding config."""
@@ -558,11 +834,13 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         profile_combo.setMinimumWidth(200)
 
         save_profile_btn = QPushButton("Speichern als...")
+        rename_profile_btn = QPushButton("Umbenennen")
         delete_profile_btn = QPushButton("Löschen")
 
         profile_layout.addWidget(QLabel("Profil:"))
         profile_layout.addWidget(profile_combo, stretch=1)
         profile_layout.addWidget(save_profile_btn)
+        profile_layout.addWidget(rename_profile_btn)
         profile_layout.addWidget(delete_profile_btn)
 
         layout.addWidget(profile_group)
@@ -724,8 +1002,26 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
                 _refresh_profiles()
                 status_label.setText(f"Profil '{name}' gelöscht")
 
+        def _rename_profile():
+            old_name = profile_combo.currentText()
+            if old_name == "(Aktuelle Einstellungen)":
+                return
+            new_name, ok = QInputDialog.getText(
+                dialog, "Profil umbenennen",
+                "Neuer Profilname:",
+                text=old_name
+            )
+            if ok and new_name.strip() and new_name.strip() != old_name:
+                if app_cfg.rename_profile(old_name, new_name.strip()):
+                    _refresh_profiles()
+                    profile_combo.setCurrentText(new_name.strip())
+                    status_label.setText(f"'{old_name}' → '{new_name.strip()}'")
+                else:
+                    status_label.setText(f"Umbenennen fehlgeschlagen (Name belegt?)")
+
         profile_combo.currentTextChanged.connect(_on_profile_selected)
         save_profile_btn.clicked.connect(_save_profile_dialog)
+        rename_profile_btn.clicked.connect(_rename_profile)
         delete_profile_btn.clicked.connect(_delete_profile)
 
         # ===== Model Loading =====
@@ -735,34 +1031,40 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             "claude-3-5-sonnet-20241022", "claude-3-haiku-20240307"
         ]
 
+        _settings_model_worker = [None]  # mutable container for worker ref
+
+        def _select_current_model():
+            cur = app_cfg.llm_model
+            idx = model_combo.findText(cur)
+            if idx >= 0:
+                model_combo.setCurrentIndex(idx)
+            elif model_combo.count() > 0:
+                model_combo.setCurrentIndex(0)
+
         def load_models_for_provider(provider: str):
             model_combo.clear()
             status_label.setText("Lade...")
-            QApplication.processEvents()
 
             if provider == "ollama":
-                try:
-                    from ..llm.ollama_client import OllamaClient
-                    url = ollama_url_edit.text().strip() or OllamaClient.DEFAULT_URL
-                    key = ollama_key_edit.text().strip()
-                    client = OllamaClient.__new__(OllamaClient)
-                    client.base_url = url
-                    client.api_key = key
-                    client._is_available = False
-                    client.model = ""
-                    client._check_availability()
+                # Async model load — no GUI freeze
+                if _settings_model_worker[0] and _settings_model_worker[0].isRunning():
+                    return
+                url = ollama_url_edit.text().strip() or "http://localhost:11434"
+                key = ollama_key_edit.text().strip()
+                worker = ModelLoadWorker(url, key)
 
-                    if client.is_available:
-                        models = client.get_models()
-                        if models:
-                            model_combo.addItems(models)
-                            status_label.setText(f"{len(models)} Modelle auf {url}")
-                        else:
-                            status_label.setText("Ollama läuft, aber keine Modelle installiert")
-                    else:
-                        status_label.setText(f"Ollama nicht erreichbar ({url})")
-                except Exception as e:
-                    status_label.setText(f"Fehler: {e}")
+                def _on_ollama_models(models, msg):
+                    model_combo.clear()
+                    if models:
+                        model_combo.addItems(models)
+                    status_label.setText(msg)
+                    _select_current_model()
+                    _settings_model_worker[0] = None
+
+                worker.models_loaded.connect(_on_ollama_models)
+                _settings_model_worker[0] = worker
+                worker.start()
+                return  # combo will be filled once worker finishes
 
             elif provider == "openai":
                 model_combo.addItems(OPENAI_MODELS)
@@ -781,13 +1083,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
                 else:
                     status_label.setText("Claude Code CLI NICHT gefunden!")
 
-            # Try to select current model
-            cur = app_cfg.llm_model
-            idx = model_combo.findText(cur)
-            if idx >= 0:
-                model_combo.setCurrentIndex(idx)
-            elif model_combo.count() > 0:
-                model_combo.setCurrentIndex(0)
+            _select_current_model()
 
         provider_combo.currentTextChanged.connect(load_models_for_provider)
         refresh_btn.clicked.connect(lambda: load_models_for_provider(provider_combo.currentText()))
@@ -894,6 +1190,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         def _on_extraction_complete():
             self._extraction_worker = None
             self._update_document_context()
+            self._update_pipeline_phase()
             self.statusbar.showMessage(f"Extraktion abgeschlossen: {len(pending)} Dokumente")
 
         self._extraction_worker.doc_extracted.connect(_on_doc_extracted)
@@ -913,60 +1210,79 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         pass
 
     def _on_export_requested(self, formats: list, directory: str):
-        """Handle export request."""
+        """Handle export request — lets user choose filename via dialog."""
         content = self.output_panel.get_content()
         if not content:
             QMessageBox.warning(self, "Export", "Kein Inhalt zum Exportieren.")
             return
 
-        output_dir = Path(directory)
-        output_dir.mkdir(parents=True, exist_ok=True)
-
         project_name = self._current_project.name if self._current_project else "report"
         safe_name = "".join(c for c in project_name if c.isalnum() or c in " -_").strip().replace(" ", "_")
 
+        # Build list of (format, path) pairs — ask user for filename
+        _filter_map = {
+            "md": "Markdown (*.md)", "txt": "Text (*.txt)",
+            "html": "HTML (*.html)", "pdf": "PDF (*.pdf)", "docx": "Word (*.docx)"
+        }
+        if len(formats) == 1:
+            fmt = formats[0]
+            default_path = Path(directory) / f"{safe_name}.{fmt}"
+            filepath, _ = QFileDialog.getSaveFileName(
+                self, "Bericht exportieren",
+                str(default_path),
+                f"{_filter_map.get(fmt, 'Dateien (*)')};;Alle Dateien (*)"
+            )
+            if not filepath:
+                return
+            formats_and_paths = [(fmt, Path(filepath))]
+        else:
+            base_name, ok = QInputDialog.getText(
+                self, "Exportdatei-Name",
+                "Basis-Dateiname (ohne Erweiterung):",
+                text=safe_name
+            )
+            if not ok or not base_name.strip():
+                return
+            output_dir = Path(directory)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            formats_and_paths = [(fmt, output_dir / f"{base_name.strip()}.{fmt}") for fmt in formats]
+
         exported = []
-
-        for fmt in formats:
-            filename = f"{safe_name}.{fmt}"
-            filepath = output_dir / filename
-
+        for fmt, filepath in formats_and_paths:
+            filepath.parent.mkdir(parents=True, exist_ok=True)
             try:
                 if fmt == "md":
                     filepath.write_text(content, encoding="utf-8")
-                    exported.append(filename)
+                    exported.append(filepath.name)
 
                 elif fmt == "txt":
-                    # Strip markdown
                     import re
                     plain = re.sub(r'[#*`_]', '', content)
                     filepath.write_text(plain, encoding="utf-8")
-                    exported.append(filename)
+                    exported.append(filepath.name)
 
                 elif fmt == "html":
-                    # Simple markdown to HTML
                     html = self._md_to_html(content)
                     filepath.write_text(html, encoding="utf-8")
-                    exported.append(filename)
+                    exported.append(filepath.name)
 
                 elif fmt == "pdf":
-                    # Try to use external converter
                     if self._export_pdf(content, filepath):
-                        exported.append(filename)
+                        exported.append(filepath.name)
 
                 elif fmt == "docx":
-                    # Try to create docx
                     if self._export_docx(content, filepath):
-                        exported.append(filename)
+                        exported.append(filepath.name)
 
             except Exception as e:
                 self.statusbar.showMessage(f"Fehler bei {fmt}: {e}")
 
         if exported:
+            out_dir = str(formats_and_paths[0][1].parent)
             self.output_panel.set_status(f"Exportiert: {', '.join(exported)}")
             QMessageBox.information(
                 self, "Export",
-                f"Erfolgreich exportiert:\n{chr(10).join(exported)}\n\nOrdner: {directory}"
+                f"Erfolgreich exportiert:\n{chr(10).join(exported)}\n\nOrdner: {out_dir}"
             )
 
     def _md_to_html(self, content: str) -> str:
@@ -1065,6 +1381,37 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         except Exception as e:
             self.statusbar.showMessage(f"LLM-Fehler: {e}")
 
+    def _update_pipeline_phase(self):
+        """Update the pipeline phase indicator in the status bar."""
+        if not hasattr(self, '_pipeline_label'):
+            return
+        if not self._current_project:
+            self._pipeline_label.setText("📄 Keine Dokumente")
+            return
+
+        docs = [d for d in self._current_project.documents.documents if not d.is_directory]
+        if not docs:
+            self._pipeline_label.setText("📄 Keine Dokumente")
+            return
+
+        extracted = [d for d in docs if d.extracted_text]
+        indexed = [d for d in docs if d.is_indexed]
+
+        if len(extracted) == 0:
+            self._pipeline_label.setText(f"🔤 {len(docs)} Dok. → Text extrahieren (Schritt 1)")
+        elif len(extracted) < len(docs):
+            self._pipeline_label.setText(
+                f"⏳ {len(extracted)}/{len(docs)} extrahiert → weiter extrahieren"
+            )
+        elif indexed:
+            self._pipeline_label.setText(
+                f"🎯 {len(extracted)} extrahiert, {len(indexed)} indexiert → Bericht erstellen"
+            )
+        else:
+            self._pipeline_label.setText(
+                f"✅ {len(extracted)} extrahiert → Analysieren oder Bericht erstellen"
+            )
+
     def _update_document_context(self):
         """Update the document context for chat."""
         if not self._current_project:
@@ -1079,6 +1426,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
 
         context = "\n\n".join(context_parts)
         self.chat_panel.set_document_context(context)
+        self._update_pipeline_phase()
 
     def _extract_all_text(self, on_complete=None):
         """Extract text from all documents in background thread."""
@@ -1377,6 +1725,62 @@ Verwende Markdown-Formatierung."""
             self.output_panel.set_status(f"Prompt exportiert: {filepath.name}")
             self.statusbar.showMessage(f"Prompt exportiert: {filepath}")
 
+    def _show_pipeline_help(self):
+        """Öffnet den Pipeline-Hilfe-Dialog."""
+        dialog = _PipelineHelpDialog(self)
+        dialog.exec()
+
+    def _export_workspace(self):
+        """Exportiert das aktuelle Projekt als notespacellm-workspace-v1.json."""
+        if not self._current_project:
+            QMessageBox.warning(self, "Workspace exportieren", "Kein Projekt geöffnet.")
+            return
+
+        from ..core.workspace_exporter import build_workspace_export_payload, export_workspace_to_file
+        from datetime import datetime
+
+        project_name = self._current_project.name
+        safe_name = "".join(c for c in project_name if c.isalnum() or c in " -_").strip().replace(" ", "_")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        default_name = f"{safe_name}_workspace_{timestamp}.json"
+
+        filepath, _ = QFileDialog.getSaveFileName(
+            self,
+            "Workspace exportieren",
+            str(self.output_panel.get_output_directory() / default_name),
+            "JSON (*.json);;Alle Dateien (*)"
+        )
+        if not filepath:
+            return
+
+        try:
+            report_content = self.output_panel.get_content()
+            raw_msgs = self.chat_panel.get_messages() if hasattr(self.chat_panel, 'get_messages') else []
+            chat_history = [{"role": m.role, "content": m.content} for m in raw_msgs]
+
+            payload = build_workspace_export_payload(
+                project=self._current_project,
+                report_content=report_content,
+                chat_history=chat_history,
+                include_subquery_excerpts=True,
+            )
+            export_workspace_to_file(payload, Path(filepath))
+
+            doc_count = len([d for d in self._current_project.documents.documents
+                             if not d.is_directory])
+            self.statusbar.showMessage(
+                f"Workspace exportiert: {Path(filepath).name} ({doc_count} Dokumente)"
+            )
+            QMessageBox.information(
+                self, "Workspace exportiert",
+                f"Erfolgreich exportiert:\n{Path(filepath).name}\n\n"
+                f"Enthält: {doc_count} Dokument(e), Bericht, Chat\n"
+                f"API-Schlüssel und Rohdaten wurden nicht exportiert."
+            )
+        except Exception as e:
+            QMessageBox.critical(self, "Fehler", f"Export fehlgeschlagen:\n{e}")
+            self.statusbar.showMessage(f"Workspace-Export fehlgeschlagen: {e}")
+
     def closeEvent(self, event):
         """Handle window close."""
         # Save project
@@ -1386,7 +1790,14 @@ Verwende Markdown-Formatierung."""
     # ==================== RAG Methods ====================
 
     def _init_rag_engine(self):
-        """Initialize the RAG engine with ChromaDB and Ollama Embeddings."""
+        """Initialize the RAG engine with ChromaDB and Ollama Embeddings.
+
+        Wird via QTimer.singleShot(0) aufgerufen — erst nach dem ersten GUI-Render,
+        damit der Start nicht durch Netzwerk-Latenz oder schwere Imports blockiert wird.
+        """
+        if hasattr(self, "statusbar"):
+            self.statusbar.showMessage("RAG-Engine wird verbunden …")
+
         try:
             from ..rag.engine import RAGEngine
             from ..core.app_config import get_app_config
@@ -1401,6 +1812,8 @@ Verwende Markdown-Formatierung."""
             if app_cfg.llm_provider not in ("ollama",):
                 logger.info("RAG Engine übersprungen (Provider ist nicht Ollama)")
                 self._rag_engine = None
+                if hasattr(self, "statusbar"):
+                    self.statusbar.showMessage("Bereit (RAG nicht aktiv — kein Ollama-Provider)")
                 return
 
             # Storage-Verzeichnis
@@ -1415,12 +1828,16 @@ Verwende Markdown-Formatierung."""
                 ollama_base_url=ollama_url,
                 api_key=app_cfg.ollama_api_key
             )
-
+            self._rag_engine_ready = True
             logger.info(f"RAG Engine initialisiert (URL: {ollama_url}, Embedding: {embedding_model})")
+            if hasattr(self, "statusbar"):
+                self.statusbar.showMessage(f"RAG-Engine bereit ({embedding_model} @ {ollama_url})", 5000)
 
         except Exception as e:
             logger.error(f"RAG Engine Initialisierung fehlgeschlagen: {e}")
             self._rag_engine = None
+            if hasattr(self, "statusbar"):
+                self.statusbar.showMessage(f"RAG-Engine nicht verfügbar: {e}", 8000)
 
     def _index_all_documents(self):
         """Index all documents with extracted text (async)."""

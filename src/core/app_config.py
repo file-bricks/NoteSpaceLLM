@@ -178,6 +178,23 @@ class AppConfig:
             return True
         return False
 
+    def rename_profile(self, old_name: str, new_name: str) -> bool:
+        """Benennt ein benutzerdefiniertes Profil um."""
+        if old_name in self.BUILTIN_PROFILES:
+            return False  # Built-ins nicht umbenennbar
+        if not new_name or new_name == old_name:
+            return False
+        profiles = self._data.get("profiles", {})
+        if old_name not in profiles:
+            return False
+        if new_name in self.BUILTIN_PROFILES or new_name in profiles:
+            return False  # Zielname bereits belegt
+        profiles[new_name] = profiles.pop(old_name)
+        if self._data.get("active_profile") == old_name:
+            self._data["active_profile"] = new_name
+        self.save()
+        return True
+
     def list_profile_names(self) -> List[str]:
         """Gibt alle Profilnamen zurück."""
         return list(self.profiles.keys())

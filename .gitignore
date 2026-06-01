@@ -1,4 +1,4 @@
-# Python
+﻿# Python
 __pycache__/
 *.py[cod]
 *.pyo
@@ -71,3 +71,7 @@ AUFGABEN.txt
 *.swp
 *.swo
 *~
+DECISIONS.md
+PORTIERUNGSPLAN.md
+TODO.md
+DONE.md

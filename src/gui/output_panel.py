@@ -220,10 +220,10 @@ class OutputPanel(QWidget if PYSIDE_AVAILABLE else object):
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
 
-        self.prompt_export_btn = QPushButton("Prompt exportieren")
+        self.prompt_export_btn = QPushButton("LLM-Prompt exportieren")
         self.prompt_export_btn.setToolTip(
-            "Exportiert den Analyse-Prompt als .md Datei\n"
-            "(zum manuellen Einspeisen in ein LLM)"
+            "Exportiert den an das LLM gesendeten Analyse-Prompt als .md Datei\n"
+            "(nützlich zum Einspeisen in andere LLMs oder zur Dokumentation)"
         )
         self.prompt_export_btn.setStyleSheet("""
             QPushButton {

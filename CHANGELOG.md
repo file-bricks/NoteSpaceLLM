@@ -5,6 +5,26 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Build / Release
+- EXE neu gebaut 2026-06-01 (PyInstaller --onefile, `notespacellm_launcher.py`-Launcher → `C:\_Local_DEV\codex_build\notespacellm`); 72/72 Tests grün (3 skipped), Smoke OK. Vorherige EXE: 2026-05-01. Anlass: QTimer-RAG-Init-Fix in `src/gui/main_window.py` (verhindert Startup-Freeze bei Remote-Ollama).
+
+### Bekannte Einschränkungen / Known Issues (Nutzerfeedback 2026-06-01)
+
+- ~~**Langer Start (mehrere Minuten)**~~ **Behoben:** `_init_rag_engine()` wird
+  jetzt via `QTimer.singleShot(0, ...)` nach dem ersten GUI-Render aufgerufen —
+  Fenster erscheint sofort, Statusbar zeigt RAG-Verbindungsstatus.
+- GUI friert bei langen Operationen (Text-Extraktion, Indexierung, Analyse, Bericht)
+  ein — Qt-Hauptthread wird blockiert. Workaround: Geduld; Fix in Arbeit (QThread).
+- Export: Dateiname kann nicht frei gewählt werden — Pfad wird automatisch gesetzt.
+- Profile: Nach dem Erstellen nicht editier- oder löschbar.
+- Begriffe (Extraktion/Indexierung/Analyse/Bericht) und deren Reihenfolge sind
+  für Neunutzer unklar — Hilfetexte/visuelle Pipeline-Darstellung geplant.
+- Button "Prompt exportieren" ist missverständlich — Umbenennung zu
+  "An LLM gesendeten Prompt exportieren" geplant.
+
+**Positiv-Feedback:** Brauchbare Berichte mit lokalem Ollama-Modell (Mac/qwen3)
+wurden erfolgreich erstellt — Remote-Ollama-Anbindung funktioniert produktiv.
+
 ### Hinzugefügt / Added
 - Portierungsplan für Windows Store, Web/PWA, Android, iOS, macOS und Linux
 - Geplantes Austauschformat `notespacellm-workspace-v1.json` für Desktop-zu-Companion-Workflows
