@@ -28,3 +28,25 @@ jobs:
 
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
+
+  macos-source-smoke:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Compile Python sources
+        run: python -m compileall -q main.py manage_translations.py translator.py src
+
+      - name: Run macOS desktop source smoke
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python tests/platform_smoke.py

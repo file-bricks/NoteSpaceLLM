@@ -286,6 +286,14 @@ node --test tests/library.test.mjs
 Der mobile Android-/iOS-PWA-Pfad ist in `web_companion/PWA_TESTPLAN.md`
 konkret dokumentiert.
 
+### macOS Source-Smoke
+
+Für die Desktop-Linie läuft zusätzlich ein kleiner macOS-Quellcode-Smoke in
+GitHub Actions. `tests/platform_smoke.py` startet die PySide6-App offscreen,
+lädt ein temporäres Textdokument und exportiert ein
+`notespacellm-workspace-v1.json`, ohne einen echten Ollama- oder LLM-Server
+vorauszusetzen.
+
 ## Entwicklung
 
 Die Anwendung ist modular aufgebaut und trennt Dokumentverwaltung, Text-Extraktion, RAG-Index, LLM-Provider und Report-Export.

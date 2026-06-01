@@ -6,6 +6,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 ## [Unreleased]
 
 ### Build / Release
+- macOS-Source-Smoke für die Desktop-Linie ergänzt: `tests/platform_smoke.py`
+  startet `MainWindow` offscreen, importiert ein temporäres Dokument und
+  exportiert ein `notespacellm-workspace-v1.json` ohne echten LLM-/Ollama-Server
+- GitHub Actions um `macos-source-smoke` auf `macos-latest` erweitert
 - EXE neu gebaut 2026-06-01 (PyInstaller --onefile, `notespacellm_launcher.py`-Launcher → `C:\_Local_DEV\codex_build\notespacellm`); 72/72 Tests grün (3 skipped), Smoke OK. Vorherige EXE: 2026-05-01. Anlass: QTimer-RAG-Init-Fix in `src/gui/main_window.py` (verhindert Startup-Freeze bei Remote-Ollama).
 
 ### Bekannte Einschränkungen / Known Issues (Nutzerfeedback 2026-06-01)
