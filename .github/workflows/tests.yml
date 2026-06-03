@@ -57,3 +57,27 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: python tests/platform_smoke.py
+
+  linux-source-smoke:
+    runs-on: ubuntu-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon-x11-0 libdbus-1-3
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Compile Python sources
+        run: python -m compileall -q main.py manage_translations.py translator.py src tests/linux_platform_smoke.py
+
+      - name: Run Linux desktop source smoke
+        run: python tests/linux_platform_smoke.py

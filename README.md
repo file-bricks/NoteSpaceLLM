@@ -286,13 +286,19 @@ node --test tests/library.test.mjs
 Der mobile Android-/iOS-PWA-Pfad ist in `web_companion/PWA_TESTPLAN.md`
 konkret dokumentiert.
 
-### macOS Source-Smoke
+### macOS- und Linux-Source-Smokes
 
-Für die Desktop-Linie läuft zusätzlich ein kleiner macOS-Quellcode-Smoke in
-GitHub Actions. `tests/platform_smoke.py` startet die PySide6-App offscreen,
-lädt ein temporäres Textdokument und exportiert ein
-`notespacellm-workspace-v1.json`, ohne einen echten Ollama- oder LLM-Server
-vorauszusetzen.
+Für die Desktop-Linie laufen zusätzliche Quellcode-Smokes in GitHub Actions.
+`tests/platform_smoke.py` bildet die gemeinsame Offscreen-Basis; der
+Linux-spezifische Wrapper `tests/linux_platform_smoke.py` ruft denselben
+Prüfpfad gezielt auf `ubuntu-latest` auf.
+
+Geprüft werden:
+
+- PySide6-App-Start ohne sichtbare GUI
+- Import eines temporären Textdokuments mit echten Umlauten
+- einfacher Berichtsexport nach Markdown und TXT
+- `notespacellm-workspace-v1.json` ohne echten Ollama- oder LLM-Server
 
 ## Entwicklung
 

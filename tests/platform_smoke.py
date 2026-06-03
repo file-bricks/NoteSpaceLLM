@@ -6,7 +6,7 @@ Kleiner Source-Smoke für Desktop-Plattformen.
 Prüft ohne echten LLM-/Ollama-Server:
 - QApplication + MainWindow starten offscreen
 - temporäres Dokument in ein Projekt laden
-- Berichtstext in der UI halten
+- einfachen Bericht lokal exportieren
 - notespacellm-workspace-v1.json exportieren
 """
 
@@ -29,7 +29,7 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 
-def run_platform_smoke() -> str:
+def run_platform_smoke(project_name: str = "Desktop Smoke") -> str:
     """Führt einen kleinen Offscreen-Smoke durch und gibt eine Kurzinfo zurück."""
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -40,11 +40,13 @@ def run_platform_smoke() -> str:
         export_workspace_to_file,
     )
     from src.gui.main_window import MainWindow
+    from src.reports.exporter import ReportExporter
 
     with tempfile.TemporaryDirectory(prefix="notespacellm-smoke-") as tmp_dir:
         tmp_home = Path(tmp_dir)
         sample_file = tmp_home / "quelle.txt"
         export_file = tmp_home / "workspace.json"
+        reports_dir = tmp_home / "reports"
         sample_text = "Äpfel, Öl und Übersicht für den Plattform-Smoke."
         sample_file.write_text(sample_text, encoding="utf-8")
 
@@ -57,7 +59,7 @@ def run_platform_smoke() -> str:
                 app.processEvents()
 
                 project = Project.create(
-                    name="macOS Smoke",
+                    name=project_name,
                     main_question="Welche Kernpunkte enthält das Testdokument?",
                     report_type="analysis",
                 )
@@ -69,6 +71,23 @@ def run_platform_smoke() -> str:
                 window._current_project = project
                 window.output_panel.set_content("# Smoke-Bericht\n\nExportbereit.")
                 app.processEvents()
+
+                exporter = ReportExporter(reports_dir)
+                report_results = exporter.export(
+                    content=window.output_panel.get_content(),
+                    base_name="platform_smoke_bericht",
+                    formats=["md", "txt"],
+                    title="Smoke-Bericht",
+                )
+                if not all(result.success for result in report_results):
+                    raise AssertionError("Berichtsexport schlug im Plattform-Smoke fehl.")
+                report_files = {result.format: result.filepath for result in report_results}
+                if not report_files["md"].exists() or not report_files["txt"].exists():
+                    raise AssertionError("Erwartete Report-Dateien fehlen im Plattform-Smoke.")
+                if "Smoke-Bericht" not in report_files["md"].read_text(encoding="utf-8"):
+                    raise AssertionError("Markdown-Export enthält den Smoke-Bericht nicht.")
+                if "Exportbereit." not in report_files["txt"].read_text(encoding="utf-8"):
+                    raise AssertionError("TXT-Export enthält den Smoke-Bericht nicht.")
 
                 payload = build_workspace_export_payload(
                     project=project,
@@ -91,7 +110,10 @@ def run_platform_smoke() -> str:
                 window.close()
                 app.processEvents()
 
-                return f"{export_file.name} ({len(exported['documents'])} Dokument)"
+                return (
+                    f"{export_file.name} + {report_files['md'].name}"
+                    f" ({len(exported['documents'])} Dokument)"
+                )
 
 
 def main() -> int:
