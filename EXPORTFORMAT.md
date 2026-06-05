@@ -1,20 +1,40 @@
 # Exportformat -- notespacellm-workspace-v1
 
-Stand: 2026-05-28
+Stand: 2026-06-05
 
 ## Zweck
 
-`notespacellm-workspace-v1.json` ist der geplante Austauschvertrag zwischen der Desktop-App und Web-/PWA-/Mobile-Companions. Das Format soll mobile Recherche- und Review-Workflows ermöglichen, ohne lokale Rohdatenordner, Vektordatenbanken oder API-Schlüssel zu kopieren.
+`notespacellm-workspace-v1.json` ist der Austauschvertrag zwischen der
+Desktop-App und Web-/PWA-/Mobile-Companions. Das Format ermöglicht mobile
+Recherche- und Review-Workflows, ohne lokale Rohdatenordner, Vektordatenbanken
+oder API-Schlüssel zu kopieren.
 
-Der erste Consumer liegt unter `web_companion/`: ein read-only PWA-Reader, der Workspace-JSON lokal im Browser importiert, Bericht und Dokumentmetadaten anzeigt und eigene Review-Notizen als Markdown exportiert.
+Der erste Consumer liegt unter `web_companion/`: ein read-only PWA-Reader, der
+Workspace-JSON lokal im Browser importiert, Bericht und Dokumentmetadaten
+anzeigt, den zuletzt geladenen Workspace offline wiederherstellt und eigene
+Review-Notizen als Markdown exportiert.
+
+## Implementierungsstatus
+
+- Desktop-Export ist umgesetzt: `src/core/workspace_exporter.py` erzeugt das
+  Payload und schreibt es atomar als UTF-8-JSON.
+- GUI-Auslöser ist vorhanden: `Datei -> Workspace exportieren (JSON)...`.
+- Tests: `tests/test_workspace_export.py` deckt Schema, Datenschutzregeln,
+  UTF-8, atomare Ausgabe und Auszugslogik ab.
+- Web/PWA-Companion validiert und liest das Format über `web_companion/library.js`
+  und `web_companion/tests/library.test.mjs`.
 
 ## Datenschutzregeln
 
 - API-Schlüssel werden nie exportiert.
 - `chroma_db/`, lokale Datenbanken und Cache-Verzeichnisse werden nie exportiert.
 - Rohdokumente werden standardmäßig nicht eingebettet.
-- Dokumentauszüge werden nur exportiert, wenn sie bereits für Bericht, Chat, Prompt oder Review ausgewählt wurden.
-- Externe Provider werden nur als Typ und Konfigurationshinweis dokumentiert, nicht mit geheimen Werten.
+- Dokumentauszüge werden nur exportiert, wenn sie bereits für Bericht, Chat,
+  Prompt oder Review ausgewählt wurden.
+- Externe Provider werden nur als Typ und Konfigurationshinweis dokumentiert,
+  nicht mit geheimen Werten.
+- Lokale absolute Pfade werden auf redigierte Hinweise oder relative
+  `path_hint`-Werte reduziert.
 
 ## Minimales Schema
 
@@ -70,10 +90,14 @@ Der erste Consumer liegt unter `web_companion/`: ein read-only PWA-Reader, der W
 - Neue optionale Felder sind erlaubt, solange bestehende Felder ihre Bedeutung behalten.
 - Consumer müssen unbekannte Felder ignorieren.
 - Breaking Changes erhöhen den Schema-Namen auf `notespacellm-workspace-v2`.
-- Große Binärdateien bleiben außerhalb des JSON und werden nur über optionale Manifeste referenziert.
+- Große Binärdateien bleiben außerhalb des JSON und werden nur über optionale
+  Manifeste referenziert.
 
-## Aktuelle Implementierungsaufgaben
+## Nächste Format-Aufgaben
 
-Die Desktop-App soll eine Funktion `build_workspace_export_payload()` erhalten, die aus aktuellem Projekt, Dokumentauswahl, Workflow, Bericht und optionalem Chat-Verlauf dieses Schema erzeugt. Danach kann eine Schreibfunktion das JSON atomar als UTF-8-Datei speichern.
-
-Der Web/PWA-Companion kann das Schema bereits lesen und validiert es mit `node --test tests/library.test.mjs`. Bis der Desktop-Export implementiert ist, dient die Demo-Workspace-Funktion in `web_companion/library.js` als Testdatenquelle.
+- Companion-Rückkanal erst definieren, wenn echte Review-Notizen reimportiert
+  werden sollen.
+- Geräte-Smokes gegen `web_companion/PWA_TESTPLAN.md` mit realen Android-/iOS-
+  oder Emulatorumgebungen durchführen.
+- Bei Bedarf ein separates optionales Rohdokument-Manifest entwerfen; nicht als
+  Standardbestandteil des Workspace-JSON.
