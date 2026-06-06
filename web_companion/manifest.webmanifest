@@ -6,5 +6,29 @@
   "background_color": "#f4efe6",
   "theme_color": "#0c4a6e",
   "lang": "de",
-  "description": "Lokaler Web/PWA-Companion für exportierte NoteSpaceLLM-Workspaces mit Review-Notizen ohne Server-Upload."
+  "description": "Lokaler Web/PWA-Companion für exportierte NoteSpaceLLM-Workspaces mit Review-Notizen ohne Server-Upload.",
+  "icons": [
+    {
+      "src": "./icons/Icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/Icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/Icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icons/Icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
 }
