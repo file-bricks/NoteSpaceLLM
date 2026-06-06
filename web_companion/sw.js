@@ -1,15 +1,20 @@
-const CACHE_NAME = "notespacellm-companion-v1";
+const CACHE_NAME = "notespacellm-companion-v2";
 const ASSETS = [
   "./",
   "./index.html",
   "./app.css",
   "./app.js",
   "./library.js",
-  "./manifest.webmanifest"
+  "./manifest.webmanifest",
+  "./icons/Icon-192.png",
+  "./icons/Icon-512.png",
+  "./icons/Icon-maskable-192.png",
+  "./icons/Icon-maskable-512.png"
 ];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
+  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
@@ -19,7 +24,7 @@ self.addEventListener("activate", (event) => {
         keys
           .filter((key) => key !== CACHE_NAME)
           .map((key) => caches.delete(key))
-      )
+      ).then(() => self.clients.claim())
     )
   );
 });

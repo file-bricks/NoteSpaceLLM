@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/library.test.mjs"
+    "test": "node --test tests/library.test.mjs tests/pwa.test.mjs"
   }
 }
