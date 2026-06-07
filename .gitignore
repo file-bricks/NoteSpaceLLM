@@ -32,6 +32,9 @@ keyring/
 # Logs
 *.log
 
+# Temporäre Backups (Bugsweep/Fix-Prozess)
+*.bak
+
 # Interne Steuerungsdateien (NIEMALS in Git!)
 TEST.txt
 TESTS.txt
