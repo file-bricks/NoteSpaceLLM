@@ -8,6 +8,15 @@ import {
 const STORAGE_PREFIX = "notespacellm-companion-notes:";
 const WORKSPACE_CACHE_KEY = "notespacellm-companion:last-workspace";
 
+function escHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 const elements = {
   clearNotes: document.querySelector("#clear-notes"),
   clearWorkspaceCache: document.querySelector("#clear-workspace-cache"),
@@ -141,17 +150,17 @@ function renderDocuments(payload) {
   elements.documentList.className = "stacked-list";
   elements.documentList.innerHTML = "";
 
-  payload.documents.forEach((document) => {
+  payload.documents.forEach((doc) => {
     const article = document.createElement("article");
     article.className = "doc-card";
 
-    const excerpts = document.excerpts.length
-      ? `<div class="excerpt-list">${document.excerpts
+    const excerpts = doc.excerpts.length
+      ? `<div class="excerpt-list">${doc.excerpts
           .map(
             (excerpt) => `
               <div class="excerpt">
-                <span class="excerpt-source">${excerpt.source_hint || "Auszug"}</span>
-                <div>${excerpt.text}</div>
+                <span class="excerpt-source">${escHtml(excerpt.source_hint) || "Auszug"}</span>
+                <div>${escHtml(excerpt.text)}</div>
               </div>
             `
           )
@@ -160,12 +169,12 @@ function renderDocuments(payload) {
 
     article.innerHTML = `
       <div class="doc-header">
-        <div class="doc-name">${document.name}</div>
-        <span class="pill">${document.selected ? "Ausgewählt" : "Nicht ausgewählt"}</span>
+        <div class="doc-name">${escHtml(doc.name)}</div>
+        <span class="pill">${doc.selected ? "Ausgewählt" : "Nicht ausgewählt"}</span>
       </div>
       <div class="doc-meta">
-        ${document.format || "unbekannt"} · ${document.path_hint || "ohne Pfadhinweis"} ·
-        ${document.content_included ? "Inhalt enthalten" : "nur Metadaten"}
+        ${escHtml(doc.format) || "unbekannt"} · ${escHtml(doc.path_hint) || "ohne Pfadhinweis"} ·
+        ${doc.content_included ? "Inhalt enthalten" : "nur Metadaten"}
       </div>
       ${excerpts}
     `;

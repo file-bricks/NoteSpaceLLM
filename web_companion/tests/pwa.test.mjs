@@ -107,6 +107,14 @@ describe('sw.js', () => {
   it('cached mindestens einen Icon-Pfad', () => {
     assert.ok(sw.includes('./icons/Icon-192.png'), 'Icon-Pfad fehlt in sw.js ASSETS');
   });
+
+  // Bug #2: caches.match ohne ignoreSearch schlägt bei ?demo=1-URLs offline fehl
+  it('caches.match nutzt ignoreSearch:true', () => {
+    assert.ok(
+      /caches\.match\([^)]*ignoreSearch\s*:\s*true/.test(sw),
+      'caches.match muss { ignoreSearch: true } nutzen — sonst Offline-Fail bei ?-URLs'
+    );
+  });
 });
 
 // ──────────────────────────────────────────────────────────────

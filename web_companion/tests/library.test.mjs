@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   buildReviewMarkdown,
@@ -8,6 +11,9 @@ import {
   normalizeWorkspacePayload,
   parseWorkspaceText
 } from "../library.js";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const appSource = readFileSync(join(root, "app.js"), "utf8");
 
 test("normalizeWorkspacePayload accepts minimal valid payload", () => {
   const payload = normalizeWorkspacePayload({
@@ -71,4 +77,28 @@ test("getPlatformGuide returns iOS-specific install guidance", () => {
   assert.equal(guide.label, "iPhone / iPad");
   assert.match(guide.install_hint, /Home-Bildschirm/);
   assert.match(guide.offline_hint, /ohne Netz|erneut geöffnet/i);
+});
+
+// Hinweis: Bug #1 + Bug #3 sind DOM-Bugs in app.js (renderDocuments).
+// Node.js-Harness hat kein DOM — Quelltext-Assertions sichern die Fixes statisch.
+
+test("app.js renderDocuments: forEach-Parameter schattet nicht DOM document (Bug #1)", () => {
+  // Vor dem Fix: forEach((document) => { ... document.createElement(...)
+  // Nach dem Fix: forEach((doc) => { ... document.createElement(...)
+  assert.ok(
+    !appSource.includes("forEach((document)"),
+    "renderDocuments darf keinen Parameter namens 'document' haben — schattet DOM document und crasht"
+  );
+  assert.match(
+    appSource,
+    /forEach\(\(doc\)/,
+    "renderDocuments muss Parameter 'doc' (nicht 'document') nutzen"
+  );
+});
+
+test("app.js enthält escHtml-Funktion für innerHTML-Schutz (Bug #3)", () => {
+  assert.match(appSource, /function escHtml/, "escHtml-Funktion muss in app.js vorhanden sein");
+  assert.match(appSource, /escHtml\(doc\.name\)/, "doc.name muss über escHtml eingesetzt werden");
+  assert.match(appSource, /escHtml\(excerpt\.text\)/, "excerpt.text muss über escHtml eingesetzt werden");
+  assert.match(appSource, /escHtml\(excerpt\.source_hint\)/, "excerpt.source_hint muss über escHtml eingesetzt werden");
 });
