@@ -2,6 +2,7 @@
 manage_translations.py - Auto-Scanner für deutsche GUI-Strings
 ================================================================
 Findet deutsche Strings in .py-Dateien und pflegt locales/translations.json.
+Unterstützt 6 Sprachen (siehe LANGUAGE_CODES.md): de, en, es, zh, ja, ru.
 
 Verwendung:
     python manage_translations.py [--dir PROJEKTVERZEICHNIS]
@@ -13,6 +14,7 @@ import os
 import sys
 
 TRANSLATION_FILE = "locales/translations.json"
+SUPPORTED_LANGUAGES = ['de', 'en', 'es', 'zh', 'ja', 'ru']
 
 STRING_PATTERNS = [
     re.compile(r'text\s*=\s*"([^"]+)"'),
@@ -70,10 +72,21 @@ def manage_translations(source_dir="."):
     found = find_german_strings(source_dir)
 
     added = []
+    upgraded = []
     for s in sorted(found):
         if s not in translations:
-            translations[s] = {"de": s, "en": ""}
+            entry = {"de": s}
+            for lang in SUPPORTED_LANGUAGES:
+                if lang != 'de':
+                    entry[lang] = ""
+            translations[s] = entry
             added.append(s)
+        else:
+            for lang in SUPPORTED_LANGUAGES:
+                if lang not in translations[s]:
+                    translations[s][lang] = ""
+                    if s not in upgraded:
+                        upgraded.append(s)
 
     os.makedirs(os.path.dirname(trans_file), exist_ok=True)
     with open(trans_file, "w", encoding="utf-8") as f:
@@ -88,13 +101,18 @@ def manage_translations(source_dir="."):
     else:
         print("[i] Keine neuen deutschen Strings gefunden.")
 
-    missing = [k for k, v in translations.items() if not v.get("en")]
-    if missing:
-        print(f"\n[!] {len(missing)} fehlende englische Übersetzungen")
-    else:
-        print("\n[ok] Alle Strings haben englische Übersetzungen.")
+    if upgraded:
+        print(f"[+] {len(upgraded)} bestehende Einträge um neue Sprach-Slots erweitert")
+
+    for lang in SUPPORTED_LANGUAGES:
+        if lang == 'de':
+            continue
+        missing = [k for k, v in translations.items() if not v.get(lang)]
+        if missing:
+            print(f"[!] {lang}: {len(missing)} fehlende Übersetzungen")
 
     print(f"\n[i] Gesamt: {len(translations)} Strings in {trans_file}")
+    print(f"[i] Sprachen: {', '.join(SUPPORTED_LANGUAGES)}")
 
 
 if __name__ == "__main__":

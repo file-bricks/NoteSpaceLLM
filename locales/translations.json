@@ -1,34 +1,66 @@
 {
   "+ Dateien": {
     "de": "+ Dateien",
-    "en": "+ Files"
+    "en": "+ Files",
+    "es": "+ Archivos",
+    "zh": "+ 文件",
+    "ja": "+ ファイル",
+    "ru": "+ Файлы"
   },
   "Als Profil speichern": {
     "de": "Als Profil speichern",
-    "en": "Save as Profile"
+    "en": "Save as Profile",
+    "es": "Guardar como perfil",
+    "zh": "保存为配置文件",
+    "ja": "プロファイルとして保存",
+    "ru": "Сохранить как профиль"
   },
   "Bereit zum Exportieren": {
     "de": "Bereit zum Exportieren",
-    "en": "Ready to Export"
+    "en": "Ready to Export",
+    "es": "Listo para exportar",
+    "zh": "准备导出",
+    "ja": "エクスポート準備完了",
+    "ru": "Готово к экспорту"
   },
   "Exportieren": {
     "de": "Exportieren",
-    "en": "Export"
+    "en": "Export",
+    "es": "Exportar",
+    "zh": "导出",
+    "ja": "エクスポート",
+    "ru": "Экспортировать"
   },
   "Fehler": {
     "de": "Fehler",
-    "en": "Error"
+    "en": "Error",
+    "es": "Error",
+    "zh": "错误",
+    "ja": "エラー",
+    "ru": "Ошибка"
   },
   "LLM-Einstellungen": {
     "de": "LLM-Einstellungen",
-    "en": "LLM Settings"
+    "en": "LLM Settings",
+    "es": "Configuración de LLM",
+    "zh": "LLM 设置",
+    "ja": "LLM 設定",
+    "ru": "Настройки LLM"
   },
   "Modelle laden": {
     "de": "Modelle laden",
-    "en": "Load Models"
+    "en": "Load Models",
+    "es": "Cargar modelos",
+    "zh": "加载模型",
+    "ja": "モデルを読み込む",
+    "ru": "Загрузить модели"
   },
   "Workflow bearbeiten": {
     "de": "Workflow bearbeiten",
-    "en": "Edit Workflow"
+    "en": "Edit Workflow",
+    "es": "Editar flujo de travail",
+    "zh": "编辑工作流",
+    "ja": "ワークフローを編集",
+    "ru": "Редактировать рабочий процесс"
   }
 }

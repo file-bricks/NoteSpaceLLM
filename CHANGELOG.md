@@ -38,6 +38,10 @@ wurden erfolgreich erstellt — Remote-Ollama-Anbindung funktioniert produktiv.
 - Geplantes Austauschformat `notespacellm-workspace-v1.json` für Desktop-zu-Companion-Workflows
 - Erster Web/PWA-Companion unter `web_companion/` mit lokalem Workspace-Import, read-only Bericht-/Dokumentansicht und Export für Review-Notizen
 - `web_companion/PWA_TESTPLAN.md` für Android-/iOS-PWA-Smokes zu Installierbarkeit, Import, Offline-Start und Review-Notiz-Export
+- `web_companion/manifest.webmanifest`: `id` und `scope` ergänzt (PWA-Installierbarkeits-Best-Practice)
+- `web_companion/sw.js`: CACHE_NAME v2, `skipWaiting()` + `self.clients.claim()`, 4 Icon-Pfade in ASSETS
+- `web_companion/tests/pwa.test.mjs`: 22 Node.js-Strukturtests (Manifest-Pflichtfelder, Icons, SW-Inhalt, HTML-Integrationskette), kein npm install
+- `web_companion/package.json`: Testscript auf beide Testdateien erweitert (28/28 grün)
 - README-Screenshot und SEO-Metadaten für den Web/PWA-Companion
 - Remote-Ollama-Anbindung: Konfigurierbare Server-URL pro Projekt
 - API-Key-Authentifizierung für Ollama-Proxies (Bearer Token)

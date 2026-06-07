@@ -1,8 +1,9 @@
 """
 TranslationSystem - Multi-Language Support für Anwendungen
 ============================================================
-Version: 1.0.0 (isoliert aus _LANG)
+Version: 2.0.0 (6-Sprachen-Ausbau)
 Quelle: ARC_EntwicklungsschleifeAdvanced/TranslationSystem.py v2.4
+Referenz: _LANG/LANGUAGE_CODES.md
 
 Verwendung:
 -----------
@@ -18,19 +19,23 @@ import re
 from pathlib import Path
 from typing import Dict, List, Set
 
+SUPPORTED_LANGUAGES = ['de', 'en', 'es', 'zh', 'ja', 'ru']
+DEFAULT_LANGUAGE = 'de'
+FALLBACK_CHAIN = ['en', 'de']
+
 
 class TranslationSystem:
-    """Multi-Language Support System v1.0"""
+    """Multi-Language Support System v2.0"""
 
     def __init__(self, default_lang: str = 'de', app_dir: Path = None):
         """
         Initialisiert Translation-System.
 
         Args:
-            default_lang: Standard-Sprache ('de' oder 'en')
+            default_lang: Standard-Sprache (siehe LANGUAGE_CODES.md)
             app_dir: Verzeichnis der Anwendung (default: aktuelles Verzeichnis)
         """
-        self.current_lang = default_lang
+        self.current_lang = default_lang if default_lang in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
 
         if app_dir is None:
             app_dir = Path.cwd()
@@ -75,32 +80,46 @@ class TranslationSystem:
 
     def t(self, key: str) -> str:
         """
-        übersetzt einen Key in die aktuelle Sprache.
-
-        Args:
-            key: Translation-Key (oft der deutsche Originaltext)
-
-        Returns:
-            übersetzter Text oder Key als Fallback
+        Übersetzt einen Key in die aktuelle Sprache.
+        Fallback-Kette: aktuelle Sprache -> en -> de -> Key selbst.
         """
         if key in self.translations:
-            return self.translations[key].get(self.current_lang, key)
+            entry = self.translations[key]
+            value = entry.get(self.current_lang)
+            if value:
+                return value
+            for fb in FALLBACK_CHAIN:
+                value = entry.get(fb)
+                if value:
+                    return value
+            return key
 
         if self._is_german(key):
-            self.translations[key] = {"de": key, "en": ""}
+            entry = {"de": key}
+            for lang in SUPPORTED_LANGUAGES:
+                if lang != 'de':
+                    entry[lang] = ""
+            self.translations[key] = entry
             self._save_translations()
 
         return key
 
     def set_language(self, lang: str):
-        if lang in ['de', 'en']:
+        if lang in SUPPORTED_LANGUAGES:
             self.current_lang = lang
 
     def get_language(self) -> str:
         return self.current_lang
 
-    def add_translation(self, key: str, de: str, en: str):
-        self.translations[key] = {"de": de, "en": en}
+    def get_supported_languages(self) -> List[str]:
+        return list(SUPPORTED_LANGUAGES)
+
+    def add_translation(self, key: str, **translations: str):
+        if key not in self.translations:
+            self.translations[key] = {lang: "" for lang in SUPPORTED_LANGUAGES}
+        for lang, value in translations.items():
+            if lang in SUPPORTED_LANGUAGES:
+                self.translations[key][lang] = value
         self._save_translations()
 
     def scan_and_update(self, project_dir: Path = None) -> Dict:
@@ -113,13 +132,21 @@ class TranslationSystem:
         added = []
         for string in sorted(found_strings):
             if string not in self.translations:
-                self.translations[string] = {"de": string, "en": ""}
+                entry = {"de": string}
+                for lang in SUPPORTED_LANGUAGES:
+                    if lang != 'de':
+                        entry[lang] = ""
+                self.translations[string] = entry
                 added.append(string)
 
         if added:
             self._save_translations()
 
-        missing = [k for k, v in self.translations.items() if not v.get("en")]
+        missing = {lang: [] for lang in SUPPORTED_LANGUAGES if lang != 'de'}
+        for k, v in self.translations.items():
+            for lang in SUPPORTED_LANGUAGES:
+                if lang != 'de' and not v.get(lang):
+                    missing[lang].append(k)
 
         return {'added': added, 'missing': missing, 'total': len(self.translations)}
 
@@ -150,12 +177,25 @@ class TranslationSystem:
         text_lower = text.lower()
         return any(hint in text_lower for hint in self.german_hints)
 
-    def get_missing_translations(self) -> List[str]:
-        return [k for k, v in self.translations.items() if not v.get("en")]
+    def get_missing_translations(self, lang: str = None) -> Dict[str, List[str]]:
+        """Gibt fehlende Übersetzungen zurück. Ohne Argument: alle Sprachen."""
+        if lang and lang in SUPPORTED_LANGUAGES:
+            return {lang: [k for k, v in self.translations.items() if not v.get(lang)]}
+        missing = {}
+        for l in SUPPORTED_LANGUAGES:
+            if l == 'de':
+                continue
+            m = [k for k, v in self.translations.items() if not v.get(l)]
+            if m:
+                missing[l] = m
+        return missing
 
 
 if __name__ == "__main__":
     tr = TranslationSystem('de')
     print(f"Sprache: {tr.get_language()}")
+    print(f"Unterstützt: {', '.join(SUPPORTED_LANGUAGES)}")
     result = tr.scan_and_update()
-    print(f"Scan: {result['total']} Strings, {len(result['added'])} neu, {len(result['missing'])} ohne EN")
+    print(f"Scan: {result['total']} Strings, {len(result['added'])} neu")
+    for lang, keys in result['missing'].items():
+        print(f"  {lang}: {len(keys)} fehlend")
