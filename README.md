@@ -18,7 +18,7 @@ uploading documents to a server.
 private document chat, PySide6 research tool, offline AI report generator,
 local-first document workflow.
 
-## English quick start
+## Quick Start
 
 ```bash
 git clone https://github.com/file-bricks/NoteSpaceLLM.git
@@ -27,7 +27,9 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Run the test and compile smoke checks with:
+On Windows you can also launch via `start.bat`. A local Windows launcher can be built with `build_exe.bat`.
+
+Run tests and compile smoke checks with:
 
 ```bash
 python -m unittest discover -s tests -v
@@ -42,89 +44,58 @@ node --test tests/library.test.mjs
 
 ![NoteSpaceLLM Web/PWA Companion](README/screenshots/web-companion.png)
 
-## Deutsch
-
-Ein lokaler, datenschutzfreundlicher Ersatz für Google NotebookLM zur Dokumentenanalyse und Berichterstellung.
-
 ## Features
 
-- **Dokumentenverwaltung**: Dateien und Verzeichnisse per Drag & Drop hinzufügen
-- **Automatische Extraktion & Auto-Indexierung**: Neue Dokumente werden direkt verarbeitet und für RAG vorbereitet
-- **Selektive Auswahl**: Dokumente für Berichterstellung auswählen/abwählen
-- **Detailrecherchen**: Rechtsklick für dokumentspezifische Analysen (Sub-Queries)
-- **Workflow-Visualisierung**: Grafische Darstellung des Berichtsprozesses
-- **Chat-Interface**: Interaktives Chatten über die Dokumente mit LLM
-- **Claude Code Integration**: Wahlweise strukturierte API-Antworten oder Übergabe an eine interaktive Claude-Code-Session
-- **Multi-Format-Export**: Ausgabe in MD, PDF, DOCX, HTML, TXT
-- **Prompt-Export**: Berichtskontext als Markdown-Prompt für externe LLM-Workflows exportieren
-- **Remote-Ollama pro Projekt**: Eigene Base-URL und API-Key für lokale oder entfernte Ollama-Server
-- **Umlaut-sichere Oberfläche**: Deutsche UI-Texte verwenden echte Umlaute; der Übersetzungs-Scan vermeidet englische False Positives
-- **Profile**: Wiederverwendbare Ausgabeformat-Kombinationen
-
-## Desktop-Screenshot
-
-![NoteSpaceLLM Hauptfenster](README/screenshots/main.png)
+- **Document management**: Add files and directories via drag & drop
+- **Auto-indexing**: New documents are processed and indexed immediately for RAG
+- **Selective analysis**: Check/uncheck documents to include or exclude from reports
+- **Sub-queries**: Right-click a document for targeted document-specific research
+- **Workflow visualization**: Graphical overview of the report pipeline
+- **Chat interface**: Interactive chat over loaded documents with any LLM
+- **Claude Code integration**: Structured API responses or hand-off to an interactive Claude Code session
+- **Multi-format export**: Output to MD, PDF, DOCX, HTML, TXT
+- **Prompt export**: Save the report context as a Markdown prompt for external LLM workflows
+- **Remote Ollama per project**: Configurable server URL and API key per project
+- **6-language i18n**: Interface translations for de, en, es, zh, ja, ru
+- **Umlaut-safe UI**: German UI strings use native umlauts; the translation scanner avoids English false positives
+- **Profiles**: Reusable output-format combinations
 
 ## Installation
 
 ```bash
-# Repository klonen oder Ordner kopieren
+# Clone or copy the project folder
 cd NoteSpaceLLM
 
-# Abhängigkeiten installieren
+# Install dependencies
 pip install -r requirements.txt
 
-# Anwendung starten
+# Start the app
 python main.py
 ```
 
-Unter Windows kann die App alternativ per `start.bat` gestartet werden.
-
-Für einen lokalen Windows-Launcher kann zusätzlich folgender Build ausgeführt
-werden:
-
-```bat
-build_exe.bat
-```
-
-Der Build erzeugt `NoteSpaceLLM.exe` als schlanken Starter für die lokale
-Python-Umgebung und die Projekt-Abhängigkeiten.
-
-## Abhängigkeiten prüfen
+Check dependencies:
 
 ```bash
 python main.py --check
 ```
 
-## Tests
+## LLM Configuration
 
-```bash
-python -m unittest discover -s tests -v
-python -m compileall -q main.py manage_translations.py translator.py src
-```
+### Ollama (Local — Recommended)
 
-## LLM-Konfiguration
+1. [Install Ollama](https://ollama.ai)
+2. Download a model: `ollama pull llama3`
+3. In the app: Menu > LLM > Use Ollama
 
-### Ollama (Lokal - Empfohlen)
+### Ollama (Remote Server)
 
-1. [Ollama installieren](https://ollama.ai)
-2. Modell herunterladen: `ollama pull llama3`
-3. In der App: Menü > LLM > Ollama verwenden
+NoteSpaceLLM can connect to a remote Ollama server, e.g. via [ellmos-stack](https://github.com/ellmos-ai/ellmos-stack):
 
-### Ollama (Remote-Server)
+1. In the app: Menu > LLM > Settings
+2. **Ollama URL:** `http://your-server:11435` (or your port)
+3. **API Key:** If the server is behind an auth proxy (recommended)
 
-NoteSpaceLLM kann einen entfernten Ollama-Server nutzen, z.B. über [ellmos-stack](https://github.com/ellmos-ai/ellmos-stack):
-
-1. In der App: Menü > LLM > Einstellungen
-2. **Ollama URL:** `http://your-server:11435` (oder eigener Port)
-3. **API-Key:** Falls der Server hinter einem Auth-Proxy liegt (empfohlen)
-
-Die Remote-Anbindung eignet sich für:
-- Stärkere Modelle auf dedizierter Hardware
-- Gemeinsame Nutzung eines LLM-Servers im Team
-- Desktop ohne GPU
-
-> **Tipp:** Ollama hat keine eingebaute Authentifizierung. Für Remote-Zugriff empfehlen wir einen Reverse-Proxy (z.B. Nginx) mit API-Key oder Basic Auth.
+> **Tip:** Ollama has no built-in authentication. For remote access, use a reverse proxy (e.g. Nginx) with API key or Basic Auth.
 
 ### OpenAI
 
@@ -140,217 +111,238 @@ export ANTHROPIC_API_KEY="<your-anthropic-api-key>"
 
 ### Claude Code
 
-Für den Provider `claude-code` wird die lokale CLI benötigt:
+Requires the local CLI:
 
 ```bash
 npm install -g @anthropic-ai/claude-code
 ```
 
-In der App stehen zwei Modi bereit:
-- **API-Modus**: strukturierte Antwort direkt zurück in NoteSpaceLLM
-- **Chat-Modus**: Übergabe des Prompts an eine interaktive Claude-Code-Konsole
+Two modes are available in the app:
+- **API mode**: structured response returned directly into NoteSpaceLLM
+- **Chat mode**: hands the prompt off to an interactive Claude Code console
 
-## Verwendung
+## Usage
 
-### 1. Dokumente hinzufügen
+### 1. Add Documents
 
-- **Drag & Drop**: Dateien/Ordner in das linke Panel ziehen
-- **Button**: "Dateien hinzufügen" oder "Ordner hinzufügen"
+- **Drag & Drop**: Drop files or folders into the left panel
+- **Button**: "Add files" or "Add folder"
 
-### 2. Dokumente auswählen
+### 2. Select Documents
 
-- Checkbox: Dokumente für Analyse ein-/ausschließen
-- Buttons: "Alle" / "Keine" für Massenauswahl
+- Checkbox: include/exclude documents for analysis
+- Buttons: "All" / "None" for bulk selection
 
-### 3. Detailrecherchen (optional)
+### 3. Sub-queries (optional)
 
-Rechtsklick auf ein Dokument:
-- **Zusammenfassung erstellen**: Automatische Zusammenfassung
-- **Informationen extrahieren**: Spezifische Daten finden
-- **Analysieren**: Gezielte Analyse
-- **Frage stellen**: Konkrete Frage zum Dokument
+Right-click a document:
+- **Create summary**: Automatic summary
+- **Extract information**: Find specific data
+- **Analyse**: Targeted analysis
+- **Ask question**: Specific question about the document
 
-### 4. Hauptfragestellung definieren
+### 4. Define main question
 
-Im Workflow-Panel die zentrale Fragestellung eingeben.
+Enter the central research question in the workflow panel.
 
-### 5. Workflow/Berichtsart wählen
+### 5. Choose workflow/report type
 
-- **Analyse**: Umfassende Analyse mit Empfehlungen
-- **Zusammenfassung**: Kurze Zusammenfassung
-- **Forschungsbericht**: Akademische Struktur
-- **Vergleich**: Systematischer Dokumentenvergleich
+- **Analysis**: Comprehensive analysis with recommendations
+- **Summary**: Short summary
+- **Research report**: Academic structure
+- **Comparison**: Systematic document comparison
 
-### 6. Bericht erstellen
+### 6. Generate report
 
-Klick auf "Bericht erstellen" - die Ausgabe erscheint im rechten Panel.
+Click "Create report" — output appears in the right panel.
 
-### 7. Exportieren
+### 7. Export
 
-Ausgabeformate wählen und "Exportieren" klicken.
+Select output formats and click "Export".
 
-### 8. Prompt exportieren
+### 8. Prompt export
 
-Über **"Prompt exportieren"** wird der aktuelle Arbeitskontext als Markdown-Datei gespeichert, um ihn in Claude Code oder anderen LLM-Workflows weiterzuverwenden.
+Use **"Export prompt"** to save the current working context as a Markdown file for use in Claude Code or other LLM workflows.
 
-## Projektstruktur
+## Web/PWA Companion
 
-```
-NoteSpaceLLM/
-├── main.py                 # Startpunkt
-├── requirements.txt        # Abhängigkeiten
-├── README.md              # Diese Datei
-├── src/
-│   ├── core/              # Kernfunktionalität
-│   │   ├── document_manager.py   # Dokumentenverwaltung
-│   │   ├── text_extractor.py     # Textextraktion
-│   │   ├── sub_query.py          # Detailrecherchen
-│   │   └── project.py            # Projektverwaltung
-│   ├── gui/               # PySide6 Benutzeroberfläche
-│   │   ├── main_window.py        # Hauptfenster
-│   │   ├── document_panel.py     # Dokument-Panel
-│   │   ├── workflow_panel.py     # Workflow-Panel
-│   │   ├── chat_panel.py         # Chat-Panel
-│   │   └── output_panel.py       # Ausgabe-Panel
-│   ├── llm/               # LLM-Integration (lokal + remote)
-│   │   ├── client.py             # Basis-Client + Factory
-│   │   ├── ollama_client.py      # Ollama (lokal & remote, mit Auth)
-│   │   ├── openai_client.py      # OpenAI
-│   │   └── anthropic_client.py   # Anthropic
-│   └── reports/           # Berichterstellung
-│       ├── generator.py          # Berichtsgenerierung
-│       ├── templates.py          # Vorlagen
-│       └── exporter.py           # Export
-├── data/                  # Datenverzeichnis
-├── workflows/             # Workflow-Definitionen
-├── profiles/              # Ausgabeprofile
-└── output/                # Exportierte Berichte
-```
+Under `web_companion/` is a read-only Companion strand for Android, iOS and
+browser. It imports exported `notespacellm-workspace-v1.json` files locally in
+the browser, shows the report, document metadata and selected excerpts, restores
+the last loaded workspace locally for offline starts, and can export review
+notes as Markdown.
 
-## Unterstützte Dateiformate
-
-| Format | Lesen | Schreiben |
-|--------|-------|-----------|
-| PDF    | ✅    | ✅        |
-| DOCX   | ✅    | ✅        |
-| DOC    | ⚠️    | -         |
-| TXT    | ✅    | ✅        |
-| MD     | ✅    | ✅        |
-| XLSX   | ✅    | -         |
-| HTML   | -     | ✅        |
-| EML    | ✅    | -         |
-| MSG    | ✅    | -         |
-
-⚠️ .doc benötigt antiword oder LibreOffice
-
-## Tips
-
-1. **Große Dokumente**: Bei vielen Dokumenten zuerst nur wichtige auswählen
-2. **Detailrecherchen**: Für bessere Ergebnisse gezielte Sub-Queries nutzen
-3. **Ollama**: Für Datenschutz und Offline-Nutzung empfohlen
-4. **Workflow anpassen**: Schritte können umgeordnet werden
-
-## Datenschutz
-
-NoteSpaceLLM verarbeitet Projekte, Dokumentindexe und Exporte standardmäßig lokal in den Projektordnern `data/`, `profiles/`, `workflows/`, `output/` und `chroma_db/`. Diese Ordner sind bewusst nicht für Git vorgesehen.
-
-Wenn externe oder entfernte LLM-Provider wie OpenAI, Anthropic, Claude Code oder ein Remote-Ollama-Server gewählt werden, können Prompts und ausgewählte Dokumentauszüge an diese Dienste oder Server übertragen werden. Verwende für vertrauliche Dokumente bevorzugt lokale Modelle und prüfe vor dem Teilen eines Projektordners die enthaltenen Daten.
-
-## Plattformstrategie
-
-Die Desktop-App bleibt die autoritative Vollversion für lokale Dokumente, RAG-Index, LLM-Provider und vertrauliche Arbeitsstände. Für Android, iOS und Browser ist ein Web/PWA-Companion als getrennte Linie geplant, der über `notespacellm-workspace-v1.json` mit der Desktop-App Daten austauscht. Details stehen in `PORTIERUNGSPLAN.md` und `EXPORTFORMAT.md`.
-
-### Web/PWA-Companion
-
-Unter `web_companion/` liegt jetzt der erste read-only Companion-Strang für
-Android, iOS und Browser. Er importiert exportierte
-`notespacellm-workspace-v1.json`-Dateien lokal im Browser, zeigt Bericht,
-Dokumentmetadaten und ausgewählte Auszüge an, stellt den zuletzt geladenen
-Workspace lokal für Offline-Starts wieder her und kann eigene Review-Notizen
-als Markdown exportieren.
-
-Für lokale Browser-Tests reicht ein kleiner statischer Server:
+Local browser test:
 
 ```powershell
 $env:PYTHONIOENCODING='utf-8'
 python -m http.server 8765 -d web_companion
 ```
 
-Die Companion-Smokes laufen über:
+Companion smokes:
 
 ```powershell
 cd web_companion
 node --test tests/library.test.mjs
 ```
 
-Der mobile Android-/iOS-PWA-Pfad ist in `web_companion/PWA_TESTPLAN.md`
-konkret dokumentiert.
+The Android/iOS PWA test plan is documented in `web_companion/PWA_TESTPLAN.md`.
 
-### macOS- und Linux-Source-Smokes
+## Platform Strategy
 
-Für die Desktop-Linie laufen zusätzliche Quellcode-Smokes in GitHub Actions.
-`tests/platform_smoke.py` bildet die gemeinsame Offscreen-Basis; der
-Linux-spezifische Wrapper `tests/linux_platform_smoke.py` ruft denselben
-Prüfpfad gezielt auf `ubuntu-latest` auf.
+The desktop app remains the authoritative full version for local documents, RAG
+index, LLM providers and confidential work. For Android, iOS and browser a
+Web/PWA Companion is planned as a separate strand, exchanging data via
+`notespacellm-workspace-v1.json`. Details in `PORTIERUNGSPLAN.md` and
+`EXPORTFORMAT.md`.
 
-Geprüft werden:
+### macOS and Linux Source Smokes
 
-- PySide6-App-Start ohne sichtbare GUI
-- Import eines temporären Textdokuments mit echten Umlauten
-- einfacher Berichtsexport nach Markdown und TXT
-- `notespacellm-workspace-v1.json` ohne echten Ollama- oder LLM-Server
+Additional source smokes run in GitHub Actions:
+- `tests/platform_smoke.py` — offscreen PySide6 start, document import, report export, workspace JSON export
+- `tests/linux_platform_smoke.py` — Linux-specific wrapper on `ubuntu-latest`
 
-## Entwicklung
+## Project Structure
 
-Die Anwendung ist modular aufgebaut und trennt Dokumentverwaltung, Text-Extraktion, RAG-Index, LLM-Provider und Report-Export.
+```
+NoteSpaceLLM/
+├── main.py                 # Entry point
+├── requirements.txt        # Dependencies
+├── translator.py           # i18n system (6 languages)
+├── locales/                # Translation files
+├── src/
+│   ├── core/              # Core functionality
+│   │   ├── document_manager.py
+│   │   ├── text_extractor.py
+│   │   ├── sub_query.py
+│   │   └── project.py
+│   ├── gui/               # PySide6 UI
+│   │   ├── main_window.py
+│   │   ├── document_panel.py
+│   │   ├── workflow_panel.py
+│   │   ├── chat_panel.py
+│   │   └── output_panel.py
+│   ├── llm/               # LLM integration (local + remote)
+│   │   ├── client.py
+│   │   ├── ollama_client.py
+│   │   ├── openai_client.py
+│   │   └── anthropic_client.py
+│   └── reports/           # Report generation
+│       ├── generator.py
+│       ├── templates.py
+│       └── exporter.py
+├── web_companion/         # PWA Companion
+├── data/                  # Project data (gitignored)
+├── workflows/             # Workflow definitions
+├── profiles/              # Output profiles
+└── output/                # Exported reports
+```
 
-## Lizenz
+## Supported File Formats
 
-AGPL v3 - Siehe [LICENSE](LICENSE)
+| Format | Read | Write |
+|--------|------|-------|
+| PDF    | ✅   | ✅    |
+| DOCX   | ✅   | ✅    |
+| DOC    | ⚠️   | —     |
+| TXT    | ✅   | ✅    |
+| MD     | ✅   | ✅    |
+| XLSX   | ✅   | —     |
+| HTML   | —    | ✅    |
+| EML    | ✅   | —     |
+| MSG    | ✅   | —     |
 
-Dieses Projekt verwendet PySide6 (LGPL) und PyMuPDF (AGPL).
+⚠️ .doc requires antiword or LibreOffice
+
+## Privacy
+
+NoteSpaceLLM stores project data, document indexes, profiles, workflow settings,
+and exports locally in `data/`, `profiles/`, `workflows/`, `output/` and
+`chroma_db/`. These folders are intentionally excluded from Git.
+
+When external LLM providers (OpenAI, Anthropic, Claude Code, remote Ollama)
+are enabled, prompts and selected document excerpts may be transmitted to those
+services. For confidential documents use local models and review folder contents
+before sharing.
+
+## Tips
+
+1. **Large document sets**: Select only relevant documents first for faster results
+2. **Sub-queries**: Use targeted sub-queries for higher-quality analysis
+3. **Ollama**: Recommended for privacy and offline use
+4. **Workflow ordering**: Steps can be reordered in the workflow panel
+
+## License
+
+AGPL v3 — see [LICENSE](LICENSE)
+
+This project uses PySide6 (LGPL) and PyMuPDF (AGPL).
 
 ---
 
-## English
+## Deutsch
 
-A local replacement for Google NotebookLM with LLM integration and multi-format export.
+Ein lokaler, datenschutzfreundlicher Ersatz für Google NotebookLM zur Dokumentenanalyse und Berichterstellung.
 
 ### Features
 
-- Local LLM integration
-- Automatic extraction and auto-indexing for newly added documents
-- Multi-format document import
-- AI-powered summaries
-- Claude Code provider with API and interactive chat modes
-- Prompt export for external LLM workflows
-- German UI strings use native umlauts, while the translation scanner avoids English false positives
-- Export to multiple formats
-
-### Screenshot
-
-![NoteSpaceLLM main window](README/screenshots/main.png)
+- **Dokumentenverwaltung**: Dateien und Verzeichnisse per Drag & Drop hinzufügen
+- **Automatische Extraktion & Auto-Indexierung**: Neue Dokumente werden direkt verarbeitet und für RAG vorbereitet
+- **Selektive Auswahl**: Dokumente für Berichterstellung auswählen/abwählen
+- **Detailrecherchen**: Rechtsklick für dokumentspezifische Analysen (Sub-Queries)
+- **Workflow-Visualisierung**: Grafische Darstellung des Berichtsprozesses
+- **Chat-Interface**: Interaktives Chatten über die Dokumente mit LLM
+- **Claude Code Integration**: Wahlweise strukturierte API-Antworten oder Übergabe an eine interaktive Claude-Code-Session
+- **Multi-Format-Export**: Ausgabe in MD, PDF, DOCX, HTML, TXT
+- **Prompt-Export**: Berichtskontext als Markdown-Prompt für externe LLM-Workflows exportieren
+- **Remote-Ollama pro Projekt**: Eigene Base-URL und API-Key für lokale oder entfernte Ollama-Server
+- **6-Sprachen-i18n**: Übersetzungen für de, en, es, zh, ja, ru
+- **Umlaut-sichere Oberfläche**: Deutsche UI-Texte verwenden echte Umlaute; der Übersetzungs-Scan vermeidet englische False Positives
+- **Profile**: Wiederverwendbare Ausgabeformat-Kombinationen
 
 ### Installation
 
 ```bash
-git clone https://github.com/file-bricks/NoteSpaceLLM.git
 cd NoteSpaceLLM
 pip install -r requirements.txt
-python "main.py"
+python main.py
 ```
 
-On Windows, you can also launch the app via `start.bat`.
+Unter Windows alternativ per `start.bat`. Build: `build_exe.bat`
 
-A local Windows launcher can also be built with `build_exe.bat`.
+### LLM-Konfiguration
 
-### License
+#### Ollama (Lokal — Empfohlen)
 
-See [LICENSE](LICENSE) for details.
+1. [Ollama installieren](https://ollama.ai)
+2. Modell herunterladen: `ollama pull llama3`
+3. In der App: Menü > LLM > Ollama verwenden
 
-### Privacy
+#### Ollama (Remote-Server)
 
-Project data, indexes, profiles, workflow settings, and exports are local by default and intentionally excluded from Git. External or remote LLM providers may receive prompts and selected document excerpts when enabled.
+Konfigurierbare Server-URL und API-Key pro Projekt. Kompatibel mit [ellmos-stack](https://github.com/ellmos-ai/ellmos-stack).
+
+#### OpenAI / Anthropic (Claude)
+
+```bash
+export OPENAI_API_KEY="..."
+export ANTHROPIC_API_KEY="..."
+```
+
+### Verwendung
+
+1. Dokumente hinzufügen (Drag & Drop oder Buttons)
+2. Dokumente auswählen (Checkboxen)
+3. Optional: Detailrecherchen per Rechtsklick
+4. Hauptfragestellung eingeben
+5. Workflow/Berichtsart wählen
+6. „Bericht erstellen" klicken
+7. Ergebnis exportieren (MD, PDF, DOCX, HTML, TXT)
+8. Optional: „Prompt exportieren" für externe LLM-Workflows
+
+### Plattformstrategie
+
+Desktop-App als autoritative Vollversion. Web/PWA-Companion für Android, iOS und Browser über `notespacellm-workspace-v1.json`. Details in `PORTIERUNGSPLAN.md` und `EXPORTFORMAT.md`.
 
 ---
 
@@ -361,4 +353,3 @@ Dieses Projekt ist eine **unentgeltliche Open-Source-Schenkung** im Sinne der §
 Nutzung auf eigenes Risiko. Keine Wartungszusage, keine Verfügbarkeitsgarantie, keine Gewähr für Fehlerfreiheit oder Eignung für einen bestimmten Zweck.
 
 This project is an unpaid open-source donation. Liability is limited to intent and gross negligence (§ 521 German Civil Code). Use at your own risk. No warranty, no maintenance guarantee, no fitness-for-purpose assumed.
-

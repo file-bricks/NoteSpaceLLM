@@ -29,15 +29,19 @@ class TranslationSystemTests(unittest.TestCase):
             result = tr.scan_and_update(project_dir)
 
             self.assertEqual(result["added"], ["Datei öffnen"])
-            self.assertEqual(result["missing"], ["Datei öffnen"])
+            # missing is a per-language dict since i18n expansion (6 languages)
+            self.assertIsInstance(result["missing"], dict)
+            for lang in ("en", "es", "zh", "ja", "ru"):
+                self.assertIn("Datei öffnen", result["missing"].get(lang, []))
             self.assertEqual(result["total"], 1)
 
             translations_path = project_dir / "locales" / "translations.json"
             data = json.loads(translations_path.read_text(encoding="utf-8"))
-            self.assertEqual(
-                data,
-                {"Datei öffnen": {"de": "Datei öffnen", "en": ""}},
-            )
+            self.assertIn("Datei öffnen", data)
+            entry = data["Datei öffnen"]
+            self.assertEqual(entry["de"], "Datei öffnen")
+            for lang in ("en", "es", "zh", "ja", "ru"):
+                self.assertIn(lang, entry)
 
 
 if __name__ == "__main__":

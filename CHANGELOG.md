@@ -5,6 +5,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Documentation
+- README restructured to English-first with full English feature/install/config/usage documentation; German translation moved to secondary section
+- `llms.txt` added for LLM crawler discoverability
+
+### Fixed
+- `tests/test_translator.py`: updated `test_scan_and_update_only_picks_up_german_strings` to match the multi-language `missing` dict returned since i18n expansion (6 languages)
+
 ### Build / Release
 - macOS-Source-Smoke für die Desktop-Linie ergänzt: `tests/platform_smoke.py`
   startet `MainWindow` offscreen, importiert ein temporäres Dokument und
