@@ -67,7 +67,10 @@ body {
 .shell {
   margin: 0 auto;
   max-width: 1180px;
-  padding: 32px 18px 48px;
+  padding-top: calc(32px + env(safe-area-inset-top, 0px));
+  padding-right: 18px;
+  padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+  padding-left: 18px;
   position: relative;
   z-index: 1;
 }
@@ -202,6 +205,8 @@ button,
   font: inherit;
   font-weight: 700;
   justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
   padding: 12px 18px;
   text-decoration: none;
   transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;

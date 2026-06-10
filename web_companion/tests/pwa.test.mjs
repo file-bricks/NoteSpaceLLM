@@ -144,3 +144,75 @@ describe('app.js', () => {
     assert.ok(app.includes('./library.js'), 'import von library.js fehlt in app.js');
   });
 });
+
+// ──────────────────────────────────────────────────────────────
+// index.html iOS-PWA-Meta
+// ──────────────────────────────────────────────────────────────
+
+describe('index.html iOS-PWA-Meta', () => {
+  const html = readText('index.html');
+
+  it('viewport-Meta enthält width=device-width und initial-scale=1', () => {
+    assert.match(html, /<meta[^>]*name="viewport"[^>]*width=device-width/);
+    assert.match(html, /<meta[^>]*name="viewport"[^>]*initial-scale=1/);
+  });
+
+  it('viewport-Meta enthält viewport-fit=cover', () => {
+    assert.match(html, /<meta[^>]*name="viewport"[^>]*viewport-fit=cover/);
+  });
+
+  it('apple-mobile-web-app-status-bar-style ist gesetzt', () => {
+    assert.match(
+      html,
+      /<meta[^>]*name="apple-mobile-web-app-status-bar-style"[^>]*content="[^"]+"/
+    );
+  });
+
+  it('apple-mobile-web-app-title ist gesetzt', () => {
+    assert.match(
+      html,
+      /<meta[^>]*name="apple-mobile-web-app-title"[^>]*content="[^"]+"/
+    );
+  });
+
+  it('apple-touch-icon verweist auf ./icons/apple-touch-icon-180.png', () => {
+    assert.match(
+      html,
+      /<link[^>]*rel="apple-touch-icon"[^>]*href="\.\/icons\/apple-touch-icon-180\.png"/
+    );
+  });
+
+  it('apple-touch-icon hat sizes="180x180"', () => {
+    assert.match(html, /<link[^>]*rel="apple-touch-icon"[^>]*sizes="180x180"/);
+  });
+
+  it('manifest-Link ist vorhanden', () => {
+    assert.match(html, /<link[^>]*rel="manifest"/);
+  });
+
+  it('theme-color Meta-Tag ist gesetzt', () => {
+    assert.match(html, /<meta[^>]*name="theme-color"[^>]*content="[^"]+"/);
+  });
+
+  it('keine doppelten viewport-Meta-Tags', () => {
+    const matches = html.match(/<meta[^>]*name="viewport"/g) ?? [];
+    assert.equal(
+      matches.length,
+      1,
+      `Genau 1 viewport-Meta erwartet, gefunden: ${matches.length}`
+    );
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
+// Icons — apple-touch-icon-180.png
+// ──────────────────────────────────────────────────────────────
+
+describe('Icons — apple-touch-icon-180.png', () => {
+  it('icons/apple-touch-icon-180.png existiert', () => {
+    assert.ok(
+      existsSync(join(root, 'icons', 'apple-touch-icon-180.png')),
+      'Fehlende Datei: icons/apple-touch-icon-180.png'
+    );
+  });
+});

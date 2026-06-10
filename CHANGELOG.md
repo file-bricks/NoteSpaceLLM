@@ -3,6 +3,14 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-06-10]
+
+### Changed (web_companion)
+- `web_companion/index.html`: viewport-Meta um `viewport-fit=cover` erweitert; iOS-PWA-Meta-Tags ergänzt: `apple-mobile-web-app-status-bar-style` (default), `apple-mobile-web-app-title` (NoteSpaceLLM), `apple-touch-icon` 180×180 px
+- `web_companion/app.css`: `.shell`-Padding auf vollständige Longhand-Deklarationen mit `env(safe-area-inset-top, 0px)` / `env(safe-area-inset-bottom, 0px)` umgestellt; `button`/`.file-button` erhalten `min-height: 44px` und `min-width: 44px` (Apple-HIG-Touch-Targets)
+- `web_companion/icons/apple-touch-icon-180.png`: Neues 180×180-Icon aus Icon-192.png via LANCZOS-Resize generiert
+- `web_companion/tests/pwa.test.mjs`: 10 neue iOS-PWA-Tests ergänzt (viewport-fit=cover, apple-status-bar-style, apple-title, apple-touch-icon-Pfad, apple-touch-icon-sizes, manifest-Link, theme-color, kein doppeltes viewport, apple-touch-icon-180.png existiert); 33/33 Tests grün (vorher 23)
+
 ## [Unreleased]
 
 ### Documentation
