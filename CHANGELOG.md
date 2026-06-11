@@ -15,10 +15,8 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Documentation
 - README restructured to English-first with full English feature/install/config/usage documentation; German translation moved to secondary section
-- `llms.txt` added for LLM crawler discoverability
-
-### Fixed
-- `tests/test_translator.py`: updated `test_scan_and_update_only_picks_up_german_strings` to match the multi-language `missing` dict returned since i18n expansion (6 languages)
+- `llms.txt` added for LLM crawler discoverability; Last-checked: 2026-06-11, Audience and Search Phrases sections standardized
+- `PORTIERUNGSPLAN.md` reference removed from README (internal file, already gitignored); `docs/` added to `.gitignore`
 
 ### Build / Release
 - macOS-Source-Smoke für die Desktop-Linie ergänzt: `tests/platform_smoke.py`
@@ -49,6 +47,8 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 wurden erfolgreich erstellt — Remote-Ollama-Anbindung funktioniert produktiv.
 
 ### Hinzugefügt / Added
+- `locales/translations.json`: i18n for es, zh, ja, ru — Premium 6-language translations added (Spanish, Chinese, Japanese, Russian) via `manage_translations.py` (0b9769d)
+- `translator.py`: per-language `missing` dict bucketing for all 6 languages (en/de/es/zh/ja/ru)
 - Portierungsplan für Windows Store, Web/PWA, Android, iOS, macOS und Linux
 - Geplantes Austauschformat `notespacellm-workspace-v1.json` für Desktop-zu-Companion-Workflows
 - Erster Web/PWA-Companion unter `web_companion/` mit lokalem Workspace-Import, read-only Bericht-/Dokumentansicht und Export für Review-Notizen
@@ -75,6 +75,10 @@ wurden erfolgreich erstellt — Remote-Ollama-Anbindung funktioniert produktiv.
 - GitHub Actions führt neben dem Compile-Smoke-Test jetzt auch die Unit-Tests aus
 
 ### Behoben / Fixed
+- `web_companion/app.js`: `forEach`-Parameter `document` shadowed the DOM global causing `createElement` to crash → renamed to `doc` (73f0c98)
+- `web_companion/app.js`: `escHtml()` added; all `innerHTML` assignments (doc.name, doc.format, doc.path_hint, excerpt.text, excerpt.source_hint) now HTML-escaped to prevent XSS (73f0c98)
+- `web_companion/sw.js`: `caches.match` now uses `{ignoreSearch: true}` to prevent offline fail on `?`-query URLs (73f0c98)
+- `tests/test_translator.py`: updated `test_scan_and_update_only_picks_up_german_strings` to match the multi-language `missing` dict returned since i18n expansion (6 languages)
 - `.gitignore` ignoriert lokale Projektordner nur noch im Repository-Root, nicht mehr `.github/workflows`
 - Deutsche UI-Texte verwenden echte Umlaute; die Übersetzungs-Erkennung markiert englische Wörter mit `ss` nicht mehr irrtümlich als Deutsch
 

@@ -1,5 +1,7 @@
 # NoteSpaceLLM
 
+## Last-checked: 2026-06-11
+
 > Local NotebookLM alternative for private document analysis, RAG-assisted research, and multi-format report generation.
 
 ## Description
@@ -35,29 +37,24 @@ NoteSpaceLLM is an offline-first PySide6 desktop application for private documen
 
 ## Audience
 
-- Privacy-conscious researchers and knowledge workers
-- Developers who need a local NotebookLM alternative
-- Teams running local LLM infrastructure (Ollama/ellmos-stack)
-- Anyone who wants offline AI document analysis without cloud dependency
+- Privacy-conscious researchers and knowledge workers who need a local NotebookLM alternative
+- Developers evaluating offline-first PySide6 desktop apps with ChromaDB and multi-provider LLM support
+- Teams running local LLM infrastructure (Ollama, ellmos-stack) wanting document analysis without cloud upload
+- Anyone who wants offline AI document analysis, report generation, and mobile review via PWA Companion
 
 ## Search Phrases
 
-- local NotebookLM alternative
-- offline RAG document analysis desktop app
-- private document chat PySide6
-- local LLM document analysis Python
-- ChromaDB desktop research tool
-- NotebookLM alternative open source
-- offline AI report generator Python
-- local-first document workflow LLM
-- PySide6 document analysis
-- Ollama document chat desktop
-
-## Preferred Search Phrases
-
-- local NotebookLM alternative offline privacy
-- private document analysis RAG desktop app
-- PySide6 ChromaDB document research tool
+```
+local NotebookLM alternative offline privacy
+private document analysis RAG desktop app Python
+PySide6 ChromaDB document research tool
+offline RAG document analysis desktop app
+local LLM document analysis Python
+NotebookLM alternative open source
+offline AI report generator Python
+local-first document workflow LLM
+Ollama document chat desktop PySide6
+```
 
 ## Topics
 
@@ -68,5 +65,3 @@ notebooklm-alternative, rag, local-first, pyside6, document-analysis, document-c
 - URL: https://github.com/file-bricks/NoteSpaceLLM
 - Organization: file-bricks
 - License: AGPL-3.0
-
-## Last-checked: 2026-06-10

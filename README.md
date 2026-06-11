@@ -342,7 +342,7 @@ export ANTHROPIC_API_KEY="..."
 
 ### Plattformstrategie
 
-Desktop-App als autoritative Vollversion. Web/PWA-Companion für Android, iOS und Browser über `notespacellm-workspace-v1.json`. Details in `PORTIERUNGSPLAN.md` und `EXPORTFORMAT.md`.
+Desktop-App als autoritative Vollversion. Web/PWA-Companion für Android, iOS und Browser über `notespacellm-workspace-v1.json`. Details im [Exportformat](EXPORTFORMAT.md).
 
 ---
 
