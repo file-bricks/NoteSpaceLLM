@@ -13,6 +13,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### CI / Maintenance
+- Community workflows refreshed: `.github/workflows/stale.yml` now uses `actions/stale@v10`, and `.github/workflows/welcome.yml` now uses `actions/first-interaction@v3`.
+
 ### Documentation
 - README restructured to English-first with full English feature/install/config/usage documentation; German translation moved to secondary section
 - `llms.txt` added for LLM crawler discoverability; Last-checked: 2026-06-11, Audience and Search Phrases sections standardized

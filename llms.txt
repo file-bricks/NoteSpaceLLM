@@ -1,6 +1,6 @@
 # NoteSpaceLLM
 
-## Last-checked: 2026-06-11
+## Last-checked: 2026-06-12
 
 > Local NotebookLM alternative for private document analysis, RAG-assisted research, and multi-format report generation.
 
@@ -34,6 +34,7 @@ NoteSpaceLLM is an offline-first PySide6 desktop application for private documen
 - Web/PWA Companion for mobile review of exported workspaces
 - 6-language i18n infrastructure (de, en, es, zh, ja, ru)
 - macOS and Linux source smoke tests in GitHub Actions
+- Community workflows use `actions/stale@v10` and `actions/first-interaction@v3`
 
 ## Audience
 
