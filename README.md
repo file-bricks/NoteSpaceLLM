@@ -1,12 +1,15 @@
-<p align="center">
-  <img src="NoteSpace_logo.jpg" alt="NoteSpaceLLM" width="700">
-</p>
+<img src="assets/banner.svg" width="100%" alt="NoteSpaceLLM Banner">
 
 # NoteSpaceLLM
 
-**Local NotebookLM alternative for private document analysis, RAG-assisted research, and multi-format report generation.**
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
+[![Platform: Windows](https://img.shields.io/badge/platform-Windows-lightgrey.svg)]()
+[![Offline-first](https://img.shields.io/badge/offline--first-yes-green.svg)]()
 
-NoteSpaceLLM is an offline-first PySide6 desktop app for working with PDFs,
+> **Local NotebookLM alternative for private document analysis, RAG-assisted research, and multi-format report generation.**
+
+
 Word files, Markdown, mail exports, notes, and research folders. It keeps
 project data local by default, supports local or remote Ollama, OpenAI,
 Anthropic and Claude Code workflows, and exports analysis results to Markdown,
