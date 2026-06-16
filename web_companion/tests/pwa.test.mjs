@@ -108,6 +108,14 @@ describe('sw.js', () => {
     assert.ok(sw.includes('./icons/Icon-192.png'), 'Icon-Pfad fehlt in sw.js ASSETS');
   });
 
+  it('CACHE_NAME ist v3 oder höher (iOS Cache-Refresh nach Icon-Opak-Fix)', () => {
+    assert.match(sw, /notespacellm-companion-v[3-9]/, 'CACHE_NAME muss v3+ sein');
+  });
+
+  it('apple-touch-icon-180.png ist in ASSETS gecacht', () => {
+    assert.ok(sw.includes('apple-touch-icon-180.png'), 'apple-touch-icon-180.png fehlt in sw.js ASSETS');
+  });
+
   // Bug #2: caches.match ohne ignoreSearch schlägt bei ?demo=1-URLs offline fehl
   it('caches.match nutzt ignoreSearch:true', () => {
     assert.ok(
@@ -192,6 +200,10 @@ describe('index.html iOS-PWA-Meta', () => {
 
   it('theme-color Meta-Tag ist gesetzt', () => {
     assert.match(html, /<meta[^>]*name="theme-color"[^>]*content="[^"]+"/);
+  });
+
+  it('KEIN apple-mobile-web-app-capable (deprecated seit iOS 11.3)', () => {
+    assert.doesNotMatch(html, /apple-mobile-web-app-capable/, 'deprecated seit iOS 11.3 — darf nicht gesetzt sein');
   });
 
   it('keine doppelten viewport-Meta-Tags', () => {
