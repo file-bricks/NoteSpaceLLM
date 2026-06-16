@@ -6,10 +6,12 @@ import { fileURLToPath } from "node:url";
 
 import {
   buildReviewMarkdown,
+  getUiText,
   getPlatformGuide,
   getDemoWorkspace,
   normalizeWorkspacePayload,
-  parseWorkspaceText
+  parseWorkspaceText,
+  resolveUiLocale
 } from "../library.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -51,6 +53,15 @@ test("buildReviewMarkdown includes workspace metadata and notes", () => {
   assert.match(markdown, /Zwei Quellen morgen gegenlesen\./);
 });
 
+test("buildReviewMarkdown supports English exports", () => {
+  const workspace = getDemoWorkspace("en");
+  const markdown = buildReviewMarkdown(workspace, "Re-check section 2 tomorrow.", "en");
+
+  assert.match(markdown, /Review notes: Demo: research notes/);
+  assert.match(markdown, /Question: Which core claims carry the report most strongly\?/);
+  assert.match(markdown, /Re-check section 2 tomorrow\./);
+});
+
 test("normalizeWorkspacePayload ignores malformed documents container", () => {
   const payload = normalizeWorkspacePayload({
     schema_version: "notespacellm-workspace-v1",
@@ -61,6 +72,18 @@ test("normalizeWorkspacePayload ignores malformed documents container", () => {
 
   assert.equal(payload.summary.document_count, 0);
   assert.deepEqual(payload.documents, []);
+});
+
+test("resolveUiLocale supports browser-style locale tags", () => {
+  assert.equal(resolveUiLocale("en-US"), "en");
+  assert.equal(resolveUiLocale("de-DE"), "de");
+  assert.equal(resolveUiLocale("fr-FR"), "de");
+});
+
+test("getUiText returns English copy for en locales", () => {
+  const text = getUiText("en-GB");
+  assert.equal(text.loadDemo, "Load demo");
+  assert.equal(text.clearNotes, "Clear notes");
 });
 
 test("getPlatformGuide returns Android-specific install guidance", () => {
@@ -77,6 +100,21 @@ test("getPlatformGuide returns iOS-specific install guidance", () => {
   assert.equal(guide.label, "iPhone / iPad");
   assert.match(guide.install_hint, /Home-Bildschirm/);
   assert.match(guide.offline_hint, /ohne Netz|erneut geöffnet/i);
+});
+
+test("getPlatformGuide can localize platform hints to English", () => {
+  const guide = getPlatformGuide("Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/125.0 Mobile Safari/537.36", "en");
+
+  assert.equal(guide.label, "Android");
+  assert.match(guide.install_hint, /home screen|install icon/i);
+  assert.match(guide.offline_hint, /offline start|stored locally/i);
+});
+
+test("parseWorkspaceText surfaces English validation messages when requested", () => {
+  assert.throws(
+    () => parseWorkspaceText("", "en"),
+    /selected file is empty/i
+  );
 });
 
 // Hinweis: Bug #1 + Bug #3 sind DOM-Bugs in app.js (renderDocuments).

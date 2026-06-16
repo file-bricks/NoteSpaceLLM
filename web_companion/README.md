@@ -12,6 +12,7 @@ Review-Notizen.
 - Bericht, Dokumentmetadaten und ausgewählte Auszüge anzeigen
 - zuletzt geladenen Workspace lokal für Offline-Starts wiederherstellen
 - eigene Review-Notizen lokal speichern und als Markdown exportieren
+- DE/EN-Oberfläche mit Browser-/Workspace-Locale und manuellem Sprachumschalter
 
 ## Lokaler Start
 

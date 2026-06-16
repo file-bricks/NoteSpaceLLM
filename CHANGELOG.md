@@ -13,6 +13,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Changed (web_companion)
+- `web_companion/` nutzt jetzt ein DE/EN-i18n-System mit Browser-/Workspace-Locale und manuellem Sprachumschalter; HTML-Labels, Statusmeldungen, Offline-/PWA-Hinweise und Review-Exporttexte laufen über zentrale UI-Texte.
+- `web_companion/library.js`: Review-Markdown, Plattformhinweise, Fallback-Texte und Demo-Workspace unterstützen jetzt DE/EN; Node-Tests decken Locale-Auflösung und englische Copy mit ab.
+
 ### CI / Maintenance
 - Community workflows refreshed: `.github/workflows/stale.yml` now uses `actions/stale@v10`, and `.github/workflows/welcome.yml` now uses `actions/first-interaction@v3`.
 

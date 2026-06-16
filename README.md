@@ -172,7 +172,8 @@ Use **"Export prompt"** to save the current working context as a Markdown file f
 Under `web_companion/` is a read-only Companion strand for Android, iOS and
 browser. It imports exported `notespacellm-workspace-v1.json` files locally in
 the browser, shows the report, document metadata and selected excerpts, restores
-the last loaded workspace locally for offline starts, and can export review
+the last loaded workspace locally for offline starts, supports a DE/EN UI with
+browser/workspace locale plus manual language switch, and can export review
 notes as Markdown.
 
 Local browser test:

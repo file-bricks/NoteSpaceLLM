@@ -161,6 +161,45 @@ h3 {
   margin-top: 24px;
 }
 
+.toolbar-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+.toolbar-row .import-panel {
+  margin-top: 0;
+}
+
+.locale-switch {
+  align-items: center;
+  color: var(--muted);
+  display: inline-flex;
+  flex-wrap: wrap;
+  font-weight: 700;
+  gap: 10px;
+}
+
+.locale-switch select {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(12, 74, 110, 0.16);
+  border-radius: 999px;
+  color: var(--text);
+  font: inherit;
+  min-height: 44px;
+  min-width: 9rem;
+  padding: 0 14px;
+}
+
+.locale-switch select:focus {
+  border-color: rgba(14, 165, 233, 0.5);
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.14);
+  outline: none;
+}
+
 .mobile-pwa-panel {
   background: rgba(255, 255, 255, 0.56);
   border: 1px solid rgba(12, 74, 110, 0.10);
@@ -398,5 +437,20 @@ code {
 
   h1 {
     max-width: none;
+  }
+
+  .toolbar-row,
+  .import-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .locale-switch {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .locale-switch select {
+    flex: 1 1 auto;
   }
 }

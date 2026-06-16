@@ -6,11 +6,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="NoteSpaceLLM">
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon-180.png">
-  <title>NoteSpaceLLM Web/PWA Companion</title>
-  <meta name="description" content="Lokaler Web/PWA-Companion für exportierte NoteSpaceLLM-Workspaces: mobile Review-Notizen, Berichtsvorschau und Dokumentmetadaten ohne Server-Upload.">
+  <title data-i18n="pageTitle">NoteSpaceLLM Web/PWA Companion</title>
+  <meta id="page-description" name="description" data-i18n-content="pageDescription" content="Lokaler Web/PWA-Companion für exportierte NoteSpaceLLM-Workspaces: mobile Review-Notizen, Berichtsvorschau und Dokumentmetadaten ohne Server-Upload.">
   <meta name="keywords" content="NoteSpaceLLM, NotebookLM Alternative, local RAG, document analysis, privacy-first AI, PWA, document review">
-  <meta property="og:title" content="NoteSpaceLLM Web/PWA Companion">
-  <meta property="og:description" content="Read-only browser companion for exported NoteSpaceLLM workspaces with local review notes and no server upload.">
+  <meta id="og-title" property="og:title" data-i18n-content="ogTitle" content="NoteSpaceLLM Web/PWA Companion">
+  <meta id="og-description" property="og:description" data-i18n-content="ogDescription" content="Read-only browser companion for exported NoteSpaceLLM workspaces with local review notes and no server upload.">
   <meta property="og:type" content="website">
   <meta name="theme-color" content="#0c4a6e">
   <link rel="manifest" href="./manifest.webmanifest">
@@ -21,38 +21,47 @@
   <div class="background-glow background-glow-b"></div>
   <main class="shell">
     <section class="hero card">
-      <p class="eyebrow">NoteSpaceLLM Companion</p>
-      <h1>Lokaler Review-Reader für exportierte Workspaces</h1>
-      <p class="hero-copy">
+      <p class="eyebrow" data-i18n="eyebrow">NoteSpaceLLM Companion</p>
+      <h1 data-i18n="heroTitle">Lokaler Review-Reader für exportierte Workspaces</h1>
+      <p class="hero-copy" data-i18n="heroCopy">
         Der Companion importiert <code>notespacellm-workspace-v1.json</code> direkt im Browser,
         bleibt read-only für den Workspace und exportiert nur eigene Review-Notizen.
       </p>
       <div class="hero-badges">
-        <span>Kein Upload</span>
-        <span>Offline-fähig</span>
-        <span>Android / iOS / Web</span>
+        <span data-i18n="heroBadgePrivacy">Kein Upload</span>
+        <span data-i18n="heroBadgeOffline">Offline-fähig</span>
+        <span data-i18n="heroBadgePlatforms">Android / iOS / Web</span>
       </div>
-      <div class="import-panel">
-        <label class="file-button" for="workspace-file">Workspace wählen</label>
-        <input id="workspace-file" type="file" accept=".json,application/json">
-        <button id="load-demo" class="secondary-button" type="button">Demo laden</button>
+      <div class="toolbar-row">
+        <div class="import-panel">
+          <label class="file-button" for="workspace-file" data-i18n="selectWorkspace">Workspace wählen</label>
+          <input id="workspace-file" type="file" accept=".json,application/json">
+          <button id="load-demo" class="secondary-button" type="button" data-i18n="loadDemo">Demo laden</button>
+        </div>
+        <label class="locale-switch" for="language-select">
+          <span data-i18n="languageLabel">Sprache</span>
+          <select id="language-select" aria-label="Language selector">
+            <option value="de">Deutsch</option>
+            <option value="en">English</option>
+          </select>
+        </label>
       </div>
-      <p id="status-message" class="status-message" role="status">
+      <p id="status-message" class="status-message" role="status" data-i18n="statusNoWorkspace">
         Noch kein Workspace geladen.
       </p>
       <div class="mobile-pwa-panel">
         <div class="card-header">
-          <h2>Android/iOS-PWA</h2>
-          <span id="platform-pill" class="pill subtle-pill">Plattform wird erkannt …</span>
+          <h2 data-i18n="androidIosPwa">Android/iOS-PWA</h2>
+          <span id="platform-pill" class="pill subtle-pill" data-i18n="platformDetecting">Plattform wird erkannt …</span>
         </div>
-        <p id="install-hint" class="mobile-copy">
+        <p id="install-hint" class="mobile-copy" data-i18n="installHintPending">
           Install-Hinweise werden nach dem Laden im Browser angezeigt.
         </p>
         <ul class="hint-list">
-          <li id="offline-hint">Offline-Status wird geprüft.</li>
-          <li id="cache-hint">Noch kein Workspace für Offline-Starts gespeichert.</li>
+          <li id="offline-hint" data-i18n="offlineHintPending">Offline-Status wird geprüft.</li>
+          <li id="cache-hint" data-i18n="cacheHintEmpty">Noch kein Workspace für Offline-Starts gespeichert.</li>
         </ul>
-        <button id="clear-workspace-cache" class="secondary-button" type="button">
+        <button id="clear-workspace-cache" class="secondary-button" type="button" data-i18n="clearWorkspaceCache">
           Workspace-Cache löschen
         </button>
       </div>
@@ -60,30 +69,30 @@
 
     <section class="dashboard">
       <article class="card summary-card">
-        <h2>Überblick</h2>
+        <h2 data-i18n="summaryHeading">Überblick</h2>
         <dl id="workspace-summary" class="summary-grid">
           <div>
-            <dt>Projekt</dt>
+            <dt data-i18n="summaryProject">Projekt</dt>
             <dd>-</dd>
           </div>
           <div>
-            <dt>Frage</dt>
+            <dt data-i18n="summaryQuestion">Frage</dt>
             <dd>-</dd>
           </div>
           <div>
-            <dt>Dokumente</dt>
+            <dt data-i18n="summaryDocuments">Dokumente</dt>
             <dd>-</dd>
           </div>
           <div>
-            <dt>Auszüge</dt>
+            <dt data-i18n="summaryExcerpts">Auszüge</dt>
             <dd>-</dd>
           </div>
           <div>
-            <dt>Bericht</dt>
+            <dt data-i18n="summaryReport">Bericht</dt>
             <dd>-</dd>
           </div>
           <div>
-            <dt>Provider</dt>
+            <dt data-i18n="summaryProvider">Provider</dt>
             <dd>-</dd>
           </div>
         </dl>
@@ -91,37 +100,37 @@
 
       <article class="card report-card">
         <div class="card-header">
-          <h2>Bericht</h2>
-          <span id="report-badge" class="pill">Kein Bericht</span>
+          <h2 data-i18n="reportHeading">Bericht</h2>
+          <span id="report-badge" class="pill" data-i18n="reportBadgeEmpty">Kein Bericht</span>
         </div>
-        <h3 id="report-title">Noch kein Export geladen</h3>
-        <pre id="report-preview" class="report-preview">Importiere einen Workspace, um Bericht und Metadaten lokal anzuzeigen.</pre>
+        <h3 id="report-title" data-i18n="reportTitleEmpty">Noch kein Export geladen</h3>
+        <pre id="report-preview" class="report-preview" data-i18n="reportPreviewEmpty">Importiere einen Workspace, um Bericht und Metadaten lokal anzuzeigen.</pre>
       </article>
     </section>
 
     <section class="content-grid">
       <article class="card">
         <div class="card-header">
-          <h2>Dokumente</h2>
+          <h2 data-i18n="documentsHeading">Dokumente</h2>
           <span id="document-badge" class="pill">0 Einträge</span>
         </div>
-        <div id="document-list" class="stacked-list empty-state">
+        <div id="document-list" class="stacked-list empty-state" data-i18n="documentListEmpty">
           Noch keine Dokumente geladen.
         </div>
       </article>
 
       <article class="card">
         <div class="card-header">
-          <h2>Review-Notizen</h2>
-          <span id="notes-badge" class="pill">Lokal im Browser</span>
+          <h2 data-i18n="reviewNotesHeading">Review-Notizen</h2>
+          <span id="notes-badge" class="pill" data-i18n="notesBadge">Lokal im Browser</span>
         </div>
-        <label class="notes-label" for="review-notes">
+        <label class="notes-label" for="review-notes" data-i18n="notesLabel">
           Eigene Beobachtungen, offene Fragen oder mobile Review-Punkte:
         </label>
-        <textarea id="review-notes" rows="12" placeholder="Beispiel: Abschnitt 3 genauer prüfen, Quellenvergleich mit Bericht vom Vortag nötig ..."></textarea>
+        <textarea id="review-notes" rows="12" data-i18n-placeholder="notesPlaceholder" placeholder="Beispiel: Abschnitt 3 genauer prüfen, Quellenvergleich mit Bericht vom Vortag nötig ..."></textarea>
         <div class="notes-actions">
-          <button id="export-notes" type="button">Review-Notizen exportieren</button>
-          <button id="clear-notes" class="secondary-button" type="button">Notizen leeren</button>
+          <button id="export-notes" type="button" data-i18n="exportNotes">Review-Notizen exportieren</button>
+          <button id="clear-notes" class="secondary-button" type="button" data-i18n="clearNotes">Notizen leeren</button>
         </div>
       </article>
     </section>
