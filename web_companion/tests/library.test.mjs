@@ -9,6 +9,7 @@ import {
   getUiText,
   getPlatformGuide,
   getDemoWorkspace,
+  getSupportedUiLocales,
   normalizeWorkspacePayload,
   parseWorkspaceText,
   resolveUiLocale
@@ -62,6 +63,23 @@ test("buildReviewMarkdown supports English exports", () => {
   assert.match(markdown, /Re-check section 2 tomorrow\./);
 });
 
+test("buildReviewMarkdown supports Spanish exports", () => {
+  const workspace = getDemoWorkspace("es");
+  const markdown = buildReviewMarkdown(workspace, "Revisar la sección 2 mañana.", "es");
+
+  assert.match(markdown, /Notas de revisión: Demo: notas de investigación/);
+  assert.match(markdown, /Pregunta: ¿Qué tesis centrales/);
+  assert.match(markdown, /Revisar la sección 2 mañana\./);
+});
+
+test("getDemoWorkspace localizes non-Latin demo content", () => {
+  const workspace = getDemoWorkspace("zh-CN");
+
+  assert.equal(workspace.workspace.locale, "zh-Hans");
+  assert.equal(workspace.workspace.title, "演示：研究笔记");
+  assert.match(workspace.report.content, /# 综合/);
+});
+
 test("normalizeWorkspacePayload ignores malformed documents container", () => {
   const payload = normalizeWorkspacePayload({
     schema_version: "notespacellm-workspace-v1",
@@ -77,13 +95,41 @@ test("normalizeWorkspacePayload ignores malformed documents container", () => {
 test("resolveUiLocale supports browser-style locale tags", () => {
   assert.equal(resolveUiLocale("en-US"), "en");
   assert.equal(resolveUiLocale("de-DE"), "de");
+  assert.equal(resolveUiLocale("es-MX"), "es");
+  assert.equal(resolveUiLocale("zh-CN"), "zh-Hans");
+  assert.equal(resolveUiLocale("zh-Hans"), "zh-Hans");
+  assert.equal(resolveUiLocale("ja-JP"), "ja");
+  assert.equal(resolveUiLocale("ru-RU"), "ru");
   assert.equal(resolveUiLocale("fr-FR"), "de");
+});
+
+test("getSupportedUiLocales exposes all web companion UI locales", () => {
+  assert.deepEqual(getSupportedUiLocales(), ["de", "en", "es", "zh-Hans", "ja", "ru"]);
+});
+
+test("all UI locale tables expose the same keys", () => {
+  const baselineKeys = Object.keys(getUiText("de")).sort();
+
+  for (const locale of getSupportedUiLocales()) {
+    assert.deepEqual(
+      Object.keys(getUiText(locale)).sort(),
+      baselineKeys,
+      `${locale} must expose the complete UI text contract`
+    );
+  }
 });
 
 test("getUiText returns English copy for en locales", () => {
   const text = getUiText("en-GB");
   assert.equal(text.loadDemo, "Load demo");
   assert.equal(text.clearNotes, "Clear notes");
+});
+
+test("getUiText returns premium-language web companion copy", () => {
+  assert.equal(getUiText("es").loadDemo, "Cargar demo");
+  assert.equal(getUiText("zh-CN").summaryHeading, "概览");
+  assert.equal(getUiText("ja").exportNotes, "レビュー用ノートをエクスポート");
+  assert.equal(getUiText("ru").clearNotes, "Очистить заметки");
 });
 
 test("getPlatformGuide returns Android-specific install guidance", () => {
@@ -110,10 +156,25 @@ test("getPlatformGuide can localize platform hints to English", () => {
   assert.match(guide.offline_hint, /offline start|stored locally/i);
 });
 
+test("getPlatformGuide can localize mobile hints to Japanese", () => {
+  const guide = getPlatformGuide("Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Version/17.5 Mobile/15E148 Safari/604.1", "ja");
+
+  assert.equal(guide.label, "iPhone / iPad");
+  assert.match(guide.install_hint, /ホーム画面/);
+  assert.match(guide.offline_hint, /ネットワークなし/);
+});
+
 test("parseWorkspaceText surfaces English validation messages when requested", () => {
   assert.throws(
     () => parseWorkspaceText("", "en"),
     /selected file is empty/i
+  );
+});
+
+test("parseWorkspaceText surfaces Russian validation messages when requested", () => {
+  assert.throws(
+    () => parseWorkspaceText("", "ru"),
+    /файл пуст/i
   );
 });
 

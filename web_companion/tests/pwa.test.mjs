@@ -139,6 +139,16 @@ describe('index.html — Integration', () => {
   it('lädt app.js als Modul', () => {
     assert.ok(html.includes('app.js'), 'app.js-Script fehlt in index.html');
   });
+
+  it('bietet alle sechs UI-Sprachen im Sprachumschalter an', () => {
+    for (const locale of ['de', 'en', 'es', 'zh-Hans', 'ja', 'ru']) {
+      assert.match(
+        html,
+        new RegExp(`<option value="${locale}">`),
+        `Sprachoption fehlt: ${locale}`
+      );
+    }
+  });
 });
 
 // ──────────────────────────────────────────────────────────────

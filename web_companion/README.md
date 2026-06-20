@@ -12,7 +12,8 @@ Review-Notizen.
 - Bericht, Dokumentmetadaten und ausgewählte Auszüge anzeigen
 - zuletzt geladenen Workspace lokal für Offline-Starts wiederherstellen
 - eigene Review-Notizen lokal speichern und als Markdown exportieren
-- DE/EN-Oberfläche mit Browser-/Workspace-Locale und manuellem Sprachumschalter
+- DE/EN/ES/ZH-Hans/JA/RU-Oberfläche mit Browser-/Workspace-Locale und
+  manuellem Sprachumschalter
 
 ## Lokaler Start
 
@@ -33,7 +34,7 @@ http://127.0.0.1:8765
 
 ```powershell
 cd web_companion
-node --test tests/library.test.mjs
+npm test
 ```
 
 Der konkrete Android-/iOS-PWA-Ablauf steht in `PWA_TESTPLAN.md`.
