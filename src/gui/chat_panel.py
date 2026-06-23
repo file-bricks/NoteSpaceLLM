@@ -210,6 +210,17 @@ class RAGWorker(QThread if PYSIDE_AVAILABLE else object):
         self.question = question
         self.document_ids = document_ids
         self.k = k
+        self._stop_requested = False
+
+    def stop(self):
+        """Request stop.
+
+        Bugsweep (2026-06-23): RAGWorker fehlte die stop()-Methode, die LLMWorker hat.
+        stop_generation() ruft worker.stop() auf -> bei laufendem RAGWorker
+        AttributeError. Die laufende rag_engine.query() laesst sich nicht mitten im
+        Aufruf abbrechen; dieses Flag verhindert nur den Crash und erlaubt wait().
+        """
+        self._stop_requested = True
 
     def run(self):
         """Execute the RAG query."""
@@ -617,6 +628,13 @@ SPRACHE: Deutsch.
         """Clear chat history."""
         for widget in self._message_widgets:
             widget.deleteLater()
+
+        # Bugsweep (2026-06-23): Wird der Verlauf waehrend einer laufenden Antwort
+        # geloescht, wurde auch das Streaming-Widget per deleteLater() zerstoert,
+        # waehrend _on_response_chunk() es weiter ueber _streaming_widget ansprach
+        # -> RuntimeError (Internal C++ object already deleted). Referenz nullen,
+        # damit die None-Guards in _on_response_chunk/_on_response_error greifen.
+        self._streaming_widget = None
 
         self._messages.clear()
         self._message_widgets.clear()

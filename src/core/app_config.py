@@ -15,6 +15,8 @@ import json
 from pathlib import Path
 from typing import Optional, Dict, List
 
+from ._io import atomic_write_text
+
 # Config lives outside synced project folders
 CONFIG_DIR = Path.home() / ".notespacellm"
 CONFIG_FILE = CONFIG_DIR / "config.json"
@@ -64,8 +66,12 @@ class AppConfig:
     def save(self):
         """Write config to disk."""
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(self._data, f, indent=2, ensure_ascii=False)
+        # Bugsweep (2026-06-23): atomar schreiben, sonst Korruption der Config
+        # (inkl. API-Key) bei Crash/OneDrive-Lock mitten im json.dump.
+        atomic_write_text(
+            CONFIG_FILE,
+            json.dumps(self._data, indent=2, ensure_ascii=False),
+        )
 
     # --- Properties ---
 

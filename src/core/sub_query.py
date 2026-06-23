@@ -16,6 +16,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Callable
 
+from ._io import atomic_write_text
+
 
 class SubQueryStatus(Enum):
     """Status of a sub-query."""
@@ -385,7 +387,8 @@ class SubQueryManager:
             "queries": [q.to_dict() for q in self._queries.values()],
             "saved_at": datetime.now().isoformat()
         }
-        filepath.write_text(json.dumps(state, indent=2), encoding="utf-8")
+        # Bugsweep (2026-06-23): atomar schreiben (sonst Sub-Query-Verlust bei Crash).
+        atomic_write_text(filepath, json.dumps(state, indent=2))
 
     def load_state(self, filepath: Path) -> bool:
         """Load sub-queries from file."""

@@ -25,6 +25,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Callable, TYPE_CHECKING
 import uuid
 
+from ._io import atomic_write_text
+
 if TYPE_CHECKING:
     from ..rag.engine import RAGEngine
 
@@ -437,7 +439,8 @@ class DocumentManager:
             "documents": [d.to_dict() for d in self._documents.values()],
             "saved_at": datetime.now().isoformat()
         }
-        filepath.write_text(json.dumps(state, indent=2), encoding="utf-8")
+        # Bugsweep (2026-06-23): atomar schreiben (sonst Workspace-Verlust bei Crash).
+        atomic_write_text(filepath, json.dumps(state, indent=2))
 
     def load_state(self, filepath: Path) -> bool:
         """Load workspace state from file."""

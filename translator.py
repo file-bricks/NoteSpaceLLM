@@ -85,6 +85,11 @@ class TranslationSystem:
         """
         if key in self.translations:
             entry = self.translations[key]
+            # Bugsweep (2026-06-23): isinstance-Guard. Eine korrupte/handeditierte
+            # translations.json mit einem String (statt {lang: text}-Dict) als Wert
+            # liess entry.get(...) mit AttributeError crashen.
+            if not isinstance(entry, dict):
+                return key
             value = entry.get(self.current_lang)
             if value:
                 return value

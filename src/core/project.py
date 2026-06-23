@@ -19,6 +19,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
+from ._io import atomic_write_text
 from .document_manager import DocumentManager
 from .sub_query import SubQueryManager
 
@@ -215,8 +216,9 @@ class Project:
         directory.mkdir(parents=True, exist_ok=True)
 
         # Save project metadata
+        # Bugsweep (2026-06-23): atomar schreiben (sonst Projekt-Metadaten-Verlust bei Crash).
         project_file = directory / "project.json"
-        project_file.write_text(json.dumps(self.to_dict(), indent=2), encoding="utf-8")
+        atomic_write_text(project_file, json.dumps(self.to_dict(), indent=2))
 
         # Save document state
         docs_file = directory / "documents.json"
