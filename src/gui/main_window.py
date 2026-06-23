@@ -1318,7 +1318,8 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
 
             result = subprocess.run(
                 ['pandoc', md_path, '-o', str(filepath)],
-                capture_output=True
+                capture_output=True,
+                timeout=60
             )
 
             Path(md_path).unlink()
