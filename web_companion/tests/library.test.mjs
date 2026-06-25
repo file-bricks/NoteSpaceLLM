@@ -201,3 +201,11 @@ test("app.js enthält escHtml-Funktion für innerHTML-Schutz (Bug #3)", () => {
   assert.match(appSource, /escHtml\(excerpt\.text\)/, "excerpt.text muss über escHtml eingesetzt werden");
   assert.match(appSource, /escHtml\(excerpt\.source_hint\)/, "excerpt.source_hint muss über escHtml eingesetzt werden");
 });
+
+test("app.js speichert komplette Workspace-Payloads nicht in localStorage", () => {
+  assert.doesNotMatch(
+    appSource,
+    /localStorage\.setItem\(\s*WORKSPACE_CACHE_KEY/,
+    "Workspace-JSON darf wegen Dokumentinhalten und Berichtstext nicht persistent in localStorage landen"
+  );
+});

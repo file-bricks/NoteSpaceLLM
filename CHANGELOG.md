@@ -6,6 +6,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 ## [Unreleased — 2026-06-20]
 
 ### Changed (web_companion)
+- `web_companion/` speichert importierte Workspace-Payloads nicht mehr dauerhaft
+  in `localStorage`; alte Workspace-Cache-Einträge werden beim Start und beim
+  Leeren entfernt, während Review-Notizen separat erhalten bleiben.
 - `web_companion/` erweitert die Companion-Oberfläche von DE/EN auf DE/EN/ES/ZH-Hans/JA/RU. Sprachumschalter, Browser-/Workspace-Locale-Auflösung, Plattformhinweise, Validierungsfehler, Demo-Workspace und Review-Markdown-Export nutzen jetzt denselben sechssprachigen UI-Textvertrag.
 - `web_companion/tests/library.test.mjs` und `web_companion/tests/pwa.test.mjs` prüfen die sechs unterstützten Locales, Key-Parität, non-latin Demo-Inhalte, lokalisierte Plattformhinweise und die sichtbaren Select-Optionen.
 

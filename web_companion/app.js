@@ -199,26 +199,14 @@ function renderDocuments(payload) {
 }
 
 function saveWorkspaceCache(payload) {
-  localStorage.setItem(WORKSPACE_CACHE_KEY, JSON.stringify(payload));
+  localStorage.removeItem(WORKSPACE_CACHE_KEY);
   updateCacheHint(payload.workspace.title);
 }
 
 function loadWorkspaceCache() {
-  const raw = localStorage.getItem(WORKSPACE_CACHE_KEY);
-  if (!raw) {
-    updateCacheHint();
-    return null;
-  }
-
-  try {
-    const payload = parseWorkspaceText(raw, activeLocale);
-    updateCacheHint(payload.workspace.title);
-    return payload;
-  } catch {
-    localStorage.removeItem(WORKSPACE_CACHE_KEY);
-    updateCacheHint();
-    return null;
-  }
+  localStorage.removeItem(WORKSPACE_CACHE_KEY);
+  updateCacheHint();
+  return null;
 }
 
 function rerenderCurrentWorkspace() {
