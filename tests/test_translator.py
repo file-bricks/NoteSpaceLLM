@@ -12,7 +12,9 @@ class TranslationSystemTests(unittest.TestCase):
             tr = TranslationSystem("de", Path(tmp))
 
             self.assertFalse(tr._is_german("Hello world"))
+            self.assertFalse(tr._is_german("Important filtering starts here"))
             self.assertTrue(tr._is_german("Datei öffnen"))
+            self.assertTrue(tr._is_german("Export"))
 
     def test_scan_and_update_only_picks_up_german_strings(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -21,7 +23,8 @@ class TranslationSystemTests(unittest.TestCase):
             (project_dir / "sample.py").write_text(
                 'from PySide6.QtWidgets import QPushButton\n'
                 'btn1 = QPushButton("Hello")\n'
-                'btn2 = QPushButton("Datei öffnen")\n',
+                'btn2 = QPushButton("Important filtering starts here")\n'
+                'btn3 = QPushButton("Datei öffnen")\n',
                 encoding="utf-8",
             )
 

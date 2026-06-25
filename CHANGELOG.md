@@ -3,6 +3,11 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-06-25]
+
+### Fixed
+- `translator._is_german()` erkennt deutsche Hinweiswörter jetzt tokenbasiert statt per Teilstring-Matching. Englische Texte mit Wörtern wie `important`, `filtering` oder `starts` werden dadurch nicht mehr fälschlich als Deutsch gescannt; der BACH-Spiegel unter `system/tools/notespace/translator.py` wurde synchron nachgezogen.
+
 ## [Unreleased — 2026-06-20]
 
 ### Changed (web_companion)
