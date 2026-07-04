@@ -380,7 +380,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         from ..core.document_manager import DocumentManager
         from ..core.sub_query import SubQueryManager
         from ..core.project import Project, ProjectManager
-        from ..core.text_extractor import TextExtractor
+        from ..core.text_extractor import default_text_extractor
 
         # Project management
         self._projects_dir = Path.home() / "NoteSpaceLLM" / "projects"
@@ -390,7 +390,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         self._current_project: Optional[Project] = None
 
         # Core services
-        self._text_extractor = TextExtractor()
+        self._text_extractor = default_text_extractor()
         self._llm_client = None
         self._report_worker = None
         self._analysis_worker = None
@@ -1174,9 +1174,9 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
 
         self.statusbar.showMessage(f"Extrahiere Text aus {len(pending)} Dokumenten...")
 
-        from ..core.text_extractor import TextExtractor
+        from ..core.text_extractor import default_text_extractor
         if not hasattr(self, '_text_extractor') or self._text_extractor is None:
-            self._text_extractor = TextExtractor()
+            self._text_extractor = default_text_extractor()
 
         self._extraction_worker = ExtractionWorker(self._text_extractor, pending)
 

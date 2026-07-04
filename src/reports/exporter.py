@@ -7,6 +7,8 @@ Report Exporter - Export reports to various formats
 Supports: Markdown, PDF, DOCX, HTML, TXT
 """
 
+import html
+import json
 import re
 import subprocess
 import tempfile
@@ -98,6 +100,16 @@ class ReportExporter:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"{safe}_{timestamp}" if safe else f"report_{timestamp}"
 
+    def _yaml_scalar(self, value: str) -> str:
+        """Serialize user-facing metadata as a safe YAML scalar."""
+        normalized = value.replace("\r\n", "\n").replace("\r", "\n")
+        return json.dumps(normalized, ensure_ascii=False)
+
+    def _html_text(self, value: str, fallback: str) -> str:
+        """Escape user-provided text for HTML metadata contexts."""
+        text = value if value else fallback
+        return html.escape(text, quote=True)
+
     def _export_markdown(self, content: str, name: str, title: str, author: str) -> ExportResult:
         """Export to Markdown."""
         try:
@@ -108,9 +120,9 @@ class ReportExporter:
             if title or author:
                 header = "---\n"
                 if title:
-                    header += f"title: {title}\n"
+                    header += f"title: {self._yaml_scalar(title)}\n"
                 if author:
-                    header += f"author: {author}\n"
+                    header += f"author: {self._yaml_scalar(author)}\n"
                 header += f"date: {datetime.now().strftime('%Y-%m-%d')}\n"
                 header += "---\n\n"
 
@@ -149,13 +161,14 @@ class ReportExporter:
 
             # Convert Markdown to HTML
             html_content = self._markdown_to_html(content)
+            safe_title = self._html_text(title, "Bericht")
 
             html = f"""<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{title or 'Bericht'}</title>
+    <title>{safe_title}</title>
     <style>
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -302,9 +315,9 @@ class ReportExporter:
                 # Add metadata
                 header = "---\n"
                 if title:
-                    header += f"title: '{title}'\n"
+                    header += f"title: {self._yaml_scalar(title)}\n"
                 if author:
-                    header += f"author: '{author}'\n"
+                    header += f"author: {self._yaml_scalar(author)}\n"
                 header += f"date: '{datetime.now().strftime('%d.%m.%Y')}'\n"
                 header += "---\n\n"
 
@@ -329,11 +342,12 @@ class ReportExporter:
             from weasyprint import HTML
 
             html_content = self._markdown_to_html(content)
+            safe_title = self._html_text(title, "Bericht")
             html = f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{title or 'Bericht'}</title>
+    <title>{safe_title}</title>
     <style>
         @page {{ margin: 2cm; }}
         body {{ font-family: sans-serif; line-height: 1.6; }}

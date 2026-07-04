@@ -11,6 +11,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from src.reports.exporter import ReportExporter
+
 
 # ===== AppConfig Profile-Tests (kein PySide6 nötig) =====
 
@@ -186,3 +188,37 @@ class TestExportIntegration:
         assert "#" not in result
         assert "**" not in result
         assert "`" not in result
+
+    def test_markdown_export_quotes_yaml_metadata(self, tmp_path):
+        """Titel/Autor mit Newlines und Doppelpunkt dürfen den YAML-Header nicht brechen."""
+        exporter = ReportExporter(tmp_path)
+
+        [result] = exporter.export(
+            "# Bericht\n\nInhalt",
+            "yaml-header",
+            ["md"],
+            title='Titel:\n<LLM>',
+            author='Autor:in "A"'
+        )
+
+        assert result.success is True
+        written = result.filepath.read_text(encoding="utf-8")
+        assert 'title: "Titel:\\n<LLM>"' in written
+        assert 'author: "Autor:in \\"A\\""' in written
+        assert "<LLM>\nauthor:" not in written
+
+    def test_html_export_escapes_title_markup(self, tmp_path):
+        """HTML-Metadaten dürfen Titel-Markup nicht als echtes HTML interpretieren."""
+        exporter = ReportExporter(tmp_path)
+
+        [result] = exporter.export(
+            "# Bericht",
+            "html-title",
+            ["html"],
+            title="<think>: Titel & Test"
+        )
+
+        assert result.success is True
+        written = result.filepath.read_text(encoding="utf-8")
+        assert "<title>&lt;think&gt;: Titel &amp; Test</title>" in written
+        assert "<title><think>: Titel & Test</title>" not in written

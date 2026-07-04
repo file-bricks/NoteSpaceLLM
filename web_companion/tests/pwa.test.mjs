@@ -123,6 +123,12 @@ describe('sw.js', () => {
       'caches.match muss { ignoreSearch: true } nutzen — sonst Offline-Fail bei ?-URLs'
     );
   });
+
+  // BUG-W1: fetch ohne .catch() → unhandled rejection bei Offline-Netzwerkfehler
+  it('fetch-Handler hat .catch() Offline-Fallback (BUG-W1)', () => {
+    assert.ok(sw.includes('.catch('), '.catch() fehlt im fetch-Handler — BUG-W1');
+    assert.ok(sw.includes('status: 503'), '503-Fallback fehlt — BUG-W1');
+  });
 });
 
 // ──────────────────────────────────────────────────────────────

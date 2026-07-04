@@ -1,0 +1,13 @@
+# NoteSpaceLLM -- Optionale Abhängigkeiten
+# ==========================================
+# Diese Pakete sind NICHT Teil der Standard-Distribution. Wer sie installiert,
+# trifft die Lizenz-/Qualitätsentscheidung selbst und lokal.
+
+# Optional: beste PDF-Qualität (AGPL -- lokale Nutzerentscheidung)
+# Wird vom PDF-Backend-Schalter automatisch erkannt (pdf_backend = auto|pymupdf).
+# Ohne PyMuPDF nutzt die App pypdfium2 (rendert, inkl. OCR) bzw. pypdf.
+PyMuPDF>=1.23.0
+
+# Optional: OCR für bildbasierte PDFs (Scans)
+# pytesseract>=0.3.10
+# Pillow>=10.0.0

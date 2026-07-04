@@ -8,10 +8,12 @@ Geprüfte echte Bugs (NoteSpaceLLM Desktop-Erst-Sweep):
   #3 chat_panel RAGWorker: fehlende stop()-Methode -> AttributeError in stop_generation().
   #4 chat_panel _clear_history(): Streaming-Widget-Referenz nicht genullt -> RuntimeError
      (Zugriff auf gelöschtes C++-Objekt), wenn während Streaming gelöscht wird.
+  #5 chat_panel MessageWidget rendert LLM-Markup nicht mehr als RichText.
 """
 import json
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -105,3 +107,22 @@ def test_clear_history_nulls_streaming_widget_source():
     next_def = src.index("\n    def ", clear_idx + 1)
     body = src[clear_idx:next_def]
     assert "self._streaming_widget = None" in body
+
+
+@pytest.mark.skipif(not PYSIDE_AVAILABLE, reason="PySide6 nicht verfügbar")
+def test_message_widget_uses_plain_text_for_llm_output():
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import QApplication
+    from src.gui.chat_panel import ChatMessage, MessageWidget
+
+    app = QApplication.instance() or QApplication([])  # noqa: F841
+    widget = MessageWidget(
+        ChatMessage(
+            role="assistant",
+            content="<think>literal markup</think>",
+            timestamp=datetime.now(),
+        )
+    )
+
+    assert widget.content_label.textFormat() == Qt.TextFormat.PlainText
+    assert widget.content_label.text() == "<think>literal markup</think>"

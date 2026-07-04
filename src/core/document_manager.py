@@ -472,8 +472,8 @@ class DocumentManager:
         """Versucht automatische Textextraktion für ein Dokument."""
         try:
             if self._text_extractor is None:
-                from .text_extractor import TextExtractor
-                self._text_extractor = TextExtractor()
+                from .text_extractor import default_text_extractor
+                self._text_extractor = default_text_extractor()
 
             doc.status = DocumentStatus.EXTRACTING
             self._notify_change("update", doc)

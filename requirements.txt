@@ -5,10 +5,12 @@
 PySide6>=6.5.0
 
 # Document Processing
-PyMuPDF>=1.23.0      # PDF reading
+pypdfium2>=4         # PDF reading + rendering (Apache-2.0/BSD-3, deckt auch OCR ab)
+pypdf>=4            # PDF reading, Pure-Python-Fallback ohne Rendering (BSD-3)
 python-docx>=1.0.0   # Word documents
 openpyxl>=3.1.0      # Excel files
 extract-msg>=0.48.0  # Outlook .msg files
+# PyMuPDF (beste PDF-Qualität) ist optional -> siehe requirements-optional.txt
 
 # =========================
 # RAG Components (LangChain + ChromaDB + Ollama)

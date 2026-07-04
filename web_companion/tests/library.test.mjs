@@ -201,3 +201,56 @@ test("app.js enthält escHtml-Funktion für innerHTML-Schutz (Bug #3)", () => {
   assert.match(appSource, /escHtml\(excerpt\.text\)/, "excerpt.text muss über escHtml eingesetzt werden");
   assert.match(appSource, /escHtml\(excerpt\.source_hint\)/, "excerpt.source_hint muss über escHtml eingesetzt werden");
 });
+
+test("Bug #1 Regression: fileInput.value-Reset in finally-Block (nicht nur im try-Erfolgsfall)", () => {
+  assert.match(
+    appSource,
+    /finally\s*\{/,
+    "handleFile muss einen finally-Block haben damit fileInput.value stets zurückgesetzt wird"
+  );
+  assert.match(
+    appSource,
+    /fileInput\.value\s*=\s*["']{2}/,
+    "fileInput.value = '' muss im finally-Block stehen"
+  );
+});
+
+test("Bug #2 Regression: saveNotes, saveWorkspaceCache und setLocale wrappen localStorage.setItem in try/catch", () => {
+  const saveNotesMatch = appSource.match(/function saveNotes[\s\S]*?^}/m);
+  assert.ok(saveNotesMatch, "saveNotes-Funktion muss im Quelltext vorhanden sein");
+  assert.match(
+    saveNotesMatch[0],
+    /try\s*\{/,
+    "saveNotes muss localStorage.setItem in try/catch wrappen (QuotaExceededError)"
+  );
+
+  const saveWorkspaceCacheMatch = appSource.match(/function saveWorkspaceCache[\s\S]*?^}/m);
+  assert.ok(saveWorkspaceCacheMatch, "saveWorkspaceCache-Funktion muss im Quelltext vorhanden sein");
+  assert.match(
+    saveWorkspaceCacheMatch[0],
+    /try\s*\{/,
+    "saveWorkspaceCache muss localStorage.setItem in try/catch wrappen (QuotaExceededError)"
+  );
+
+  const setLocaleMatch = appSource.match(/function setLocale[\s\S]*?^}/m);
+  assert.ok(setLocaleMatch, "setLocale-Funktion muss im Quelltext vorhanden sein");
+  assert.match(
+    setLocaleMatch[0],
+    /try\s*\{/,
+    "setLocale muss localStorage.setItem in try/catch wrappen (localStorage deaktiviert in Safari Private Browsing)"
+  );
+});
+
+test("Bug #3 Regression: downloadText verwendet setTimeout für URL.revokeObjectURL (iOS Safari)", () => {
+  const downloadTextMatch = appSource.match(/function downloadText[\s\S]*?^}/m);
+  assert.ok(downloadTextMatch, "downloadText-Funktion muss im Quelltext vorhanden sein");
+  assert.match(
+    downloadTextMatch[0],
+    /setTimeout/,
+    "downloadText muss URL.revokeObjectURL per setTimeout verzögern — synchrones Revoke bricht iOS Safari Download"
+  );
+  assert.ok(
+    !downloadTextMatch[0].includes("URL.revokeObjectURL(url);\n"),
+    "URL.revokeObjectURL darf nicht synchron nach link.click() stehen"
+  );
+});

@@ -280,7 +280,14 @@ before sharing.
 
 AGPL v3 — see [LICENSE](LICENSE)
 
-This project uses PySide6 (LGPL) and PyMuPDF (AGPL).
+This project uses PySide6 (LGPL). PDF processing runs through a configurable
+backend switch (`pdf_backend`): the default distribution ships **pypdfium2**
+(Apache-2.0 / BSD-3, also used for OCR rendering) and **pypdf** (BSD-3, pure
+Python, extraction only). **PyMuPDF (AGPL)** is an *optional* opt-in
+(`requirements-optional.txt`) for best quality — when the user installs it, the
+`auto` switch picks it up, so its AGPL terms remain a local runtime choice, not
+part of the shipped dependencies. Direct runtime dependency licenses are
+inventoried in [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt).
 
 ---
 

@@ -91,7 +91,11 @@ function saveNotes() {
   if (!currentWorkspace) {
     return;
   }
-  localStorage.setItem(workspaceStorageKey(currentWorkspace), elements.notes.value);
+  try {
+    localStorage.setItem(workspaceStorageKey(currentWorkspace), elements.notes.value);
+  } catch {
+    // QuotaExceededError (Safari Private Browsing, full storage) — Notes-Input bleibt sichtbar
+  }
 }
 
 function updateCacheHint(title = "") {
@@ -124,7 +128,7 @@ function downloadText(filename, content) {
   document.body.append(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function loadNotes(payload) {
@@ -199,7 +203,11 @@ function renderDocuments(payload) {
 }
 
 function saveWorkspaceCache(payload) {
-  localStorage.setItem(WORKSPACE_CACHE_KEY, JSON.stringify(payload));
+  try {
+    localStorage.setItem(WORKSPACE_CACHE_KEY, JSON.stringify(payload));
+  } catch {
+    // QuotaExceededError — Offline-Cache nicht verfügbar, App bleibt nutzbar
+  }
   updateCacheHint(payload.workspace.title);
 }
 
@@ -242,7 +250,11 @@ function setLocale(locale, { persist = false } = {}) {
   rerenderCurrentWorkspace();
 
   if (persist) {
-    localStorage.setItem(UI_LOCALE_KEY, activeLocale);
+    try {
+      localStorage.setItem(UI_LOCALE_KEY, activeLocale);
+    } catch {
+      // localStorage nicht verfügbar (Safari Private Browsing, per Policy deaktiviert)
+    }
     hasUserLocaleOverride = true;
   }
 }
@@ -281,9 +293,10 @@ async function handleFile(file) {
     const text = await file.text();
     const payload = parseWorkspaceText(text, activeLocale);
     renderWorkspace(payload, file.name);
-    elements.fileInput.value = "";
   } catch (error) {
     setStatus(error.message, true);
+  } finally {
+    elements.fileInput.value = "";
   }
 }
 

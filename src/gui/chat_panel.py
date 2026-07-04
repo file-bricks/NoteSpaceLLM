@@ -125,6 +125,7 @@ class MessageWidget(QFrame if PYSIDE_AVAILABLE else object):
         # Content
         self.content_label = QLabel(self.message.content)
         self.content_label.setWordWrap(True)
+        self.content_label.setTextFormat(Qt.TextFormat.PlainText)
         self.content_label.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse |
             Qt.TextInteractionFlag.TextSelectableByKeyboard

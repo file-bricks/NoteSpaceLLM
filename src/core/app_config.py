@@ -32,6 +32,7 @@ class AppConfig:
         "ollama_api_key": "",
         "embedding_model": "nomic-embed-text",
         "claude_code_mode": "api",
+        "pdf_backend": "auto",
         "active_profile": "",
         "profiles": {},
     }
@@ -122,6 +123,15 @@ class AppConfig:
     @claude_code_mode.setter
     def claude_code_mode(self, value: str):
         self._data["claude_code_mode"] = value
+
+    @property
+    def pdf_backend(self) -> str:
+        """PDF-Engine-Schalter: auto|pymupdf|pypdfium2|pypdf."""
+        return self._data.get("pdf_backend", "auto")
+
+    @pdf_backend.setter
+    def pdf_backend(self, value: str):
+        self._data["pdf_backend"] = value
 
     # --- Profile System ---
 

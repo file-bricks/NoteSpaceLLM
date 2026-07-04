@@ -14,7 +14,7 @@ from typing import Dict, List, Optional, Iterator, Callable
 
 from ..core.document_manager import DocumentManager, DocumentItem, DocumentStatus
 from ..core.sub_query import SubQueryManager, SubQuery, SubQueryStatus
-from ..core.text_extractor import TextExtractor
+from ..core.text_extractor import TextExtractor, default_text_extractor
 from ..llm.client import LLMClient
 
 
@@ -71,7 +71,7 @@ class ReportGenerator:
         self.documents = document_manager
         self.subqueries = subquery_manager
         self.llm = llm_client
-        self.extractor = text_extractor or TextExtractor()
+        self.extractor = text_extractor or default_text_extractor()
 
         self._progress_callback: Optional[Callable[[GenerationProgress], None]] = None
         self._cancel_requested = False

@@ -1,0 +1,75 @@
+# Third-Party Licenses
+
+Project: NoteSpaceLLM
+Checked: 2026-07-02
+PDF-Backend-Umbau geprüft: 2026-07-04 (pypdfium2/pypdf ergänzt, PyMuPDF optional)
+
+Project license:
+- NoteSpaceLLM is licensed under AGPL-3.0-only according to `LICENSE`.
+
+Scope:
+- This inventory covers direct Python runtime dependencies declared in
+  `requirements.txt`, plus the Qt for Python wheel set installed transitively by
+  `PySide6`.
+- `web_companion/package.json` declares no external runtime npm dependencies.
+- PyPI project metadata was checked on 2026-07-02 for package names, current
+  metadata versions, license expressions/classifiers and project URLs.
+- This file is not a frozen transitive SBOM. Before a binary or Store release,
+  regenerate a full transitive inventory from the exact resolved build
+  environment.
+
+## Direct Python Runtime Dependencies
+
+| Package | Requirement | Checked metadata version | License metadata | Source |
+|---|---|---:|---|---|
+| PySide6 | `PySide6>=6.5.0` | 6.11.1 | LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only | https://pypi.org/project/PySide6/ |
+| pypdfium2 | `pypdfium2>=4` | 5.11.0 | BSD-3-Clause, Apache-2.0 (PDFium; siehe Wheel-Lizenzdateien) | https://pypi.org/project/pypdfium2/ |
+| pypdf | `pypdf>=4` | 6.14.2 | BSD-3-Clause | https://pypi.org/project/pypdf/ |
+| python-docx | `python-docx>=1.0.0` | 1.2.0 | MIT | https://pypi.org/project/python-docx/ |
+| openpyxl | `openpyxl>=3.1.0` | 3.1.5 | MIT | https://pypi.org/project/openpyxl/ |
+| extract-msg | `extract-msg>=0.48.0` | 0.55.0 | GPL | https://pypi.org/project/extract-msg/ |
+| langchain | `langchain>=0.3.0` | 1.3.11 | MIT | https://pypi.org/project/langchain/ |
+| langchain-core | `langchain-core>=0.3.0` | 1.4.8 | MIT | https://pypi.org/project/langchain-core/ |
+| langchain-community | `langchain-community>=0.3.0` | 0.4.2 | MIT | https://pypi.org/project/langchain-community/ |
+| langchain-ollama | `langchain-ollama>=0.2.0` | 1.1.0 | MIT | https://pypi.org/project/langchain-ollama/ |
+| langchain-chroma | `langchain-chroma>=0.1.0` | 1.1.0 | MIT | https://pypi.org/project/langchain-chroma/ |
+| chromadb | `chromadb>=0.5.0` | 1.5.9 | Apache Software License | https://pypi.org/project/chromadb/ |
+
+## Optional (Opt-in) Dependencies -- nicht Teil der Distribution
+
+Diese Pakete stehen in `requirements-optional.txt`. Der Nutzer installiert sie
+selbst; die App erkennt sie automatisch über den `pdf_backend`-Schalter
+(`auto`/`pymupdf`). Sie sind KEIN Bestandteil der ausgelieferten Abhängigkeiten.
+
+| Package | Requirement | Checked metadata version | License metadata | Source |
+|---|---|---:|---|---|
+| PyMuPDF | `PyMuPDF>=1.23.0` (optional) | 1.28.0 | Dual Licensed - GNU AFFERO GPL 3.0 or Artifex Commercial License | https://pypi.org/project/pymupdf/ |
+
+Hinweis: PyMuPDF ist AGPL/kommerziell. Die Aufnahme in die Standard-Distribution
+würde AGPL erzwingen; deshalb wird stattdessen pypdfium2 (permissiv) ausgeliefert
+und PyMuPDF bleibt eine lokale Opt-in-Runtime-Entscheidung des Nutzers.
+
+## Qt for Python Runtime Wheels
+
+| Package | Requirement | Checked metadata version | License metadata | Source |
+|---|---|---:|---|---|
+| PySide6_Addons | transitive via `PySide6` | 6.11.1 | LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only | https://pypi.org/project/PySide6-Addons/ |
+| PySide6_Essentials | transitive via `PySide6` | 6.11.1 | LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only | https://pypi.org/project/PySide6-Essentials/ |
+| shiboken6 | transitive via `PySide6` | 6.11.1 | LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only | https://pypi.org/project/shiboken6/ |
+
+## Direct Web Companion Runtime Dependencies
+
+| Package | Requirement | License metadata | Source |
+|---|---|---|---|
+| None | `web_companion/package.json` has no dependencies or devDependencies. | n/a | local package.json |
+
+Release notes:
+
+- Preserve upstream license files and notices bundled inside installed wheels
+  and source distributions.
+- Optional dependencies in `requirements-optional.txt` (`PyMuPDF`, `pytesseract`,
+  `Pillow`) und die auskommentierten Einträge in `requirements.txt`
+  (`weasyprint`, `tiktoken`, `openai`, `anthropic` und Test-/Formatierungs-Tools)
+  sind erst dann Teil des Runtime-Inventars, wenn der Nutzer sie installiert.
+- Re-run this inventory when `requirements.txt`, `web_companion/package.json`
+  or the frozen build environment changes.

@@ -36,6 +36,9 @@ keyring/
 *.bak
 
 # Interne Steuerungsdateien (NIEMALS in Git!)
+LOCK.txt
+LOCK.*.txt
+LOCK*.txt
 TEST.txt
 TESTS.txt
 TESTERGEBNISSE.txt

@@ -26,6 +26,21 @@ class ExtractionResult:
     method: str = ""  # e.g., "native", "ocr", "conversion"
 
 
+def default_text_extractor(enable_ocr: bool = True) -> "TextExtractor":
+    """
+    TextExtractor mit dem in der App-Konfiguration gewaehlten PDF-Backend bauen.
+
+    Faellt auf ``auto`` zurueck, wenn die Konfiguration nicht ladbar ist
+    (z.B. headless in Tests).
+    """
+    try:
+        from .app_config import get_app_config
+        pref = get_app_config().pdf_backend
+    except Exception:
+        pref = "auto"
+    return TextExtractor(enable_ocr=enable_ocr, pdf_backend=pref)
+
+
 class TextExtractor:
     """
     Extract text content from various document formats.
@@ -39,14 +54,17 @@ class TextExtractor:
     - Code: .py, .js, .java, etc.
     """
 
-    def __init__(self, enable_ocr: bool = True):
+    def __init__(self, enable_ocr: bool = True, pdf_backend: str = "auto"):
         """
         Initialize the extractor.
 
         Args:
             enable_ocr: Enable OCR for image-based PDFs
+            pdf_backend: PDF-Engine-Schalter (auto|pymupdf|pypdfium2|pypdf).
+                ``auto`` bevorzugt pymupdf, dann pypdfium2, dann pypdf.
         """
         self.enable_ocr = enable_ocr
+        self.pdf_backend_pref = pdf_backend
         self._check_dependencies()
 
     def _check_dependencies(self) -> dict:
@@ -58,6 +76,10 @@ class TextExtractor:
             "pytesseract": False,
             "extract_msg": False,
         }
+
+        # PDF-Backend nach Konfig-Schalter auswaehlen (None = keine PDF-Lib installiert)
+        from .pdf_backends import select_backend
+        self._pdf_backend = select_backend(self.pdf_backend_pref)
 
         try:
             import docx
@@ -177,26 +199,19 @@ class TextExtractor:
 
     def _extract_pdf(self, filepath: Path) -> ExtractionResult:
         """Extract text from PDF, with OCR fallback."""
-        if not self._deps["fitz"]:
+        if self._pdf_backend is None:
             return ExtractionResult(
                 False, "",
-                error="PyMuPDF (fitz) not installed. Install with: pip install pymupdf"
+                error="Kein PDF-Backend installiert. Install with: "
+                      "pip install pypdfium2 (oder pypdf / pymupdf)"
             )
 
-        import fitz
-
         try:
-            doc = fitz.open(str(filepath))
             text_parts = []
-            pages_with_text = 0
-
-            for page in doc:
-                page_text = page.get_text().strip()
+            for page_text in self._pdf_backend.extract_text(filepath):
+                page_text = page_text.strip()
                 if page_text:
                     text_parts.append(page_text)
-                    pages_with_text += 1
-
-            doc.close()
 
             # If no text found, try OCR
             if not text_parts and self.enable_ocr:
@@ -221,23 +236,29 @@ class TextExtractor:
                 error="OCR not available. Install pytesseract and Tesseract."
             )
 
-        if not self._deps["fitz"]:
-            return ExtractionResult(False, "", error="PyMuPDF required for OCR")
+        if self._pdf_backend is None or not self._pdf_backend.can_render:
+            return ExtractionResult(
+                False, "",
+                error="OCR benötigt pypdfium2 oder PyMuPDF (das gewählte "
+                      "pypdf-Backend kann Seiten nicht rendern)."
+            )
 
-        import fitz
         import pytesseract
         from PIL import Image
         import io
 
         try:
-            doc = fitz.open(str(filepath))
             text_parts = []
 
-            for page_num, page in enumerate(doc):
-                # Render page to image
-                mat = fitz.Matrix(2, 2)  # 2x zoom for better OCR
-                pix = page.get_pixmap(matrix=mat)
-                img_data = pix.tobytes("png")
+            for page_num in range(self._pdf_backend.page_count(filepath)):
+                # Render page to image (2x zoom for better OCR)
+                img_data = self._pdf_backend.render_page_png(filepath, page_num, scale=2.0)
+                if img_data is None:
+                    return ExtractionResult(
+                        False, "",
+                        error="OCR benötigt pypdfium2 oder PyMuPDF (Rendering "
+                              "nicht verfügbar)."
+                    )
 
                 # OCR the image
                 image = Image.open(io.BytesIO(img_data))
@@ -245,8 +266,6 @@ class TextExtractor:
 
                 if page_text.strip():
                     text_parts.append(f"--- Page {page_num + 1} ---\n{page_text}")
-
-            doc.close()
 
             if not text_parts:
                 return ExtractionResult(False, "", error="OCR found no text")
@@ -541,9 +560,18 @@ class TextExtractor:
 
     def get_dependencies_status(self) -> dict:
         """Get status of optional dependencies."""
+        from .pdf_backends import available_backends
+        backends = available_backends()
+        active = self._pdf_backend.name if self._pdf_backend is not None else None
         return {
             "python-docx": {"installed": self._deps["docx"], "for": "DOCX files"},
-            "PyMuPDF": {"installed": self._deps["fitz"], "for": "PDF files"},
+            "PDF backend": {
+                "installed": self._pdf_backend is not None,
+                "active": active,
+                "available": [name for name, ok in backends.items() if ok],
+                "for": "PDF files",
+            },
+            "PyMuPDF": {"installed": self._deps["fitz"], "for": "PDF files (optional, beste Qualitaet)"},
             "openpyxl": {"installed": self._deps["openpyxl"], "for": "Excel files"},
             "pytesseract": {"installed": self._deps["pytesseract"], "for": "OCR (image PDFs)"},
             "extract-msg": {"installed": self._deps["extract_msg"], "for": "Outlook MSG files"},

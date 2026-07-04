@@ -3,12 +3,40 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-07-04]
+
+### Changed
+- PDF-Verarbeitung läuft jetzt über einen austauschbaren Backend-Schalter (Entscheidung E05). Neues Modul `src/core/pdf_backends.py` mit `PdfBackend`-Interface und drei Backends: `pymupdf` (fitz, wie bisher), `pypdfium2` (PDFium, rendert → OCR) und `pypdf` (reine Extraktion, kein Rendering). Der Konfig-Schalter `pdf_backend` (`auto|pymupdf|pypdfium2|pypdf`) in `AppConfig` steuert die Auswahl; `auto` bevorzugt pymupdf, dann pypdfium2, dann pypdf. `TextExtractor._extract_pdf`/`_extract_pdf_ocr` nutzen das gewählte Backend; das Verhalten mit PyMuPDF (2x-Zoom-Rendering, deu+eng-OCR) bleibt identisch. Bei pypdf-Backend und Scan-PDF liefert der OCR-Pfad eine klare Fehlermeldung.
+
+### Dependencies / Licensing
+- `requirements.txt` liefert nun permissiv aus: `PyMuPDF` (AGPL) entfernt, dafür `pypdfium2>=4` (Apache-2.0/BSD-3) und `pypdf>=4` (BSD-3). PyMuPDF ist optionales Opt-in in neuer `requirements-optional.txt` („beste PDF-Qualität"); der `auto`-Schalter erkennt es, wenn der Nutzer es selbst installiert. `THIRD_PARTY_LICENSES.txt` und README-Lizenzabschnitt entsprechend aktualisiert.
+- Hinweis: Die MIT-Umlizenzierung (AGPL war nur durch PyMuPDF erzwungen) ist ein separater, nutzer-gegateter Folgeschritt — `LICENSE` bleibt vorerst AGPL-3.0.
+
+### Tests
+- `tests/test_pdf_backends.py` (15 Tests): auto-Kaskade per Monkeypatch, Extraktions-Roundtrip je installiertem Backend gegen ein generiertes Test-PDF, Render-Smoke (PNG-Bytes bei pypdfium2/pymupdf, None bei pypdf) und OCR-Fehler-Routing beim pypdf-Backend.
+
+## [Unreleased — 2026-07-02]
+
+### Fixed
+- `src/reports/exporter.py` escaped Export-Metadaten now safely: Markdown- und Pandoc-Front-Matter serialisieren `title`/`author` als YAML-sichere Scalars, sodass Newlines oder `:` den Header nicht mehr brechen; HTML- und WeasyPrint-Exporte escapen den Dokumenttitel im `<title>` statt LLM-/Nutzermarkup roh zu interpretieren. Regressionen in `tests/test_export_and_profiles.py` decken beide Pfade ab.
+
+### Documentation
+- `THIRD_PARTY_LICENSES.txt` ergänzt die direkte Runtime-Lizenzinventur aus `requirements.txt`, das Qt-for-Python-Wheel-Set und den dependency-freien Web/PWA-Companion. `tests/test_third_party_licenses.py` sichert die Inventur gegen Dependency-Drift ab; README verweist nun auf die Lizenzdatei.
+
 ## [Unreleased — 2026-06-25]
 
 ### Fixed
 - `translator._is_german()` erkennt deutsche Hinweiswörter jetzt tokenbasiert statt per Teilstring-Matching. Englische Texte mit Wörtern wie `important`, `filtering` oder `starts` werden dadurch nicht mehr fälschlich als Deutsch gescannt; der BACH-Spiegel unter `system/tools/notespace/translator.py` wurde synchron nachgezogen.
 
+## [Unreleased — 2026-07-01]
+
+### Fixed
+- `src/gui/chat_panel.py`: `MessageWidget.content_label` rendert LLM-Ausgaben jetzt explizit als PlainText statt als `QLabel`-AutoText. Literaler Markup-Output wie `<think>…</think>` bleibt dadurch sichtbar und wird nicht mehr als RichText interpretiert; die Regression `tests/test_bug_regressions_20260623.py` prüft Widget-Textformat und sichtbaren Inhalt direkt.
+
 ## [Unreleased — 2026-06-20]
+
+### Security / Repository Hygiene
+- `.gitignore` schließt interne `LOCK*.txt`-Projekt- und Scope-Sperren explizit aus, damit temporäre Multi-Agenten-Locks nicht versehentlich ins öffentliche Repository gelangen.
 
 ### Changed (web_companion)
 - `web_companion/` erweitert die Companion-Oberfläche von DE/EN auf DE/EN/ES/ZH-Hans/JA/RU. Sprachumschalter, Browser-/Workspace-Locale-Auflösung, Plattformhinweise, Validierungsfehler, Demo-Workspace und Review-Markdown-Export nutzen jetzt denselben sechssprachigen UI-Textvertrag.
