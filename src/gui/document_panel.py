@@ -70,15 +70,41 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
         header = QHBoxLayout()
 
         self.add_files_btn = QPushButton("+ Dateien")
+        self.add_files_btn.setToolTip(
+            "Dateien zum aktuellen Projekt hinzufügen\n"
+            "Unterstützte Formate werden danach für Extraktion und Bericht verfügbar."
+        )
+        self.add_files_btn.setAccessibleName("Dateien hinzufügen")
+        self.add_files_btn.setAccessibleDescription(
+            "Öffnet die Dateiauswahl, um Dokumente in das aktuelle Projekt zu laden."
+        )
         self.add_files_btn.clicked.connect(self._on_add_files)
 
         self.add_folder_btn = QPushButton("+ Ordner")
+        self.add_folder_btn.setToolTip(
+            "Einen ganzen Ordner rekursiv hinzufügen\n"
+            "Alle unterstützten Dateien im Ordner werden übernommen."
+        )
+        self.add_folder_btn.setAccessibleName("Ordner hinzufügen")
+        self.add_folder_btn.setAccessibleDescription(
+            "Öffnet die Ordnerauswahl und importiert alle unterstützten Dateien daraus."
+        )
         self.add_folder_btn.clicked.connect(self._on_add_folder)
 
         self.select_all_btn = QPushButton("Alle")
+        self.select_all_btn.setToolTip("Alle geladenen Dokumente für Analyse und Bericht auswählen")
+        self.select_all_btn.setAccessibleName("Alle Dokumente auswählen")
+        self.select_all_btn.setAccessibleDescription(
+            "Markiert alle Dokumente, damit sie in die nächste Analyse einfließen."
+        )
         self.select_all_btn.clicked.connect(self._on_select_all)
 
         self.deselect_all_btn = QPushButton("Keine")
+        self.deselect_all_btn.setToolTip("Alle Dokumente von Analyse und Bericht ausschließen")
+        self.deselect_all_btn.setAccessibleName("Keine Dokumente auswählen")
+        self.deselect_all_btn.setAccessibleDescription(
+            "Hebt die Auswahl aller Dokumente auf, damit keines im Bericht verwendet wird."
+        )
         self.deselect_all_btn.clicked.connect(self._on_deselect_all)
 
         header.addWidget(self.add_files_btn)
@@ -93,6 +119,14 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
         self.tree = QTreeWidget()
         self.tree.setHeaderLabels(["Dokument", "Status", "Größe"])
         self.tree.setColumnCount(3)
+        self.tree.setToolTip(
+            "Dokumentenliste des aktuellen Projekts\n"
+            "Checkboxen steuern, welche Dateien in Analyse und Bericht einfließen."
+        )
+        self.tree.setAccessibleName("Dokumentenliste")
+        self.tree.setAccessibleDescription(
+            "Zeigt alle geladenen Dokumente mit Status und Größe sowie Auswahl-Checkboxen."
+        )
 
         # Enable drag & drop
         self.tree.setAcceptDrops(True)

@@ -304,11 +304,25 @@ class WorkflowPanel(QWidget if PYSIDE_AVAILABLE else object):
             "Forschungsbericht",
             "Vergleich"
         ])
+        self.report_type_combo.setToolTip(
+            "Wählt die Berichtsart und den passenden Standard-Workflow für das Projekt."
+        )
+        self.report_type_combo.setAccessibleName("Berichtstyp")
+        self.report_type_combo.setAccessibleDescription(
+            "Legt fest, ob Analyse, Zusammenfassung, Forschungsbericht oder Vergleich erstellt wird."
+        )
         self.report_type_combo.currentTextChanged.connect(self._on_report_type_changed)
 
         self.workflow_combo = QComboBox()
         for wf in self._workflows.values():
             self.workflow_combo.addItem(wf.name, wf.id)
+        self.workflow_combo.setToolTip(
+            "Wählt den konkreten Ablauf mit seinen einzelnen Workflow-Schritten."
+        )
+        self.workflow_combo.setAccessibleName("Workflow")
+        self.workflow_combo.setAccessibleDescription(
+            "Zeigt den aktuell gewählten Arbeitsablauf und erlaubt den Wechsel auf andere Vorlagen."
+        )
         self.workflow_combo.currentIndexChanged.connect(self._on_workflow_changed)
 
         selection_layout.addRow("Berichtstyp:", self.report_type_combo)
@@ -344,6 +358,14 @@ class WorkflowPanel(QWidget if PYSIDE_AVAILABLE else object):
             "Beispiel: 'Welche Faktoren beeinflussten die Entwicklung im Jahr 2025?'"
         )
         self.question_edit.setMaximumHeight(100)
+        self.question_edit.setToolTip(
+            "Formuliere hier die Hauptfrage für den Bericht.\n"
+            "Sie steuert die spätere Analyse und den finalen LLM-Bericht."
+        )
+        self.question_edit.setAccessibleName("Hauptfragestellung")
+        self.question_edit.setAccessibleDescription(
+            "Eingabefeld für die zentrale Frage, die im Bericht beantwortet werden soll."
+        )
         question_layout.addWidget(self.question_edit)
 
         layout.addWidget(question_group)
@@ -352,9 +374,23 @@ class WorkflowPanel(QWidget if PYSIDE_AVAILABLE else object):
         actions = QHBoxLayout()
 
         self.edit_workflow_btn = QPushButton("Workflow bearbeiten")
+        self.edit_workflow_btn.setToolTip(
+            "Öffnet den ausgewählten Workflow zum Anpassen von Schritten und Ausgabeformaten."
+        )
+        self.edit_workflow_btn.setAccessibleName("Workflow bearbeiten")
+        self.edit_workflow_btn.setAccessibleDescription(
+            "Öffnet einen Dialog, um den aktuellen Workflow zu prüfen und anzupassen."
+        )
         self.edit_workflow_btn.clicked.connect(self._on_edit_workflow)
 
         self.start_btn = QPushButton("Bericht erstellen")
+        self.start_btn.setToolTip(
+            "Startet die Berichtserstellung mit dem aktuellen Workflow und der Hauptfragestellung."
+        )
+        self.start_btn.setAccessibleName("Bericht erstellen")
+        self.start_btn.setAccessibleDescription(
+            "Startet die Analyse und erstellt den Bericht mit den aktuell ausgewählten Dokumenten."
+        )
         self.start_btn.setStyleSheet("""
             QPushButton {
                 background-color: #27ae60;

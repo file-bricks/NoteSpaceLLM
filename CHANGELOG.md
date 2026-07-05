@@ -5,6 +5,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased — 2026-07-04]
 
+### UX / Accessibility
+- `src/gui/document_panel.py` und `src/gui/workflow_panel.py` geben den primären Dokument-/Workflow-Steuerelementen jetzt klare Tooltips sowie Accessible Names/Descriptions: `+ Dateien`, `+ Ordner`, `Alle`, `Keine`, Dokumentenliste, Berichtstyp, Workflow, Hauptfragestellung, `Workflow bearbeiten` und `Bericht erstellen`. Der neue Regressionstest `tests/test_panel_accessibility.py` sichert diesen Screenreader-/Tastatur-Kontext headless ab.
+
 ### Changed
 - PDF-Verarbeitung läuft jetzt über einen austauschbaren Backend-Schalter (Entscheidung E05). Neues Modul `src/core/pdf_backends.py` mit `PdfBackend`-Interface und drei Backends: `pymupdf` (fitz, wie bisher), `pypdfium2` (PDFium, rendert → OCR) und `pypdf` (reine Extraktion, kein Rendering). Der Konfig-Schalter `pdf_backend` (`auto|pymupdf|pypdfium2|pypdf`) in `AppConfig` steuert die Auswahl; `auto` bevorzugt pymupdf, dann pypdfium2, dann pypdf. `TextExtractor._extract_pdf`/`_extract_pdf_ocr` nutzen das gewählte Backend; das Verhalten mit PyMuPDF (2x-Zoom-Rendering, deu+eng-OCR) bleibt identisch. Bei pypdf-Backend und Scan-PDF liefert der OCR-Pfad eine klare Fehlermeldung.
 
