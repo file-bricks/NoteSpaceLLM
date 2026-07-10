@@ -5,6 +5,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased — 2026-07-04]
 
+### Fixed
+- `src/gui/main_window.py` fährt beim App-Exit laufende Hintergrund-Worker jetzt kontrolliert herunter, bevor das Fenster zerstört wird. `closeEvent()` ruft dafür einen zentralen Shutdown-Pfad für `Report`-, `Analysis`-, `Extraction`-, `Index`- und `ModelLoad`-Worker auf; `src/gui/chat_panel.py` ergänzt `shutdown()` für laufende Chat-/RAG-Worker. Die Regression `tests/test_bug_regressions_20260623.py` sichert den Teardown-Pfad gegen `QThread: Destroyed while thread is still running`.
+
 ### UX / Accessibility
 - `src/gui/document_panel.py` und `src/gui/workflow_panel.py` geben den primären Dokument-/Workflow-Steuerelementen jetzt klare Tooltips sowie Accessible Names/Descriptions: `+ Dateien`, `+ Ordner`, `Alle`, `Keine`, Dokumentenliste, Berichtstyp, Workflow, Hauptfragestellung, `Workflow bearbeiten` und `Bericht erstellen`. Der neue Regressionstest `tests/test_panel_accessibility.py` sichert diesen Screenreader-/Tastatur-Kontext headless ab.
 

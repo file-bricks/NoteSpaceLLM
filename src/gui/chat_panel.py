@@ -649,6 +649,14 @@ SPRACHE: Deutsch.
             self._current_worker.wait()
             self._on_response_error("Abgebrochen")
 
+    def shutdown(self):
+        """Stop chat workers without emitting new UI errors during app shutdown."""
+        if self._current_worker and self._current_worker.isRunning():
+            self._current_worker.stop()
+            self._current_worker.wait()
+        self._current_worker = None
+        self._streaming_widget = None
+
     def get_messages(self) -> List[ChatMessage]:
         """Get all messages."""
         return list(self._messages)

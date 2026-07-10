@@ -9,12 +9,15 @@ Geprüfte echte Bugs (NoteSpaceLLM Desktop-Erst-Sweep):
   #4 chat_panel _clear_history(): Streaming-Widget-Referenz nicht genullt -> RuntimeError
      (Zugriff auf gelöschtes C++-Objekt), wenn während Streaming gelöscht wird.
   #5 chat_panel MessageWidget rendert LLM-Markup nicht mehr als RichText.
+  #6 main_window.closeEvent stoppt laufende Worker nicht -> QThread kann beim App-Exit
+     noch laufen und "Destroyed while thread is still running" auslösen.
 """
 import json
 import os
 import sys
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -126,3 +129,93 @@ def test_message_widget_uses_plain_text_for_llm_output():
 
     assert widget.content_label.textFormat() == Qt.TextFormat.PlainText
     assert widget.content_label.text() == "<think>literal markup</think>"
+
+
+class _FakeWorker:
+    def __init__(self, *, running=True, has_stop=True):
+        self.running = running
+        self.stop_called = 0
+        self.quit_called = 0
+        self.wait_called = 0
+        self._has_stop = has_stop
+
+    def isRunning(self):
+        return self.running
+
+    def stop(self):
+        if not self._has_stop:
+            raise AttributeError("stop not available")
+        self.stop_called += 1
+        self.running = False
+
+    def quit(self):
+        self.quit_called += 1
+        self.running = False
+
+    def wait(self):
+        self.wait_called += 1
+
+
+class _FakeEvent:
+    def __init__(self):
+        self.accepted = False
+
+    def accept(self):
+        self.accepted = True
+
+
+def test_close_event_stops_background_workers_before_accept():
+    from src.gui.main_window import MainWindow
+
+    window = MainWindow.__new__(MainWindow)
+    chat_panel = SimpleNamespace(shutdown_called=0)
+
+    def _shutdown():
+        chat_panel.shutdown_called += 1
+
+    chat_panel.shutdown = _shutdown
+
+    report_worker = _FakeWorker(has_stop=True)
+    analysis_worker = _FakeWorker(has_stop=True)
+    extraction_worker = _FakeWorker(has_stop=True)
+    index_worker = _FakeWorker(has_stop=True)
+    model_worker = _FakeWorker(has_stop=True)
+
+    project_manager = SimpleNamespace(close_calls=0)
+
+    def _close_project():
+        project_manager.close_calls += 1
+
+    project_manager.close_project = _close_project
+
+    window.chat_panel = chat_panel
+    window._project_manager = project_manager
+    window._report_worker = report_worker
+    window._analysis_worker = analysis_worker
+    window._extraction_worker = extraction_worker
+    window._index_worker = index_worker
+    window._model_load_worker = model_worker
+
+    event = _FakeEvent()
+    window.closeEvent(event)
+
+    assert chat_panel.shutdown_called == 1
+    assert project_manager.close_calls == 1
+    assert event.accepted is True
+
+    for worker in (
+        report_worker,
+        analysis_worker,
+        extraction_worker,
+        index_worker,
+        model_worker,
+    ):
+        assert worker.stop_called == 1
+        assert worker.wait_called == 1
+        assert worker.isRunning() is False
+
+    assert window._report_worker is None
+    assert window._analysis_worker is None
+    assert window._extraction_worker is None
+    assert window._index_worker is None
+    assert window._model_load_worker is None

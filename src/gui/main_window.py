@@ -43,15 +43,24 @@ if PYSIDE_AVAILABLE:
             super().__init__()
             self._llm_client = llm_client
             self._tasks = tasks  # [(query_id, prompt), ...]
+            self._stop_requested = False
+
+        def stop(self):
+            self._stop_requested = True
 
         def run(self):
             for query_id, prompt in self._tasks:
+                if self._stop_requested:
+                    return
                 try:
                     response = self._llm_client.chat(prompt, "")
+                    if self._stop_requested:
+                        return
                     self.query_complete.emit(query_id, response, "")
                 except Exception as e:
                     self.query_complete.emit(query_id, "", str(e))
-            self.all_complete.emit()
+            if not self._stop_requested:
+                self.all_complete.emit()
 
     class ExtractionWorker(QThread):
         """Worker thread for text extraction (prevents GUI freeze)."""
@@ -63,21 +72,30 @@ if PYSIDE_AVAILABLE:
             super().__init__()
             self._extractor = extractor
             self._docs = docs  # [(doc_id, doc_path, doc_name), ...]
+            self._stop_requested = False
+
+        def stop(self):
+            self._stop_requested = True
 
         def run(self):
             total = len(self._docs)
             for i, (doc_id, doc_path, doc_name) in enumerate(self._docs):
+                if self._stop_requested:
+                    return
                 self.progress.emit(i, total, doc_name)
                 try:
                     result = self._extractor.extract(doc_path)
+                    if self._stop_requested:
+                        return
                     if result.success:
                         self.doc_extracted.emit(doc_id, result.text, "")
                     else:
                         self.doc_extracted.emit(doc_id, "", result.error or "Extraktion fehlgeschlagen")
                 except Exception as e:
                     self.doc_extracted.emit(doc_id, "", str(e))
-            self.progress.emit(total, total, "")
-            self.all_complete.emit()
+            if not self._stop_requested:
+                self.progress.emit(total, total, "")
+                self.all_complete.emit()
 
     class IndexWorker(QThread):
         """Worker thread for RAG indexing (prevents GUI freeze)."""
@@ -89,21 +107,30 @@ if PYSIDE_AVAILABLE:
             super().__init__()
             self._doc_manager = doc_manager
             self._docs = doc_ids_and_names  # [(doc_id, doc_name), ...]
+            self._stop_requested = False
+
+        def stop(self):
+            self._stop_requested = True
 
         def run(self):
             total = len(self._docs)
             indexed = 0
             for i, (doc_id, doc_name) in enumerate(self._docs):
+                if self._stop_requested:
+                    return
                 self.progress.emit(i, total, doc_name)
                 try:
                     success = self._doc_manager.index_document(doc_id)
+                    if self._stop_requested:
+                        return
                     self.doc_indexed.emit(doc_id, success)
                     if success:
                         indexed += 1
                 except Exception:
                     self.doc_indexed.emit(doc_id, False)
-            self.progress.emit(total, total, "")
-            self.all_complete.emit(indexed, total)
+            if not self._stop_requested:
+                self.progress.emit(total, total, "")
+                self.all_complete.emit(indexed, total)
 
     class ModelLoadWorker(QThread):
         """Worker thread for Ollama model discovery (prevents GUI freeze on network call)."""
@@ -113,6 +140,10 @@ if PYSIDE_AVAILABLE:
             super().__init__()
             self._url = url
             self._api_key = api_key
+            self._stop_requested = False
+
+        def stop(self):
+            self._stop_requested = True
 
         def run(self):
             try:
@@ -123,13 +154,18 @@ if PYSIDE_AVAILABLE:
                 client._is_available = False
                 client.model = ""
                 client._check_availability()
+                if self._stop_requested:
+                    return
                 if client._is_available:
                     models = client.get_models()
-                    self.models_loaded.emit(models, f"{len(models)} Modelle auf {self._url}")
+                    if not self._stop_requested:
+                        self.models_loaded.emit(models, f"{len(models)} Modelle auf {self._url}")
                 else:
-                    self.models_loaded.emit([], f"Ollama nicht erreichbar ({self._url})")
+                    if not self._stop_requested:
+                        self.models_loaded.emit([], f"Ollama nicht erreichbar ({self._url})")
             except Exception as e:
-                self.models_loaded.emit([], f"Fehler: {e}")
+                if not self._stop_requested:
+                    self.models_loaded.emit([], f"Fehler: {e}")
 
 
 if PYSIDE_AVAILABLE:
@@ -396,6 +432,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         self._analysis_worker = None
         self._extraction_worker = None
         self._index_worker = None
+        self._model_load_worker = None
 
         # RAG Engine — lazy init nach erstem GUI-Render (verhindert Startup-Freeze
         # bei Remote-Ollama oder langsamer Netzwerkverbindung)
@@ -1784,9 +1821,37 @@ Verwende Markdown-Formatierung."""
 
     def closeEvent(self, event):
         """Handle window close."""
-        # Save project
+        self._shutdown_background_workers()
         self._project_manager.close_project()
         event.accept()
+
+    def _shutdown_background_workers(self):
+        """Stop background QThreads before the window is destroyed."""
+        if hasattr(self, "chat_panel") and self.chat_panel:
+            shutdown = getattr(self.chat_panel, "shutdown", None)
+            if callable(shutdown):
+                shutdown()
+
+        for attr_name in (
+            "_report_worker",
+            "_analysis_worker",
+            "_extraction_worker",
+            "_index_worker",
+            "_model_load_worker",
+        ):
+            worker = getattr(self, attr_name, None)
+            if not worker:
+                continue
+            if worker.isRunning():
+                stop = getattr(worker, "stop", None)
+                if callable(stop):
+                    stop()
+                else:
+                    quit_worker = getattr(worker, "quit", None)
+                    if callable(quit_worker):
+                        quit_worker()
+                worker.wait()
+            setattr(self, attr_name, None)
 
     # ==================== RAG Methods ====================
 

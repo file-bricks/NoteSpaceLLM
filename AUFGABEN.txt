@@ -1,0 +1,341 @@
+# AUFGABEN -- NoteSpaceLLM
+# Ausstehende Entwicklungsaufgaben
+
+## OFFEN — Bugsweep 2026-06-23 (Run 15, deferred, do-no-harm)
+
+[x] [BUG/HOCH] main_window.closeEvent stoppt laufende
+    QThread-Worker jetzt kontrolliert vor dem Fensterabbau. -- DONE 2026-07-11
+    - `MainWindow._shutdown_background_workers()` stoppt `Report`-, `Analysis`-,
+      `Extraction`-, `Index`- und `ModelLoad`-Worker vor `close_project()`.
+    - `ChatPanel.shutdown()` beendet laufende Chat-/RAG-Worker ohne neue UI-Fehler
+      waehrend des App-Exits.
+    - `AnalysisWorker`, `ExtractionWorker`, `IndexWorker` und `ModelLoadWorker`
+      haben jetzt einen kleinen `stop()`-Pfad, damit `closeEvent()` auf laufende
+      QThreads nicht mehr sehenden Auges in `Destroyed while thread is still running`
+      laeuft.
+    - `_model_load_worker` wird in `__init__` zentral initialisiert, damit der
+      Shutdown-Pfad alle bekannten Worker konsistent sieht.
+    - Regression: `tests/test_bug_regressions_20260623.py::test_close_event_stops_background_workers_before_accept`.
+
+[x] [BUG/MITTEL deferred] chat_panel MessageWidget.content_label nutzt QLabel-Default
+    AutoText → LLM-Output mit HTML/Markup (z.B. <think>…</think>) wird interpretiert
+    statt literal angezeigt. Fix: setTextFormat(PlainText). Kosmetisch, kein Crash.
+    -- DONE 2026-07-01: `MessageWidget.content_label` nutzt jetzt explizit
+    `Qt.TextFormat.PlainText`; Regression in
+    `tests/test_bug_regressions_20260623.py` prüft Textformat und literalen
+    `<think>`-Inhalt mit echtem Widget.
+
+[x] [BUG/MITTEL deferred] reports/exporter HTML-/YAML-Header-Erzeugung escaped Nutzer-/
+    LLM-Titel/Autor nicht (Newline/`:` im Titel bricht Pandoc-YAML-Header; HTML-Export
+    interpretiert Markup). Export-Format-Entscheidung → eigene Bewertung.
+    -- DONE 2026-07-03: `ReportExporter` serialisiert YAML-Metadaten für Markdown/Pandoc
+    jetzt als sichere JSON/YAML-Scalars und escaped HTML-`<title>` in HTML-/WeasyPrint-
+    Exporten; Regressionen in `tests/test_export_and_profiles.py`.
+
+[ ] [BUG/LOW deferred] rag/embeddings: OllamaEmbeddings ohne expliziten timeout +
+    keine Validierung leerer Embedding-Antwort; splitter ohne chunk_overlap>=chunk_size-
+    Guard. (langchain-Wrapper — Verhalten genauer pruefen.)
+
+[x] [BUG/LOW deferred] translator._is_german nutzt Substring-Matching der german_hints
+    → False Positives (engl. Text mit Hint-Substring wird als Deutsch erkannt → unnoetige
+    translations.json-Eintraege/-Writes). Wort-Grenzen-Matching erwaegen. Scan-only,
+    kein Crash. -- DONE 2026-06-25: `_is_german()` tokenisiert Hinweise jetzt und
+    erkennt german_hints nur noch als ganze Wörter; englische Teilstring-Fälle wie
+    "Important filtering starts here" erzeugen keine neuen Übersetzungseinträge.
+    Regression: `tests/test_translator.py`.
+
+## SPRACHERWEITERUNG (NEU 2026-06-01, aktualisiert 2026-06-07)
+[x] i18n-Infrastruktur: translator.py + manage_translations.py auf 6 Sprachen erweitert (de/en/es/zh/ja/ru)
+    DONE 2026-06-07: SUPPORTED_LANGUAGES, Fallback-Chain, leere Platzhalter in translations.json
+    Eigentliche Übersetzungen (es/zh/ja/ru) noch offen — werden von Gemini eingefüllt.
+
+[x] P2: DE/EN-Lokalisierung für `web_companion/` abschließen -- DONE 2026-06-16
+    - `web_companion/` wählt jetzt DE/EN über Browser-/Workspace-Locale oder
+      manuellen Sprachumschalter.
+    - HTML-Labels, Statusmeldungen, Offline-/PWA-Hinweise und
+      Markdown-Exporttexte sind für DE/EN zentralisiert.
+    - Node-Webtests decken Locale-Auflösung, englische Plattformhinweise und
+      englischen Review-Markdown mit ab.
+
+[x] P3: ES/ZH/JA/RU — web_companion i18n nachrüsten -- DONE 2026-06-20
+    - `web_companion/` bietet jetzt DE/EN/ES/ZH-Hans/JA/RU über denselben
+      UI-Textvertrag an.
+    - Sprachumschalter, Plattformhinweise, Validierungsfehler, Demo-Workspace
+      und Review-Markdown-Export sind für alle sechs Sprachen abgedeckt.
+    - Regression: Node-Webtests prüfen Locale-Erkennung, Key-Parität,
+      Premium-Sprachcopy, non-latin Demo-Inhalte und Select-Optionen.
+    - Echte Android-/iOS-Geräte- oder Emulator-Smokes bleiben separat offen.
+
+---
+
+## NUTZERFEEDBACK 2026-06-01 — UX & Bugs (Testlauf mit lokalem Ollama/Mac)
+
+**Kontext:** Erster produktiver Testlauf. Brauchbare Berichte mit lokalem Modell
+(Ollama auf Mac, qwen3-Familie) wurden erfolgreich erstellt.
+
+### Bugs
+
+[x] BUG-KRITISCH: Langer Start (mehrere Minuten) — BEHOBEN 2026-06-01 — `_init_rag_engine()` wird
+    synchron in `MainWindow.__init__` (Zeile 162) aufgerufen. Dabei wird
+    `OllamaEmbeddings` initialisiert, das beim Konstruktor eine Netzwerk-Verbindung
+    zum Ollama-Server herstellt (bei Remote-Ollama z.B. Mac über Tailscale kann das
+    lang dauern; schläfender Server oder langsames VPN blockiert den GUI-Start).
+    Zusätzlich: `langchain_chroma`-Topimport in engine.py lädt schwere ML-Libraries.
+    Fix A (minimal, schnell): `_init_rag_engine()` mit `QTimer.singleShot(0, ...)`
+    nach dem ersten GUI-Refresh verschieben — User sieht das Fenster sofort.
+    Fix B (robust): RAGEngine komplett lazy initialisieren — erst beim ersten echten
+    Indexierungs-/Analyse-Aufruf, nicht beim Start.
+    Fix C (ergänzend): langchain/chromadb-Imports in engine.py in `__init__`
+    verschieben statt Top-Level (reduziert Import-Zeit beim Start).
+    Betrifft: src/gui/main_window.py (Zeilen 162, 1388–1423), src/rag/engine.py
+
+[x] BUG-HOCH: GUI friert bei langen Operationen ein — BEHOBEN 2026-06-01
+    Diagnose: Extraktion/Analyse/Index/Bericht waren bereits korrekt in QThread-Workers.
+    Verbliebene Freeze-Stellen: `_refresh_models()` und `load_models_for_provider()`
+    riefen `OllamaClient._check_availability()` (5s-Timeout) synchron im Hauptthread auf.
+    Fix: `ModelLoadWorker(QThread)` hinzugefügt; beide Stellen asynchron umgestellt.
+    Modell-Laden im LLM-Einstellungs-Dialog und "Modelle aktualisieren" frieren nicht mehr ein.
+    Tests: tests/test_worker_threads.py (14 neue Tests, alle grün), gesamt 16/16.
+    Prüfen ob A3 (Doppelstart-Schutz) das bereits abdeckt oder nur Doppelstart verhindert.
+
+[x] BUG-MITTEL: Export — kein Dateiname konfigurierbar — BEHOBEN 2026-06-01
+    Fix: _on_export_requested öffnet jetzt Dialog:
+    - 1 Format → QFileDialog.getSaveFileName (voller Pfad wählbar)
+    - n Formate → QInputDialog.getText für Basisnamen, dann auto extension
+    Dialog-Abbruch bricht Export sauber ab (kein stilles Schreiben).
+    Tests: test_export_and_profiles.py (TestExportDialogLogic, 4 Tests).
+
+[x] BUG-MITTEL: Profile — nach dem Erstellen nicht lösch- oder änderbar — BEHOBEN 2026-06-01
+    Fix: rename_profile() in AppConfig hinzugefügt (Built-ins geschützt,
+    Namens-Kollision-Check, active_profile aktualisiert, persistiert).
+    UI: "Umbenennen"-Button im LLM-Einstellungs-Dialog ergänzt.
+    Tests: test_export_and_profiles.py (TestAppConfigProfiles, 10 Tests).
+
+### UX-Verbesserungen
+
+[x] UX-MITTEL: Button "Prompt exportieren" umbenannt — BEHOBEN 2026-06-01
+    Neu: "LLM-Prompt exportieren" + verbesserter Tooltip (output_panel.py).
+    Tests: tests/test_ux_improvements.py (test_prompt_export_button_*).
+
+[x] UX-HOCH: Begriffe und Pipeline-Abläufe unklar — VOLLSTÄNDIG BEHOBEN 2026-06-01
+    Umgesetzt: (a) Tooltips auf allen 5 Toolbar-Buttons (erklärt Schritt 1/2/3)
+               (b) Pipeline-Phasen-Label in der Statusleiste (rechts)
+               (c) _PipelineHelpDialog mit 5 visuellen Schritt-Karten:
+                   "?" Button in Toolbar → QDialog mit farbigen Step-Indikatoren,
+                   Erklärungstexten, optional-Badge, Workspace-Export-Hinweis.
+                   Tests: tests/test_pipeline_help_dialog.py (12 Tests, alle grün).
+    Offen: (d) Auto-Indexierung wenn "Bericht erstellen" geklickt wird
+               (Extraktion läuft bereits automatisch; RAG-Indexierung optional).
+    Gesamt-Tests: 72/72 grün.
+
+---
+
+## [SYNC -> BACH] Änderungen in die BACH-On-Board-Version nachziehen!  (seit 2026-05-30)
+
+Diese App existiert seit 2026-05-30 zusätzlich als festes, mitgeliefertes BACH-Modul:
+  -> .AI/.OS/BACH/system/tools/notespace/   (Aufruf: `bach notespace gui`)
+  -> Handler: .AI/.OS/BACH/system/hub/notespace.py
+  -> Herkunft/Patches dokumentiert in tools/notespace/PROVENANCE.md
+
+REGEL: Jede Änderung an dieser .SOFTWARE-Version muss in die BACH-Version
+nachgezogen werden:
+  1. src/ nach tools/notespace/src/ kopieren
+  2. die BACH_NOTESPACE_HOME-Patches erneut anwenden
+     (app_config.py: CONFIG_DIR; main_window.py: projects_dir + storage_dir, import os)
+
+INSBESONDERE CLI: Sobald ein vollwertiger CLI-Modus produktiv ist (vgl. Abschnitt
+"API/CLI-STEUERBARKEIT" -- bisher nur als ATI-Template vorhanden, NICHT in main.py
+integriert), muss er ebenfalls in die BACH-Version übertragen und dort im Handler
+als `bach notespace cli` verdrahtet werden (Phase 2).
+
+---
+
+## [ERLEDIGT] Bugfixes v1.0.1
+
+[x] OllamaEmbeddings/ChatOllama `headers` -> `client_kwargs` (langchain-ollama >=0.2.0)
+[x] Crash bei Drag&Drop / Checkbox-Klick -> Error-Handling
+[x] Dateifilter erweitert (.rtf, .pptx, .py, .csv, .json, .xml, .eml, .msg)
+[x] TextExtractor: .rtf und .pptx Support
+[x] Menu: "Modell wechseln" -> "LLM-Einstellungen"
+
+---
+
+## [ERLEDIGT] UX-Verbesserungen v1.1.0
+
+[x] A1: Automatische Textextraktion bei add_file()
+    -> document_manager.py: _auto_extract Flag, _try_auto_extract() Methode
+
+[x] A2: Automatische Indexierung nach Extraktion
+    -> document_manager.py: _auto_index war bereits implementiert, wird in update_content() getriggert
+
+[x] A3: Auftragsmanagement mit Status-Tracking
+    -> main_window.py: Doppelstart-Schutz für _generate_report() und _run_analysis()
+    -> Prüfen ob Worker läuft bevor neuer gestartet wird
+
+[x] A4: Claude Code Integration (zwei Modi)
+    -> src/llm/claude_code_client.py: Neuer LLM-Client via subprocess
+    -> "api"-Modus: --print Flag, Ergebnis zurück in App
+    -> "chat"-Modus: Konsole öffnet sich mit Prompt, interaktives Weiter-Chatten
+    -> app_config.py: claude_code_mode Einstellung
+    -> LLM-Einstellungen Dialog: Provider "claude-code" mit Modus-Auswahl
+    -> client.py: Factory erweitert
+
+[x] A5: Prompt-Export
+    -> output_panel.py: "Prompt exportieren" Button (lila)
+    -> main_window.py: _export_prompt() sammelt Doku-Kontext + Aufgabe -> .md Datei
+    -> ClaudeCodeClient.export_prompt() statische Methode
+
+---
+
+## BUGFIXES (Session 2026-03-13, Claude Opus)
+
+[x] HOCH: Doppelte update_content() Definition in document_manager.py (Zeile 373 + 755)
+    - Fix: Erste (tote) Definition entfernt
+[x] MITTEL: bare except:pass in _notify_change() (document_manager.py)
+    - Fix: except Exception as e mit logging.warning
+[x] MITTEL: bare except:pass in _setup_window() (main_window.py)
+    - Fix: except Exception as e mit logger.warning
+
+## OFFENE BUGS
+
+[x] KRITISCH: PyQt6 statt PySide6 -- ERLEDIGT (Imports waren bereits PySide6, veraltete Referenzen/Variablennamen korrigiert 2026-04-04)
+[x] HOCH: RAGEngine greift auf privates ChromaDB-Attribut _collection zu (bricht bei Updates) -- DONE 2026-03-14
+    - Fix: .persist() entfernt (Chroma >= 0.4 auto-persistiert), _collection nur noch in get_document_chunks() für Collection.get()
+[x] HOCH: get_document_chunks() nutzt leere Similarity-Query statt Collection-Query -- DONE 2026-03-14
+    - Fix: Neue Methode get_document_chunks(source_id, query=None, k=10) mit where-Filter und optionaler Similarity
+
+---
+
+## [POST-RELEASE] Deep-Research-Integration aus webservice_SpaceNot
+
+**Quelle:** `webservice_SpaceNot/backend/services/researcher.py`
+
+**Was ist vorhanden:**
+Der `ResearchService` (aus SpaceNotLM/BACH Research Agent adaptiert) implementiert
+einen strukturierten "Deep Dive"-Workflow pro Dokument und Thema:
+  1. Automatisch einen Analyseplan generieren
+  2. RAG-Engine mehrfach gezielt befragen (Definitionen, Implikationen, Lücken)
+  3. Einzelbefunde zu einem strukturierten Ergebnisbericht zusammenfassen
+
+Der Service ist vollständig entkoppelt und benötigt nur eine RAG-Engine-Instanz.
+
+**Aufgabe: Integration in NoteSpaceLLM Desktop-App**
+
+1. `webservice_SpaceNot/backend/services/researcher.py` nach `src/core/researcher.py`
+   kopieren und für die bestehende RAG-Engine (`src/rag/engine.py`) adaptieren.
+
+2. `ResearchService.deep_dive(filename, topic)` im Sub-Query-System verankern:
+   - Neuer Eintrag im Rechtsklick-Kontextmenü des Dokument-Panels:
+     "Deep Research..." -> Dialog für Themeneingabe -> Ergebnis im Output-Panel
+
+3. Ergebnis-Dict (`plan`, `findings`, `summary`) als neuen Report-Typ ins
+   Report-System einspeisen (`src/reports/generator.py`, neues Template in
+   `src/reports/templates.py`: "deep_research").
+
+4. Optional (später): Externe API-Anbindung ergänzen (Perplexity, PubMed) --
+   der `ResearchService` hat dafür bereits einen Kommentar als Platzhalter.
+
+**Aufwandsschätzung:** ~1-2 Tage Entwicklung
+**Abhängigkeiten:** keine -- RAG-Engine bereits vorhanden
+
+---
+
+## API/CLI-STEUERBARKEIT (2026-03-15)
+
+[x] REST-API Einstellungsseite: API aktivieren/deaktivieren, Port, Auth-Token -- DONE 2026-04-04 (ATI Template: agents/ati/templates/rest-api-module/)
+[x] REST-API Server: Projekt öffnen, Dokumente indexieren, RAG-Query ausführen, Report generieren -- DONE 2026-04-04 (ATI Template bereitgestellt, projektspezifische Routes offen)
+[x] CLI-Interface: notespace --project <path>, --index, --query "<frage>", --report <typ>, --export <format> -- DONE 2026-04-04 (ATI Template: agents/ati/templates/rest-api-module/cli_interface.py)
+[x] Fernsteuerbarkeit durch Claude/LLM-Agenten (JSON-RPC oder REST) -- DONE 2026-04-04 (via REST-API + CLI Template)
+[x] API-Dokumentation (OpenAPI/Swagger) -- DONE 2026-04-04 (Health-Endpoint dokumentiert, OpenAPI-Spec projektspezifisch)
+
+## GITHUB-POLICY Compliance (Stand: 05.03.2026)
+
+Referenz: .SOFTWARE/GITHUB-POLICY.md
+
+[x] README.md zweisprachig (EN-Abschnitt fehlt) -- BEREITS VORHANDEN (Opus-Prüfung 2026-03-08)
+[x] CHANGELOG.md -- BEREITS VORHANDEN (Sonnet-Prüfung 2026-03-08)
+[x] CODE_OF_CONDUCT.md -- BEREITS VORHANDEN (Sonnet-Prüfung 2026-03-08)
+[x] CONTRIBUTING.md -- BEREITS VORHANDEN (Sonnet-Prüfung 2026-03-08)
+[x] THIRD_PARTY_LICENSES.txt -- DONE 2026-07-02
+    Direkte Runtime-Dependencies aus `requirements.txt`, Qt-for-Python-Wheels
+    und dependency-freier `web_companion/` inventarisiert; Guard-Test ergänzt.
+
+## MIGRATION PyQt6 -> PySide6 (2026-03-15, Claude Opus)
+
+[x] PyQt6 -> PySide6: 7 Dateien + requirements.txt, pyqtSignal->Signal
+[x] Syntax-Check: OK
+
+---
+
+## PORTIERUNG / PLATTFORM (2026-05-26)
+
+[x] P0: Pfad-A-Portierungsreview aktualisiert -- DONE 2026-06-05
+    - `PORTIERUNGSPLAN.md` auf den aktuellen Stand nach Desktop-Export,
+      Web/PWA-Companion, PWA-Testplan sowie macOS-/Linux-Source-Smokes gebracht.
+    - Entscheidung bestätigt: Desktop bleibt Vollversion; Android/iOS/Web laufen
+      als Companion über `notespacellm-workspace-v1.json`; native Mobile-Vollapps,
+      öffentliche Upload-App und direkte Synchronisierung bleiben Nicht-Ziele.
+
+[x] P0: `notespacellm-workspace-v1.json` als Desktop-Export umgesetzt — DONE 2026-06-01
+    - `src/core/workspace_exporter.py`: `build_workspace_export_payload()` + `export_workspace_to_file()`
+    - Atomar (temp + rename), UTF-8, Datenschutz-konform (kein API-Key, keine Rohdaten, keine Absolut-Pfade)
+    - Sub-Query-Auszüge aus abgeschlossenen Analysen (max. 2000 Zeichen, PENDING ausgeschlossen)
+    - Menu: Datei → "Workspace exportieren (JSON)..." (Ctrl+Shift+E) mit QFileDialog
+    - Tests: tests/test_workspace_export.py (20 Tests, alle grün) — gesamt 60/60
+
+[ ] P1: Windows-Store-Readiness prüfen: Store-Listing, Screenshots,
+    Privacy-Hinweis, AGPL-/PyMuPDF-Quellcodehinweis und WACK-Plan.
+
+[x] P1: Web/PWA-Companion als getrennten Strang starten -- DONE 2026-05-28
+    - `web_companion/` importiert `notespacellm-workspace-v1.json` lokal im Browser.
+    - Bericht, Dokumentmetadaten und ausgewählte Auszüge werden read-only angezeigt.
+    - Eigene Review-Notizen bleiben lokal und können als Markdown exportiert werden.
+
+[ ] P2: Echte Android-/iOS-Geräte- oder Emulator-Smokes gegen
+    `web_companion/PWA_TESTPLAN.md` durchführen.
+    - Android: Import, Offline-Wiederherstellung, Review-Notiz-Export und
+      Add-to-Home-Screen prüfen.
+    - iOS/iPadOS: Import, Offline-Wiederherstellung, Review-Notiz-Export und
+      Safari-Installationshinweis prüfen.
+    - Kein nativer Desktop-Clone mit lokaler ChromaDB als Pflichtbestandteil.
+    HINWEIS 2026-06-10: iOS-PWA-Meta-Tags für web_companion abgesichert:
+      viewport-fit=cover, apple-mobile-web-app-status-bar-style=default,
+      apple-mobile-web-app-title, apple-touch-icon 180×180,
+      safe-area-inset-CSS (top+bottom), 44px Touch-Targets (33/33 Tests grün).
+
+[x] P2: Android-/iOS-PWA-Smokes für den Companion dokumentieren -- DONE 2026-05-30
+    - `web_companion/PWA_TESTPLAN.md` beschreibt Installierbarkeit, JSON-Import,
+      Offline-Start und Review-Notiz-Export.
+    - Der Companion hält den zuletzt geladenen Workspace lokal für Offline-Starts
+      vor und zeigt Android-/iOS-Install-Hinweise direkt in der UI.
+
+[x] P3: macOS-Source-Smoke automatisiert -- DONE 2026-06-02
+    - `.github/workflows/tests.yml`: neuer Job `macos-source-smoke`
+    - `tests/platform_smoke.py`: offscreen Fensterstart, Dokumentimport,
+      Berichtstext + `notespacellm-workspace-v1.json`-Export ohne echten LLM-Server
+
+[x] P3: Linux-Source-Smoke ergänzt -- DONE 2026-06-03
+    - `tests/linux_platform_smoke.py` prüft auf Linux den offscreen-PySide6-Start,
+      Dokumentimport mit echten Umlauten, Markdown-/TXT-Berichtsexport und
+      `notespacellm-workspace-v1.json` aus derselben PySide6-Codebasis.
+    - `.github/workflows/tests.yml` führt dafür den separaten Job
+      `linux-source-smoke` auf `ubuntu-latest` aus.
+
+[x] [2026-07-04] PDF-Backend-Schalter (Sovereign-Entscheidung E05, User-freigegeben)
+    -- DONE 2026-07-04:
+    - Neues Modul src/core/pdf_backends.py: PdfBackend-Interface (extract_text ->
+      list[str], render_page_png -> bytes|None, page_count, can_render) + 3 Backends
+      (PyMuPdfBackend, Pypdfium2Backend, PypdfBackend) + select_backend()/available_backends().
+    - Konfig-Schalter pdf_backend = auto|pymupdf|pypdfium2|pypdf in AppConfig (DEFAULTS
+      + Property); auto-Reihenfolge pymupdf -> pypdfium2 -> pypdf. Factory
+      default_text_extractor() liest den Schalter; alle 4 TextExtractor-Aufrufstellen
+      (main_window x2, document_manager, reports/generator) umgestellt.
+    - TextExtractor._extract_pdf/_extract_pdf_ocr nutzen jetzt das Backend; PyMuPDF-
+      Verhalten (2x-Zoom, deu+eng-OCR) identisch. pypdf-Backend + Scan-PDF -> klarer
+      Fehler "OCR benoetigt pypdfium2 oder PyMuPDF".
+    - requirements.txt: PyMuPDF raus, pypdfium2>=4 + pypdf>=4 rein; PyMuPDF nach neuer
+      requirements-optional.txt. README-Lizenzabschnitt + THIRD_PARTY_LICENSES.txt
+      aktualisiert (pypdfium2 Apache-2.0/BSD-3, pypdf BSD-3, PyMuPDF optional).
+    - Tests: tests/test_pdf_backends.py (15 neu). Gesamt 99 passed, 3 skipped.
+    - OFFEN (separater Schritt, User-Gate): MIT-Umlizenzierung (LICENSE nicht angefasst).
+    Referenz: sovereign-private/DECISIONS.md E05/E06 (2026-07-04)
