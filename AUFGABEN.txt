@@ -32,9 +32,15 @@
     jetzt als sichere JSON/YAML-Scalars und escaped HTML-`<title>` in HTML-/WeasyPrint-
     Exporten; Regressionen in `tests/test_export_and_profiles.py`.
 
-[ ] [BUG/LOW deferred] rag/embeddings: OllamaEmbeddings ohne expliziten timeout +
+[x] [BUG/LOW deferred] rag/embeddings: OllamaEmbeddings ohne expliziten timeout +
     keine Validierung leerer Embedding-Antwort; splitter ohne chunk_overlap>=chunk_size-
-    Guard. (langchain-Wrapper — Verhalten genauer pruefen.)
+    Guard. -- DONE 2026-07-14 (SOFTWAREPIPELINE)
+    `EmbeddingsManager` setzt jetzt einen expliziten HTTP-Timeout über
+    `client_kwargs`, validiert Query- und Dokument-Embedding-Vektoren auf
+    leere/falsch geformte Antworten und wird direkt als validierende
+    Chroma-Embedding-Funktion verwendet. `DocumentSplitter` lehnt ungültige
+    `chunk_size`/`chunk_overlap`-Konfigurationen früh ab. Regression:
+    `tests/test_rag_embedding_guards.py`; BACH-Notespace-Spiegel synchronisiert.
 
 [x] [BUG/LOW deferred] translator._is_german nutzt Substring-Matching der german_hints
     → False Positives (engl. Text mit Hint-Substring wird als Deutsch erkannt → unnoetige

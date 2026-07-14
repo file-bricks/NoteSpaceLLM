@@ -3,6 +3,15 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-07-14]
+
+### Fixed
+- `src/rag/embeddings.py` setzt für Ollama-Embeddings jetzt einen expliziten HTTP-Timeout über `client_kwargs`, validiert leere oder falsch geformte Embedding-Antworten und gibt ChromaDB den validierenden `EmbeddingsManager` statt des rohen LangChain-Clients.
+- `src/rag/splitter.py` lehnt ungültige Splitter-Konfigurationen wie `chunk_overlap >= chunk_size` früh mit klarer Fehlermeldung ab.
+
+### Tests
+- `tests/test_rag_embedding_guards.py` ergänzt stub-basierte Regressionen für Timeout-/Header-Weitergabe, leere Embedding-Antworten, falsche Dokument-Embedding-Zählung, Splitter-Overlap-Guards und den validierenden Chroma-Embedding-Pfad.
+
 ## [Unreleased — 2026-07-04]
 
 ### Fixed
