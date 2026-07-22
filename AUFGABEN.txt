@@ -3,6 +3,13 @@
 
 ## OFFEN — Bugsweep 2026-06-23 (Run 15, deferred, do-no-harm)
 
+[ ] [RELEASE/P1] Windows-Store-Readiness mit Listing, Datenschutz, Lizenz- und WACK-Gate bewerten (TW-NSLLM-01)
+[ ] [PLATTFORM/P2] Echte Android-/iOS-PWA-Geräte- oder Emulator-Smokes durchführen (TW-NSLLM-02)
+[ ] [FEATURE] Deep-Research-Service aus SpaceNot als lokalen Desktop-Workflow bewerten und integrieren (TW-NSLLM-03)
+[ ] [SYNC] Aktuellen NoteSpace-Stand in die BACH-On-Board-Kopie synchronisieren (TW-NSLLM-04)
+[ ] [ENTSCHEIDUNG] Lizenz- und Distributionslinie nach dem PDF-Backend-Umbau klären (TW-NSLLM-05)
+[ ] [DOKU] Aufgaben-, README- und Architekturstatus mit dem aktuellen Stand synchronisieren (TW-NSLLM-06)
+
 [x] [BUG/HOCH] main_window.closeEvent stoppt laufende
     QThread-Worker jetzt kontrolliert vor dem Fensterabbau. -- DONE 2026-07-11
     - `MainWindow._shutdown_background_workers()` stoppt `Report`-, `Analysis`-,
@@ -136,7 +143,7 @@
 
 ---
 
-## [SYNC -> BACH] Änderungen in die BACH-On-Board-Version nachziehen!  (seit 2026-05-30)
+## [SYNC -> BACH] Änderungen in die BACH-On-Board-Version nachziehen!  (seit 2026-05-30; TW-NSLLM-04)
 
 Diese App existiert seit 2026-05-30 zusätzlich als festes, mitgeliefertes BACH-Modul:
   -> .AI/.OS/BACH/system/tools/notespace/   (Aufruf: `bach notespace gui`)
@@ -212,7 +219,7 @@ als `bach notespace cli` verdrahtet werden (Phase 2).
 
 ---
 
-## [POST-RELEASE] Deep-Research-Integration aus webservice_SpaceNot
+## [POST-RELEASE] Deep-Research-Integration aus webservice_SpaceNot (TW-NSLLM-03)
 
 **Quelle:** `webservice_SpaceNot/backend/services/researcher.py`
 
@@ -289,7 +296,7 @@ Referenz: .SOFTWARE/GITHUB-POLICY.md
     - Menu: Datei → "Workspace exportieren (JSON)..." (Ctrl+Shift+E) mit QFileDialog
     - Tests: tests/test_workspace_export.py (20 Tests, alle grün) — gesamt 60/60
 
-[ ] P1: Windows-Store-Readiness prüfen: Store-Listing, Screenshots,
+[ ] P1: Windows-Store-Readiness prüfen (TW-NSLLM-01): Store-Listing, Screenshots,
     Privacy-Hinweis, AGPL-/PyMuPDF-Quellcodehinweis und WACK-Plan.
 
 [x] P1: Web/PWA-Companion als getrennten Strang starten -- DONE 2026-05-28
@@ -297,7 +304,7 @@ Referenz: .SOFTWARE/GITHUB-POLICY.md
     - Bericht, Dokumentmetadaten und ausgewählte Auszüge werden read-only angezeigt.
     - Eigene Review-Notizen bleiben lokal und können als Markdown exportiert werden.
 
-[ ] P2: Echte Android-/iOS-Geräte- oder Emulator-Smokes gegen
+[ ] P2: Echte Android-/iOS-Geräte- oder Emulator-Smokes (TW-NSLLM-02) gegen
     `web_companion/PWA_TESTPLAN.md` durchführen.
     - Android: Import, Offline-Wiederherstellung, Review-Notiz-Export und
       Add-to-Home-Screen prüfen.
@@ -345,3 +352,46 @@ Referenz: .SOFTWARE/GITHUB-POLICY.md
     - Tests: tests/test_pdf_backends.py (15 neu). Gesamt 99 passed, 3 skipped.
     - OFFEN (separater Schritt, User-Gate): MIT-Umlizenzierung (LICENSE nicht angefasst).
     Referenz: sovereign-private/DECISIONS.md E05/E06 (2026-07-04)
+
+
+---
+
+## TASKPLAN-BÜNDEL — TASKWRITER (2026-07-22)
+
+Selektor: Exit 0, Modus deep, keine vorhandenen Projektaufgaben; sechs offene Linien wurden formalisiert. TASKWRITER führt keine dieser Aufgaben und keine Mail-, Geräte-, Store-, Lizenz-, BACH- oder externe Aktion aus.
+
+### TW-NSLLM-01 — TASKPLAN #1160
+- Priorität: high; Aufwand: special; Scope: local; Status: open.
+- Quelle/Herleitung: offenes Windows-Store-Gate aus diesem Dokument und PORTIERUNGSPLAN.md; LICENSE, requirements.txt, requirements-optional.txt, PRIVACY_POLICY.md und THIRD_PARTY_LICENSES.txt bilden den aktuellen AGPL-/PDF-Backend-/Datenschutzrahmen.
+- Ergebnis/DoD: Zielversion und Buildbezug samt Hash oder fehlendem MSIX bestimmen; Listing, lokale Datenhaltung, Provider- und Companion-Grenzen, AGPL-/PyMuPDF-/Runtime-Lizenzen, Privacy-/Secret-/Config-Pfade, redigierte Safe-Mode-/Datenfluss-Screenshots sowie WACK-/Signierungs-/Publisher-Gates prüfen; alle Statusquellen synchronisieren.
+- Prüfweg/Blocker: statischer Secret-/Lizenz-/Pfadscan, Paket-Readback, lokaler Store-Preflight und autorisierte MSIX-/WACK-Prüfung. Publisher-/Store-Freigabe, signiertes MSIX, öffentliche Daten und Screenshots bleiben externe Blocker. Kein Upload, Submit oder Lizenzwechsel durch TASKWRITER.
+
+### TW-NSLLM-02 — TASKPLAN #1161
+- Priorität: medium; Aufwand: special; Scope: local; Status: open.
+- Quelle/Herleitung: offener echter Geräte-/Emulator-Signoff aus diesem Dokument, PORTIERUNGSPLAN.md und web_companion/PWA_TESTPLAN.md; lokale Node-Smokes und PWA-Härtung sind bereits dokumentiert.
+- Ergebnis/DoD: Android Chrome/Edge und iOS Safari/iPadOS gegen einen frischen redigierten notespacellm-workspace-v1.json-Export prüfen; Gerät/OS/Browser/Viewport/Host, Installationsweg, Import, Bericht-/Dokumentanzeige, Review-Notizen, Offline-Wiederherstellung, Plattformhinweise, Cache-Löschen und Markdown-Export dokumentieren; keine Rohdokumente, ChromaDB, API-Schlüssel oder Uploads.
+- Prüfweg/Blocker: PWA_TESTPLAN.md, Node-Contract-Smoke und manueller Android-/iOS-Lauf. Echte Geräte/Emulatoren, statischer Host und frischer Export sind erforderlich; kein nativer Clone aus dem Smoke ableiten.
+
+### TW-NSLLM-03 — TASKPLAN #1162
+- Priorität: medium; Aufwand: large; Scope: local; Status: open.
+- Quelle/Herleitung: POST-RELEASE-Deep-Research-Aufgabe und webservice_SpaceNot/backend/services/researcher.py; die Datei enthält derzeit nur eine RAG-/Simulationssequenz, src/core/researcher.py, UI-Verankerung und deep_research-Reporttyp fehlen.
+- Ergebnis/DoD: Usecase, Eingaben, Prompt-/Quellengrenzen und Fehlerfälle festlegen; ResearchService sicher an die aktuelle RAG-Engine anbinden; Kontextmenü, Themendialog, Worker-Abbruch und Output-Panel integrieren; deep_research-Reporttyp, Exporte, Unsicherheiten und leere-RAG-/Provider-Fehler testen; keine SpaceNot-Datenbank-/Rohdatenkopie und keine externen Provideraufrufe ohne eigene Freigabe.
+- Prüfweg/Blocker: isolierte RAG-Fixtures, Qt-/Worker-Regressionen, Report-/Export-Readback und Secret-/Pfadscan. Bestehender Worker-Vertrag sowie fachliche Report-/UX-Entscheidung sind Abhängigkeiten; TASKWRITER implementiert nicht.
+
+### TW-NSLLM-04 — TASKPLAN #1163
+- Priorität: medium; Aufwand: large; Scope: local; Status: open.
+- Quelle/Herleitung: SYNC->BACH-Vertrag in diesem Dokument und PROVENANCE.md der BACH-Kopie; der aktuelle read-only Diff zeigt source-only src/core/_io.py, src/core/pdf_backends.py und src/core/workspace_exporter.py sowie weitere Source-Änderungen nach dem letzten dokumentierten Spiegelstand.
+- Ergebnis/DoD: Source-/BACH-Diff und absichtliche BACH-Abweichungen inventarisieren; freigegebene src-/Dependency-/Teständerungen spiegeln; BACH_NOTESPACE_HOME-Patches in app_config.py und main_window.py erhalten; PROVENANCE mit Quellstand, Datum, Patches, Ausschlüssen und Readback aktualisieren; BACH-Daten, DB, Konfiguration und Secrets unangetastet lassen; BACH-Smokes oder Blocker dokumentieren.
+- Prüfweg/Blocker: gezielter Diff, Patch-Readback, isolierte BACH-Smokes und Pfad-/Secret-Scan. Handler-/Datenpfad-Freigabe und kontrollierter Spiegel-Commit sind erforderlich; kein blindes Überschreiben durch TASKWRITER.
+
+### TW-NSLLM-05 — TASKPLAN #1164
+- Priorität: low; Aufwand: special; Scope: local; Status: open.
+- Quelle/Herleitung: explizit nutzergegatete MIT-Umlizenzierungsentscheidung aus CHANGELOG.md nach dem PDF-Backend-Umbau; LICENSE bleibt AGPL-3.0, Standard-Backends sind permissiver, PyMuPDF bleibt optional.
+- Ergebnis/DoD: zulässige Lizenzlinie und Folgen für Source-Distribution, PyMuPDF-Opt-in, Notices, BACH-Spiegel, Store-Listing und Provider dokumentieren; ohne ausdrückliche Entscheidung AGPL-Baseline unverändert offen lassen; LICENSE/README/THIRD_PARTY_LICENSES/Changelog nur konsistent nach Entscheidung ändern.
+- Prüfweg/Blocker: Lizenz-/Dependency-/Notice-Readback und Entscheidungsblock. Nutzerentscheidung und ggf. Rechts-/Lizenzprüfung erforderlich; TASKWRITER ändert keine Lizenz und veröffentlicht kein Paket.
+
+### TW-NSLLM-06 — TASKPLAN #1165
+- Priorität: medium; Aufwand: medium; Scope: local; Status: open.
+- Quelle/Herleitung: stale historische Aussagen in AUFGABEN.txt (Übersetzungen noch offen), README.md (Companion an einer Stelle nur DE/EN) und ARCHITECTURE.txt gegenüber CHANGELOG, aktuellem Source-Inventar und sechs Locale-/PWA-Tests.
+- Ergebnis/DoD: historische Aussagen datieren oder korrigieren, ohne Chronikverlust; TW-NSLLM-01..05 aus Aufgaben/Portierungsplan auffindbar machen; README/README-DE, ARCHITECTURE, CHANGELOG, EXPORTFORMAT und Companion-Doku auf sechs Locales, Backend-/Lizenzgrenzen und read-only-/kein-Upload-Vertrag synchronisieren; Source-only-Module und Testpfade erfassen; echte Gate-Readbacks nicht vorwegnehmen.
+- Prüfweg/Blocker: Quellen-/Versions-/Test-Readback, stale-Scan sowie UTF-8-/Umlaut-/NUL-/Linkprüfung. Historische Aufgabenblöcke und separate Gate-Readbacks müssen klassifiziert werden; keine Produktcodeänderung durch TASKWRITER.
