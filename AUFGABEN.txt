@@ -315,6 +315,11 @@ Referenz: .SOFTWARE/GITHUB-POLICY.md
       viewport-fit=cover, apple-mobile-web-app-status-bar-style=default,
       apple-mobile-web-app-title, apple-touch-icon 180×180,
       safe-area-inset-CSS (top+bottom), 44px Touch-Targets (33/33 Tests grün).
+    TEILSTAND 2026-07-22: Review-Notizen werden auf unterstützten mobilen
+      Browsern als lokale Markdown-Datei an den System-Share-Sheet übergeben;
+      fehlende Unterstützung oder technische Share-Fehler fallen auf den
+      bestehenden Download zurück, ein bewusster Abbruch erzeugt keinen
+      Download. Echte Android-/iOS-Geräte- oder Emulator-Smokes bleiben offen.
 
 [x] P2: Android-/iOS-PWA-Smokes für den Companion dokumentieren -- DONE 2026-05-30
     - `web_companion/PWA_TESTPLAN.md` beschreibt Installierbarkeit, JSON-Import,

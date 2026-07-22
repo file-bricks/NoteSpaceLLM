@@ -12,7 +12,8 @@ import {
   getSupportedUiLocales,
   normalizeWorkspacePayload,
   parseWorkspaceText,
-  resolveUiLocale
+  resolveUiLocale,
+  shareReviewFile
 } from "../library.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -70,6 +71,97 @@ test("buildReviewMarkdown supports Spanish exports", () => {
   assert.match(markdown, /Notas de revisión: Demo: notas de investigación/);
   assert.match(markdown, /Pregunta: ¿Qué tesis centrales/);
   assert.match(markdown, /Revisar la sección 2 mañana\./);
+});
+
+test("shareReviewFile hands a Markdown file to the mobile share sheet", async () => {
+  const calls = [];
+  class FakeFile {
+    constructor(parts, name, options) {
+      this.parts = parts;
+      this.name = name;
+      this.type = options.type;
+    }
+  }
+  const navigatorApi = {
+    canShare(payload) {
+      calls.push(["canShare", payload]);
+      return true;
+    },
+    async share(payload) {
+      calls.push(["share", payload]);
+    }
+  };
+
+  const result = await shareReviewFile({
+    filename: "projekt-review-notizen.md",
+    content: "# Review\n\nLokal geprüft.",
+    navigatorApi,
+    FileCtor: FakeFile
+  });
+
+  assert.equal(result, "shared");
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1][1].files[0].name, "projekt-review-notizen.md");
+  assert.equal(calls[1][1].files[0].type, "text/markdown");
+  assert.deepEqual(calls[1][1].files[0].parts, ["# Review\n\nLokal geprüft."]);
+});
+
+test("shareReviewFile requests the existing download fallback when file sharing is unavailable", async () => {
+  let shareCalled = false;
+  const result = await shareReviewFile({
+    filename: "review.md",
+    content: "Notizen",
+    navigatorApi: {
+      canShare() {
+        return false;
+      },
+      async share() {
+        shareCalled = true;
+      }
+    },
+    FileCtor: class FakeFile {}
+  });
+
+  assert.equal(result, "download");
+  assert.equal(shareCalled, false);
+});
+
+test("shareReviewFile does not download after an intentional share cancellation", async () => {
+  const result = await shareReviewFile({
+    filename: "review.md",
+    content: "Notizen",
+    navigatorApi: {
+      canShare() {
+        return true;
+      },
+      async share() {
+        const error = new Error("cancelled");
+        error.name = "AbortError";
+        throw error;
+      }
+    },
+    FileCtor: class FakeFile {}
+  });
+
+  assert.equal(result, "cancelled");
+});
+
+test("shareReviewFile falls back to download when the platform share call fails", async () => {
+  const result = await shareReviewFile({
+    filename: "review.md",
+    content: "Notizen",
+    navigatorApi: {
+      canShare() {
+        return true;
+      },
+      async share() {
+        throw new Error("share service unavailable");
+      }
+    },
+    FileCtor: class FakeFile {}
+  });
+
+  assert.equal(result, "download");
 });
 
 test("getDemoWorkspace localizes non-Latin demo content", () => {
@@ -253,4 +345,11 @@ test("Bug #3 Regression: downloadText verwendet setTimeout für URL.revokeObject
     !downloadTextMatch[0].includes("URL.revokeObjectURL(url);\n"),
     "URL.revokeObjectURL darf nicht synchron nach link.click() stehen"
   );
+});
+
+test("app.js uses the share-or-download contract for review exports", () => {
+  assert.match(appSource, /await shareReviewFile\(\{ filename, content: markdown \}\)/);
+  assert.match(appSource, /outcome === "cancelled"/);
+  assert.match(appSource, /outcome === "download"/);
+  assert.match(appSource, /currentText\.notesShared\(filename\)/);
 });

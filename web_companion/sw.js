@@ -1,4 +1,4 @@
-const CACHE_NAME = "notespacellm-companion-v4";
+const CACHE_NAME = "notespacellm-companion-v5";
 const ASSETS = [
   "./",
   "./index.html",

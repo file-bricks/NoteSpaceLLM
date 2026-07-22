@@ -11,7 +11,9 @@ Review-Notizen.
 - mobile Lesbarkeit für Android, iOS und Browser
 - Bericht, Dokumentmetadaten und ausgewählte Auszüge anzeigen
 - zuletzt geladenen Workspace lokal für Offline-Starts wiederherstellen
-- eigene Review-Notizen lokal speichern und als Markdown exportieren
+- eigene Review-Notizen lokal speichern und als Markdown-Datei über den
+  mobilen System-Share-Sheet teilen; ohne File-Share-Unterstützung bleibt der
+  lokale Download-Fallback erhalten
 - DE/EN/ES/ZH-Hans/JA/RU-Oberfläche mit Browser-/Workspace-Locale und
   manuellem Sprachumschalter
 
@@ -42,6 +44,8 @@ Der konkrete Android-/iOS-PWA-Ablauf steht in `PWA_TESTPLAN.md`.
 ## Scope des ersten Strangs
 
 - kein Upload auf entfernte Server
+- eine Weitergabe über den System-Share-Sheet erfolgt nur nach bewusstem
+  Button-Klick und an die vom Nutzer gewählte Ziel-App
 - keine Bearbeitung des Workspaces im Browser
 - keine Rohdokumente, Vektordatenbanken oder API-Schlüssel im Companion
 - kein nativer Android-/iOS-Clone

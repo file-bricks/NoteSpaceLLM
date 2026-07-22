@@ -3,6 +3,25 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-07-22]
+
+### Added
+- Der Web/PWA-Companion übergibt Review-Notizen auf unterstützten Android-/iOS-
+  Browsern als lokale Markdown-Datei an den System-Share-Sheet. Ohne File-Share-
+  Unterstützung oder bei einem technischen Share-Fehler bleibt der lokale
+  Download-Fallback erhalten; ein bewusster Abbruch lädt nichts zusätzlich.
+
+### Changed
+- Der Service-Worker-Cache ist auf v5 angehoben, damit bestehende PWA-
+  Installationen den neuen Share-or-Download-Pfad erhalten.
+- Das Browser-Favicon verweist explizit auf das bereits gecachte 192px-PNG;
+  der statische Companion startet damit ohne impliziten `/favicon.ico`-404.
+
+### Tests
+- Vier neue Node-Regressionen prüfen Share-Erfolg, fehlende Unterstützung,
+  bewussten Abbruch und technischen Fallback; der App-Guard sichert die
+  Integration in den Export-Button.
+
 ## [Unreleased — 2026-07-14]
 
 ### Fixed

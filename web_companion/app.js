@@ -4,7 +4,8 @@ import {
   getDemoWorkspace,
   getUiText,
   parseWorkspaceText,
-  resolveUiLocale
+  resolveUiLocale,
+  shareReviewFile
 } from "./library.js";
 
 const STORAGE_PREFIX = "notespacellm-companion-notes:";
@@ -309,7 +310,7 @@ elements.loadDemo.addEventListener("click", () => {
   renderWorkspace(getDemoWorkspace(activeLocale), currentText.sourceLabelDemo);
 });
 
-elements.exportNotes.addEventListener("click", () => {
+elements.exportNotes.addEventListener("click", async () => {
   if (!currentWorkspace) {
     setStatus(currentText.loadWorkspaceFirst, true);
     return;
@@ -321,8 +322,16 @@ elements.exportNotes.addEventListener("click", () => {
     .toLowerCase() || "workspace";
   const filename = `${safeTitle}-${currentText.reviewFilenameSuffix}.md`;
   const markdown = buildReviewMarkdown(currentWorkspace, elements.notes.value, activeLocale);
-  downloadText(filename, markdown);
-  setStatus(currentText.notesExported(filename));
+  const outcome = await shareReviewFile({ filename, content: markdown });
+  if (outcome === "cancelled") {
+    return;
+  }
+  if (outcome === "download") {
+    downloadText(filename, markdown);
+    setStatus(currentText.notesExported(filename));
+    return;
+  }
+  setStatus(currentText.notesShared(filename));
 });
 
 elements.clearNotes.addEventListener("click", () => {

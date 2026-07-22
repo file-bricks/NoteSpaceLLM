@@ -67,6 +67,7 @@ const UI_TEXT = Object.freeze({
     workspaceLoaded: (sourceLabel, title) => `${sourceLabel} geladen: ${title}`,
     loadWorkspaceFirst: "Zuerst einen Workspace laden.",
     notesExported: (filename) => `Review-Notizen exportiert: ${filename}`,
+    notesShared: (filename) => `Review-Notizen zum Teilen bereitgestellt: ${filename}`,
     notesCleared: "Lokale Review-Notizen geleert.",
     cacheCleared: "Lokaler Workspace-Cache gelöscht. Die aktuelle Ansicht bleibt bis zum Neuladen sichtbar.",
     reviewFilenameSuffix: "review-notizen",
@@ -159,6 +160,7 @@ const UI_TEXT = Object.freeze({
     workspaceLoaded: (sourceLabel, title) => `${sourceLabel} loaded: ${title}`,
     loadWorkspaceFirst: "Load a workspace first.",
     notesExported: (filename) => `Review notes exported: ${filename}`,
+    notesShared: (filename) => `Review notes shared as a file: ${filename}`,
     notesCleared: "Local review notes cleared.",
     cacheCleared: "Local workspace cache cleared. The current view remains visible until reloading.",
     reviewFilenameSuffix: "review-notes",
@@ -251,6 +253,7 @@ const UI_TEXT = Object.freeze({
     workspaceLoaded: (sourceLabel, title) => `${sourceLabel} cargado: ${title}`,
     loadWorkspaceFirst: "Primero carga un workspace.",
     notesExported: (filename) => `Notas de revisión exportadas: ${filename}`,
+    notesShared: (filename) => `Notas de revisión compartidas como archivo: ${filename}`,
     notesCleared: "Notas de revisión locales borradas.",
     cacheCleared: "Caché local del workspace borrada. La vista actual permanece visible hasta recargar.",
     reviewFilenameSuffix: "notas-revision",
@@ -343,6 +346,7 @@ const UI_TEXT = Object.freeze({
     workspaceLoaded: (sourceLabel, title) => `${sourceLabel} 已加载：${title}`,
     loadWorkspaceFirst: "请先加载一个工作区。",
     notesExported: (filename) => `评审笔记已导出：${filename}`,
+    notesShared: (filename) => `评审笔记已作为文件共享：${filename}`,
     notesCleared: "本地评审笔记已清空。",
     cacheCleared: "本地工作区缓存已清除。当前视图会保留到重新加载为止。",
     reviewFilenameSuffix: "review-notes",
@@ -435,6 +439,7 @@ const UI_TEXT = Object.freeze({
     workspaceLoaded: (sourceLabel, title) => `${sourceLabel} を読み込みました：${title}`,
     loadWorkspaceFirst: "先にワークスペースを読み込んでください。",
     notesExported: (filename) => `レビュー用ノートをエクスポートしました：${filename}`,
+    notesShared: (filename) => `レビュー用ノートをファイルとして共有しました：${filename}`,
     notesCleared: "ローカルのレビュー用ノートを消去しました。",
     cacheCleared: "ローカルワークスペースキャッシュを削除しました。現在の表示は再読み込みまで残ります。",
     reviewFilenameSuffix: "review-notes",
@@ -527,6 +532,7 @@ const UI_TEXT = Object.freeze({
     workspaceLoaded: (sourceLabel, title) => `${sourceLabel} загружен: ${title}`,
     loadWorkspaceFirst: "Сначала загрузите workspace.",
     notesExported: (filename) => `Заметки для ревью экспортированы: ${filename}`,
+    notesShared: (filename) => `Заметки для ревью переданы как файл: ${filename}`,
     notesCleared: "Локальные заметки для ревью очищены.",
     cacheCleared: "Локальный кэш workspace очищен. Текущий вид останется до перезагрузки.",
     reviewFilenameSuffix: "review-notes",
@@ -724,6 +730,45 @@ export function normalizeWorkspacePayload(payload, locale = "de") {
       has_report: Boolean(reportContent.trim())
     }
   };
+}
+
+export async function shareReviewFile({
+  filename,
+  content,
+  navigatorApi = globalThis.navigator,
+  FileCtor = globalThis.File
+} = {}) {
+  if (
+    typeof FileCtor !== "function" ||
+    typeof navigatorApi?.canShare !== "function" ||
+    typeof navigatorApi?.share !== "function"
+  ) {
+    return "download";
+  }
+
+  let file;
+  try {
+    file = new FileCtor([String(content ?? "")], String(filename || "review-notes.md"), {
+      type: "text/markdown"
+    });
+  } catch {
+    return "download";
+  }
+
+  const payload = {
+    files: [file],
+    title: file.name
+  };
+
+  try {
+    if (!navigatorApi.canShare(payload)) {
+      return "download";
+    }
+    await navigatorApi.share(payload);
+    return "shared";
+  } catch (error) {
+    return error?.name === "AbortError" ? "cancelled" : "download";
+  }
 }
 
 export function buildReviewMarkdown(workspacePayload, notes, locale = "") {

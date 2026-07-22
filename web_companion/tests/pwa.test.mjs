@@ -214,6 +214,10 @@ describe('index.html iOS-PWA-Meta', () => {
     assert.match(html, /<link[^>]*rel="manifest"/);
   });
 
+  it('favicon verweist auf ein gecachtes PNG-Icon', () => {
+    assert.match(html, /<link[^>]*rel="icon"[^>]*href="\.\/icons\/Icon-192\.png"/);
+  });
+
   it('theme-color Meta-Tag ist gesetzt', () => {
     assert.match(html, /<meta[^>]*name="theme-color"[^>]*content="[^"]+"/);
   });
