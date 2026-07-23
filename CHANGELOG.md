@@ -3,6 +3,22 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-07-23]
+
+### Fixed
+- `tests/test_pdf_backends.py::TestRenderAndOcr::test_pypdfium2_renders_png` schlug in einer
+  Umgebung fehl, die ausschließlich `requirements.txt` installiert (also genau der Weg, den
+  `.github/workflows/tests.yml` geht) — `Pypdfium2Backend.render_page_png()` benötigt intern
+  Pillow (`bitmap.to_pil()`), das bewusst nur zusammen mit `pytesseract` als OCR-Extra in
+  `requirements-optional.txt` geführt wird. Im produktiven OCR-Pfad ist das unkritisch, weil
+  `_extract_pdf_ocr()` vorher bereits über `_deps["pytesseract"]` prüft, ob sowohl `pytesseract`
+  als auch `PIL` importierbar sind. Der Test rief `render_page_png()` aber direkt auf, ohne
+  dieselbe Prüfung. Fix: `_assert_renders_png()` überspringt den Render-Test jetzt sauber, wenn
+  Pillow nicht installiert ist (gleiches Skip-Muster wie bei den anderen optionalen PDF-Backends).
+  Da dieser Test nur auf dem Branch `bugsweep/2026-06-23-notespacellm-desktop` existiert und
+  GitHub Actions nur bei Push/PR gegen `master`/`main` triggert, ist der Fehlschlag bisher nie in
+  CI sichtbar geworden.
+
 ## [Unreleased — 2026-07-22]
 
 ### Added

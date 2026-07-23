@@ -166,6 +166,19 @@ class TestRenderAndOcr(unittest.TestCase):
     def _assert_renders_png(self, backend_cls):
         if not backend_cls.is_available():
             self.skipTest(f"{backend_cls.name} nicht installiert")
+        # render_page_png() der pypdfium2/PyMuPDF-Backends geht ueber Pillow
+        # (bitmap.to_pil() bzw. pix.tobytes()). Pillow ist bewusst NICHT Teil
+        # von requirements.txt (nur zusammen mit pytesseract als OCR-Extra in
+        # requirements-optional.txt) -- der produktive OCR-Pfad prueft das
+        # bereits vorab (_deps["pytesseract"] deckt "pytesseract UND PIL
+        # importierbar" ab), bevor render_page_png() ueberhaupt aufgerufen
+        # wird. Dieser Test ruft render_page_png() direkt auf und muss daher
+        # dieselbe Pillow-Verfuegbarkeit selbst pruefen, sonst schlaegt er in
+        # einer reinen requirements.txt-Umgebung (= CI) fehl.
+        try:
+            import PIL  # noqa: F401
+        except ImportError:
+            self.skipTest("Pillow nicht installiert (nur ueber requirements-optional.txt)")
         png = backend_cls().render_page_png(self.pdf_path, 0, scale=2.0)
         self.assertIsNotNone(png)
         self.assertEqual(png[:8], b"\x89PNG\r\n\x1a\n")

@@ -10,6 +10,19 @@
 [ ] [ENTSCHEIDUNG] Lizenz- und Distributionslinie nach dem PDF-Backend-Umbau klären (TW-NSLLM-05)
 [ ] [DOKU] Aufgaben-, README- und Architekturstatus mit dem aktuellen Stand synchronisieren (TW-NSLLM-06)
 
+[x] [BUG/MITTEL] tests/test_pdf_backends.py::test_pypdfium2_renders_png schlug in einer
+    reinen requirements.txt-Umgebung fehl (= exakt der Weg, den .github/workflows/tests.yml
+    installiert). Ursache: Pypdfium2Backend.render_page_png() braucht intern Pillow
+    (bitmap.to_pil()), das bewusst nur zusammen mit pytesseract als OCR-Extra in
+    requirements-optional.txt steht. Der produktive OCR-Pfad ist sicher (_extract_pdf_ocr()
+    prueft _deps["pytesseract"], was Pillow mit abdeckt), der Test rief render_page_png()
+    aber direkt auf. -- DONE 2026-07-23 (FABLE-SOL Software-Loop #32)
+    - `_assert_renders_png()` skippt jetzt sauber, wenn Pillow fehlt (gleiches Muster wie bei
+      den anderen optionalen PDF-Backends).
+    - Da dieser Test nur auf `bugsweep/2026-06-23-notespacellm-desktop` existiert und CI nicht
+      auf Branch-Pushes triggert, war der Fehlschlag bisher unsichtbar. Volle Suite (104
+      passed, 6 skipped) + Node-Suite (67/67) + Compile-Check + GUI-Offscreen-Smoke grün.
+
 [x] [BUG/HOCH] main_window.closeEvent stoppt laufende
     QThread-Worker jetzt kontrolliert vor dem Fensterabbau. -- DONE 2026-07-11
     - `MainWindow._shutdown_background_workers()` stoppt `Report`-, `Analysis`-,
