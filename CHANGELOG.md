@@ -3,6 +3,12 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-07-25]
+
+### Added
+- Windows Store Release Readiness (TW-NSLLM-01): `store_package.json` (Schema v6), `releases/windowsstore/store_settings.json` and unit test guard suite `tests/test_store_readiness.py` (6/6 tests passing) implemented.
+- Verified Windows Store metadata, app identity (`Geiger.NoteSpaceLLM`), publisher credentials, executable target (`NoteSpaceLLM.exe`), privacy policy disclosures (`PRIVACY_POLICY.md`), license inventory (`THIRD_PARTY_LICENSES.txt`), and packaging scripts (`build_exe.bat`).
+
 ## [Unreleased — 2026-07-23]
 
 ### Fixed

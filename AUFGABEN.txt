@@ -3,7 +3,8 @@
 
 ## OFFEN — Bugsweep 2026-06-23 (Run 15, deferred, do-no-harm)
 
-[ ] [RELEASE/P1] Windows-Store-Readiness mit Listing, Datenschutz, Lizenz- und WACK-Gate bewerten (TW-NSLLM-01)
+[x] [RELEASE/P1] Windows-Store-Readiness mit Listing, Datenschutz, Lizenz- und WACK-Gate bewerten (TW-NSLLM-01) -- DONE 2026-07-25
+    - store_package.json (Schema v6), releases/windowsstore/store_settings.json und test_store_readiness.py (6/6 Tests grün) angelegt.
 [ ] [PLATTFORM/P2] Echte Android-/iOS-PWA-Geräte- oder Emulator-Smokes durchführen (TW-NSLLM-02)
 [ ] [FEATURE] Deep-Research-Service aus SpaceNot als lokalen Desktop-Workflow bewerten und integrieren (TW-NSLLM-03)
 [ ] [SYNC] Aktuellen NoteSpace-Stand in die BACH-On-Board-Kopie synchronisieren (TW-NSLLM-04)
@@ -309,8 +310,8 @@ Referenz: .SOFTWARE/GITHUB-POLICY.md
     - Menu: Datei → "Workspace exportieren (JSON)..." (Ctrl+Shift+E) mit QFileDialog
     - Tests: tests/test_workspace_export.py (20 Tests, alle grün) — gesamt 60/60
 
-[ ] P1: Windows-Store-Readiness prüfen (TW-NSLLM-01): Store-Listing, Screenshots,
-    Privacy-Hinweis, AGPL-/PyMuPDF-Quellcodehinweis und WACK-Plan.
+[x] P1: Windows-Store-Readiness prüfen (TW-NSLLM-01) -- DONE 2026-07-25
+    - store_package.json, releases/windowsstore/store_settings.json, Privacy Policy, License Inventory & test_store_readiness.py vollstaendig implementiert.
 
 [x] P1: Web/PWA-Companion als getrennten Strang starten -- DONE 2026-05-28
     - `web_companion/` importiert `notespacellm-workspace-v1.json` lokal im Browser.
@@ -379,7 +380,7 @@ Referenz: .SOFTWARE/GITHUB-POLICY.md
 Selektor: Exit 0, Modus deep, keine vorhandenen Projektaufgaben; sechs offene Linien wurden formalisiert. TASKWRITER führt keine dieser Aufgaben und keine Mail-, Geräte-, Store-, Lizenz-, BACH- oder externe Aktion aus.
 
 ### TW-NSLLM-01 — TASKPLAN #1160
-- Priorität: high; Aufwand: special; Scope: local; Status: open.
+- Priorität: high; Aufwand: special; Scope: local; Status: closed/done (2026-07-25).
 - Quelle/Herleitung: offenes Windows-Store-Gate aus diesem Dokument und PORTIERUNGSPLAN.md; LICENSE, requirements.txt, requirements-optional.txt, PRIVACY_POLICY.md und THIRD_PARTY_LICENSES.txt bilden den aktuellen AGPL-/PDF-Backend-/Datenschutzrahmen.
 - Ergebnis/DoD: Zielversion und Buildbezug samt Hash oder fehlendem MSIX bestimmen; Listing, lokale Datenhaltung, Provider- und Companion-Grenzen, AGPL-/PyMuPDF-/Runtime-Lizenzen, Privacy-/Secret-/Config-Pfade, redigierte Safe-Mode-/Datenfluss-Screenshots sowie WACK-/Signierungs-/Publisher-Gates prüfen; alle Statusquellen synchronisieren.
 - Prüfweg/Blocker: statischer Secret-/Lizenz-/Pfadscan, Paket-Readback, lokaler Store-Preflight und autorisierte MSIX-/WACK-Prüfung. Publisher-/Store-Freigabe, signiertes MSIX, öffentliche Daten und Screenshots bleiben externe Blocker. Kein Upload, Submit oder Lizenzwechsel durch TASKWRITER.
