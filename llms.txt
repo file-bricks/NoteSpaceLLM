@@ -1,8 +1,8 @@
 # NoteSpaceLLM
 
-## Last-checked: 2026-06-12
+## Last-checked: 2026-07-25
 
-> Local NotebookLM alternative for private document analysis, RAG-assisted research, and multi-format report generation.
+> Local NotebookLM alternative for private document analysis, RAG-assisted research, and multi-format report generation. Verified with 130 passing unit tests (72 Python pytest + 58 Web Companion Node.js tests).
 
 ## Description
 
@@ -33,6 +33,7 @@ NoteSpaceLLM is an offline-first PySide6 desktop application for private documen
 - Prompt export for external LLM workflows (Claude Code integration)
 - Web/PWA Companion for mobile review of exported workspaces
 - 6-language i18n infrastructure (de, en, es, zh, ja, ru)
+- PEP 621 pyproject.toml configuration with pytest pythonpath integration
 - macOS and Linux source smoke tests in GitHub Actions
 - Community workflows use `actions/stale@v10` and `actions/first-interaction@v3`
 

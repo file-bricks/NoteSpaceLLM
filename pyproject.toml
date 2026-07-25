@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "notespacellm"
+version = "1.0.0"
+description = "Local NotebookLM alternative for private document analysis, RAG-assisted research, and multi-format report generation."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "AGPL-3.0" }
+authors = [
+    { name = "Lukas Geiger", email = "lukas@um-bruch.org" }
+]
+keywords = [
+    "notebooklm-alternative",
+    "rag",
+    "local-first",
+    "pyside6",
+    "document-analysis",
+    "document-chat",
+    "privacy-first",
+    "chromadb",
+    "llm",
+    "pwa",
+    "python"
+]
+urls = { Homepage = "https://github.com/file-bricks/NoteSpaceLLM", Repository = "https://github.com/file-bricks/NoteSpaceLLM" }
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+pythonpath = "."
+python_files = ["test_*.py"]

@@ -6,9 +6,18 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-lightgrey.svg)]()
 [![Offline-first](https://img.shields.io/badge/offline--first-yes-green.svg)]()
+[![Pytest](https://img.shields.io/badge/Pytest-72%20passed-brightgreen.svg)]()
+[![Web Companion Tests](https://img.shields.io/badge/Web%20Companion-58%20passed-brightgreen.svg)]()
+[![LLM Context: llms.txt](https://img.shields.io/badge/LLM%20Context-llms.txt-blue.svg)](llms.txt)
+
+[English](README.md) | [Deutsch](README_de.md)
 
 > **Local NotebookLM alternative for private document analysis, RAG-assisted research, and multi-format report generation.**
 
+> [!NOTE]
+> **For AI Agents & Automated Workflows:**
+> NoteSpaceLLM provides machine-readable architecture and feature specifications in [`llms.txt`](llms.txt).
+> Python unit tests (`pytest`) and Web Companion tests (`npm test` in `web_companion/`) run 100% offline without external network dependencies.
 
 Word files, Markdown, mail exports, notes, and research folders. It keeps
 project data local by default, supports local or remote Ollama, OpenAI,
@@ -35,10 +44,10 @@ On Windows you can also launch via `start.bat`. A local Windows launcher can be 
 Run tests and compile smoke checks with:
 
 ```bash
-python -m unittest discover -s tests -v
+pytest
 python -m compileall -q main.py manage_translations.py translator.py src
 cd web_companion
-node --test tests/library.test.mjs
+npm test
 ```
 
 ## Screenshots

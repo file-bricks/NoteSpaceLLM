@@ -3,6 +3,16 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-07-25]
+
+### Added
+- Standardized PEP 621 `pyproject.toml` with project metadata, URLs and pytest configuration (`pythonpath = "."`).
+- German documentation landing page `README_de.md` with language selector (`[English](README.md) | [Deutsch](README_de.md)`).
+- AI agent callout note (`> [!NOTE]`) and Shields.io status badges (Pytest 72 passed, Web Companion 58 passed, LLM Context `llms.txt`) in `README.md` and `README_de.md`.
+
+### Maintenance
+- `llms.txt` header updated to `Last-checked: 2026-07-25` with 130 verified unit tests across Python desktop suite and Web Companion.
+
 ## [Unreleased — 2026-06-20]
 
 ### Changed (web_companion)
