@@ -311,6 +311,7 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
         menu.addAction("Informationen extrahieren...", lambda: self._add_subquery_custom(doc_id, "extract"))
         menu.addAction("Analysieren...", lambda: self._add_subquery_custom(doc_id, "analyze"))
         menu.addAction("Frage stellen...", lambda: self._add_subquery_custom(doc_id, "question"))
+        menu.addAction("Deep Research...", lambda: self._add_deep_research(doc_id))
 
         menu.addSeparator()
 
@@ -374,6 +375,32 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
             self._subquery_manager.add_query(query)
             self._document_manager.add_sub_query(doc_id, query.id)
             self.subquery_requested.emit(doc_id, query_type, text)
+
+    def _add_deep_research(self, doc_id: str):
+        """Add structured Deep Research queries for a document."""
+        topic, ok = QInputDialog.getText(
+            self,
+            "Deep Research",
+            "Thema oder Fragestellung für die vertiefende Recherche eingeben:"
+        )
+
+        if ok and topic and self._subquery_manager and self._document_manager:
+            from ..core.researcher import ResearchService
+            from ..core.sub_query import SubQuery, SubQueryType
+
+            doc = self._document_manager.get_document(doc_id)
+            doc_text = doc.extracted_text if doc else ""
+
+            service = ResearchService()
+            plan = service.generate_plan(topic, doc_text)
+
+            for item in plan:
+                query_text = f"[{topic} / {item['aspect']}] {item['question']}"
+                query = SubQuery.create(doc_id, SubQueryType.ANALYZE, query_text)
+                self._subquery_manager.add_query(query)
+                self._document_manager.add_sub_query(doc_id, query.id)
+
+            self.subquery_requested.emit(doc_id, "deep_research", topic)
 
     def _remove_document(self, doc_id: str):
         """Remove a document."""

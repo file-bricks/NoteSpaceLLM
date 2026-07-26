@@ -6,7 +6,11 @@
 [x] [RELEASE/P1] Windows-Store-Readiness mit Listing, Datenschutz, Lizenz- und WACK-Gate bewerten (TW-NSLLM-01) -- DONE 2026-07-25
     - store_package.json (Schema v6), releases/windowsstore/store_settings.json und test_store_readiness.py (6/6 Tests grün) angelegt.
 [ ] [PLATTFORM/P2] Echte Android-/iOS-PWA-Geräte- oder Emulator-Smokes durchführen (TW-NSLLM-02)
-[ ] [FEATURE] Deep-Research-Service aus SpaceNot als lokalen Desktop-Workflow bewerten und integrieren (TW-NSLLM-03)
+[x] [FEATURE] Deep-Research-Service aus SpaceNot als lokalen Desktop-Workflow bewerten und integrieren (TW-NSLLM-03) -- DONE 2026-07-26
+    - `ResearchService` in `src/core/researcher.py` mit `generate_plan()`, `deep_dive()` und `format_as_markdown()` implementiert.
+    - Neues Report-Template `'deep_research'` in `src/reports/templates.py` registriert.
+    - `'Deep Research...'` Kontextmenü-Aktion in `src/gui/document_panel.py` integriert.
+    - Unit-Testsuite `tests/test_deep_research_service.py` erstellt und verifiziert (5/5 grün).
 [ ] [SYNC] Aktuellen NoteSpace-Stand in die BACH-On-Board-Kopie synchronisieren (TW-NSLLM-04)
 [ ] [ENTSCHEIDUNG] Lizenz- und Distributionslinie nach dem PDF-Backend-Umbau klären (TW-NSLLM-05)
 [ ] [DOKU] Aufgaben-, README- und Architekturstatus mit dem aktuellen Stand synchronisieren (TW-NSLLM-06)

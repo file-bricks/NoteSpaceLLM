@@ -1,12 +1,20 @@
 # Changelog / Änderungsprotokoll
 
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
-Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
+Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).## [Unreleased — 2026-07-26]
+
+### Added
+- Integration des vertiefenden Deep-Research-Services (`src/core/researcher.py`, Ticket TW-NSLLM-03) für mehrschrittige Dokumentanalysen.
+- Neues Report-Template `'deep_research'` in `src/reports/templates.py` mit Abschnitten für Forschungsplan, Begriffsbestimmungen, Implikationen, Lücken und Gesamtfazit.
+- Neue Kontextmenü-Aktion `"Deep Research..."` im Dokumenten-Panel (`src/gui/document_panel.py`) zum interaktiven Erzeugen von strukturierte Forschungsplan-Subqueries.
+
+### Tests
+- Fünf neue Unit-Tests in `tests/test_deep_research_service.py` verifizieren Plan-Generierung, Deep-Dive-Workflow, Report-Template und SubQuery-Integration. Gesamte Testsuite (115/115) 100% grün.
 
 ## [Unreleased — 2026-07-25]
 
 ### Added
-- Windows Store Release Readiness (TW-NSLLM-01): `store_package.json` (Schema v6), `releases/windowsstore/store_settings.json` and unit test guard suite `tests/test_store_readiness.py` (6/6 tests passing) implemented.
+- Windows Store Release Readiness (TW-NSLLM-01): `store_package.json` (Schema v6), `releases/windowsstore/store_settings.json` und unit test guard suite `tests/test_store_readiness.py` (6/6 tests passing) implementiert.
 - Verified Windows Store metadata, app identity (`Geiger.NoteSpaceLLM`), publisher credentials, executable target (`NoteSpaceLLM.exe`), privacy policy disclosures (`PRIVACY_POLICY.md`), license inventory (`THIRD_PARTY_LICENSES.txt`), and packaging scripts (`build_exe.bat`).
 
 ## [Unreleased — 2026-07-23]
@@ -19,11 +27,11 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
   `requirements-optional.txt` geführt wird. Im produktiven OCR-Pfad ist das unkritisch, weil
   `_extract_pdf_ocr()` vorher bereits über `_deps["pytesseract"]` prüft, ob sowohl `pytesseract`
   als auch `PIL` importierbar sind. Der Test rief `render_page_png()` aber direkt auf, ohne
-  dieselbe Prüfung. Fix: `_assert_renders_png()` überspringt den Render-Test jetzt sauber, wenn
+  dieselbe Prüfung. Fix: `_assert_renders_png()` überspricht den Render-Test jetzt sauber, wenn
   Pillow nicht installiert ist (gleiches Skip-Muster wie bei den anderen optionalen PDF-Backends).
   Da dieser Test nur auf dem Branch `bugsweep/2026-06-23-notespacellm-desktop` existiert und
   GitHub Actions nur bei Push/PR gegen `master`/`main` triggert, ist der Fehlschlag bisher nie in
-  CI sichtbar geworden.
+  CI sichtbar geworden.template (TW-NSLLM-03))
 
 ## [Unreleased — 2026-07-22]
 

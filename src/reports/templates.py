@@ -132,6 +132,21 @@ TEMPLATES: Dict[str, ReportTemplate] = {
         ],
         style_hints="Technisch präzise, mit Fachbegriffen, strukturiert",
         output_formats=["md", "pdf", "docx"]
+    ),
+
+    "deep_research": ReportTemplate(
+        id="deep_research",
+        name="Deep Research Bericht",
+        description="Vertiefende Mehrschritt-Forschungsanalyse zu einem spezifischen Dokument und Thema",
+        sections=[
+            ReportSection("plan", "Forschungsplan", "Strukturierte Fragestellungen und Untersuchungsziele", True, 1),
+            ReportSection("definitions", "Begriffsbestimmungen & Grundlagen", "Zentrale Konzepte und Definitionen aus dem Dokument", True, 2),
+            ReportSection("implications", "Detailanalyse & Implikationen", "Gezielte Untersuchungen und Querverbindungen", True, 3),
+            ReportSection("gaps", "Offene Fragen & Wissenslücken", "Nicht abgedeckte Aspekte und Unschärfen", True, 4),
+            ReportSection("summary", "Gesamtfazit & Synthese", "Zusammenfassende Bewertung der Ergebnisse", True, 5)
+        ],
+        style_hints="Präzise, tiefgehend, strukturierte Befunde mit klaren Referenzen",
+        output_formats=["md", "pdf", "docx"]
     )
 }
 
