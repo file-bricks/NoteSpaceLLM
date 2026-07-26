@@ -41,11 +41,44 @@ cd web_companion
 npm test
 ```
 
-## Screenshots
+## Systemarchitektur
 
-![NoteSpaceLLM Desktop Hauptfenster](README/screenshots/main.png)
+```mermaid
+graph TD
+    subgraph UI ["PySide6 Desktop-Anwendung"]
+        DP["Dokumentenverwaltung (Drag & Drop)"]
+        WP["Workflow & Berichts-Generator"]
+        CP["Interaktive Chat-Schnittstelle"]
+        OP["Multi-Format Exporter"]
+    end
 
-![NoteSpaceLLM Web/PWA Companion](README/screenshots/web-companion.png)
+    subgraph Engine ["Lokale RAG-Engine"]
+        TE["Text-Extraktor (PDF/DOCX/TXT/XLSX/EML)"]
+        CDB[("ChromaDB Vektordatenbank")]
+        RM["Berichtsgenerator & Prompts"]
+    end
+
+    subgraph LLM ["LLM-Integrationen"]
+        OL["Ollama (Lokal / Remote)"]
+        OAI["OpenAI API"]
+        ANT["Anthropic Claude"]
+        CC["Claude Code CLI"]
+    end
+
+    subgraph PWA ["Web / PWA Companion"]
+        JSON["notespacellm-workspace-v1.json"]
+        SW["PWA Service Worker & Mobile Review"]
+    end
+
+    DP --> TE
+    TE --> CDB
+    WP --> RM
+    RM --> CDB
+    RM --> LLM
+    CP --> LLM
+    OP --> JSON
+    JSON --> SW
+```
 
 ## Hauptfunktionen
 

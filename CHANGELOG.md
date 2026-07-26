@@ -3,6 +3,13 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-07-26]
+
+### Documentation & Maintenance
+- Added Mermaid System Architecture Diagrams to `README.md` and `README_de.md`.
+- Updated `llms.txt` header to `Last-checked: 2026-07-26` with 130 verified unit tests across Python desktop suite and Web Companion.
+- Performed technical hygiene and maintenance check.
+
 ## [Unreleased — 2026-07-25]
 
 ### Added
