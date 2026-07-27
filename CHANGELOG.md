@@ -5,6 +5,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased — 2026-07-27]
 
+### Added
+- Implemented Windows Store Release Readiness suite for NoteSpaceLLM (`store_package.json`, `releases/windowsstore/store_settings.json`, `STORE_LISTING.md`, `SUPPORT.md`, `THIRD_PARTY_LICENSES.txt`, `WINDOWS_STORE_PREP.md`).
+- Added automated preflight auditor `scripts/check_store_readiness.py` and test suite `tests/test_store_readiness.py` (all tests passing).
+
 ### Documentation & Maintenance
 - Updated `llms.txt` header to `Last-checked: 2026-07-27` with 130 verified unit tests across Python desktop suite and Web Companion.
 - Performed technical hygiene and maintenance check.

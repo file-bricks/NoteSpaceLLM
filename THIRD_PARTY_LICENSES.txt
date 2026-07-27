@@ -1,0 +1,31 @@
+NoteSpaceLLM — Third-Party Licenses Inventory
+=============================================
+Stand: 2026-07-27
+
+1. PySide6
+   Version: 6.8.0+
+   Project: https://wiki.qt.io/Qt_for_Python
+   License: LGPL-3.0-only / GPL-2.0-only / GPL-3.0-only
+   Usage in project: GUI Desktop Framework
+
+2. pypdfium2
+   Version: 4.0.0+
+   Project: https://github.com/pypdfium2-team/pypdfium2
+   License: Apache-2.0 / BSD-3-Clause
+   Usage in project: PDF extraction and rendering backend
+
+3. pypdf
+   Version: 4.0.0+
+   Project: https://github.com/py-pdf/pypdf
+   License: BSD-3-Clause
+   Usage in project: Lightweight PDF text extraction backend
+
+4. PyMuPDF (Optional)
+   Version: 1.23.0+
+   Project: https://github.com/pymupdf/PyMuPDF
+   License: AGPL-3.0-only (Optional user opt-in)
+   Usage in project: Optional high-performance PDF backend
+
+5. ChromaDB / LangChain Core Components
+   License: Apache-2.0 / MIT
+   Usage in project: Local RAG vector store & document splitter utilities

@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 __pycache__/
 *.py[cod]
 *.pyo
@@ -52,7 +52,8 @@ ehthumbs.db
 /webservice_SpaceNot/
 
 # Lokale Release-Builds
-/releases/
+/releases/*
+!/releases/windowsstore/
 *.exe
 *.msi
 *.msix

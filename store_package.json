@@ -1,0 +1,16 @@
+{
+  "app_name": "NoteSpaceLLM",
+  "publisher": "CN=52596601-BAB4-4F3F-B182-E8F3F273B202",
+  "publisher_display": "Lukas Geiger",
+  "identity_name": "Geiger.NoteSpaceLLM",
+  "version": "1.1.0.0",
+  "description": "Lokaler RAG-Recherche-Arbeitsplatz und Dokument-Analysator mit LLM-Unterstützung und Privacy-First-Architektur.",
+  "executable": "NoteSpaceLLM.exe",
+  "capabilities": "runFullTrust",
+  "category": "Productivity",
+  "age_rating": "3+",
+  "privacy_url": "https://github.com/llm-bricks/NoteSpaceLLM/blob/main/PRIVACY_POLICY.md",
+  "support_url": "https://github.com/llm-bricks/NoteSpaceLLM/blob/main/SUPPORT.md",
+  "logo": "assets/icon.png",
+  "languages": ["de-DE", "en-US", "es-ES", "zh-CN", "ja-JP", "ru-RU"]
+}

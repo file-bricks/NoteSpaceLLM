@@ -1,0 +1,19 @@
+{
+  "store_release_enabled": true,
+  "package_family_name": "Geiger.NoteSpaceLLM_52596601bab44f3f",
+  "target_platform": "Windows.Desktop",
+  "min_os_version": "10.0.17763.0",
+  "build_configuration": "Release",
+  "msix_package_name": "NoteSpaceLLM-1.1.0-x64.msix",
+  "capabilities": [
+    "runFullTrust"
+  ],
+  "supported_languages": [
+    "de-DE",
+    "en-US",
+    "es-ES",
+    "zh-CN",
+    "ja-JP",
+    "ru-RU"
+  ]
+}
