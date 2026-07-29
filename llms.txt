@@ -1,6 +1,6 @@
 # NoteSpaceLLM
 
-## Last-checked: 2026-07-27
+## Last-checked: 2026-07-29
 
 > Local NotebookLM alternative for private document analysis, RAG-assisted research, and multi-format report generation. Verified with 136 passing unit tests (78 Python pytest + 58 Web Companion Node.js tests).
 

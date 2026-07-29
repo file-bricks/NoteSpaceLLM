@@ -3,6 +3,12 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-07-29]
+
+### Documentation & Maintenance
+- Performed Discoverability, SEO & README Design Audit (Path B check).
+- Updated `llms.txt` header to `Last-checked: 2026-07-29` with 136 verified unit tests (78 Python pytest + 58 Web Companion Node.js tests).
+
 ## [Unreleased — 2026-07-27]
 
 ### Added
