@@ -7,6 +7,7 @@ Report Exporter - Export reports to various formats
 Supports: Markdown, PDF, DOCX, HTML, TXT
 """
 
+import html as html_lib
 import re
 import subprocess
 import tempfile
@@ -215,27 +216,47 @@ class ReportExporter:
 
     def _markdown_to_html(self, markdown: str) -> str:
         """Convert Markdown to HTML."""
-        html = markdown
+        code_blocks = []
+        inline_codes = []
 
-        # Headers
-        html = re.sub(r'^### (.+)$', r'<h3>\1</h3>', html, flags=re.MULTILINE)
-        html = re.sub(r'^## (.+)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
-        html = re.sub(r'^# (.+)$', r'<h1>\1</h1>', html, flags=re.MULTILINE)
+        # 1. Extract fenced code blocks first with HTML escaping
+        def _store_code_block(match):
+            code_text = match.group(2)
+            escaped_code = html_lib.escape(code_text)
+            idx = len(code_blocks)
+            code_blocks.append(f'<pre><code>{escaped_code}</code></pre>')
+            return f"__CODE_BLOCK_{idx}__"
 
-        # Bold and Italic
-        html = re.sub(r'\*\*\*(.+?)\*\*\*', r'<strong><em>\1</em></strong>', html)
-        html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html)
-        html = re.sub(r'\*(.+?)\*', r'<em>\1</em>', html)
+        text = re.sub(r'```(\w*)\n?(.*?)```', _store_code_block, markdown, flags=re.DOTALL)
 
-        # Code
-        html = re.sub(r'```(\w*)\n(.*?)```', r'<pre><code>\2</code></pre>', html, flags=re.DOTALL)
-        html = re.sub(r'`(.+?)`', r'<code>\1</code>', html)
+        # 2. Extract inline code with HTML escaping
+        def _store_inline_code(match):
+            code_text = match.group(1)
+            escaped_code = html_lib.escape(code_text)
+            idx = len(inline_codes)
+            inline_codes.append(f'<code>{escaped_code}</code>')
+            return f"__INLINE_CODE_{idx}__"
 
-        # Links
-        html = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href="\2">\1</a>', html)
+        text = re.sub(r'`([^`]+)`', _store_inline_code, text)
 
-        # Lists
-        lines = html.split('\n')
+        # 3. Headers (h1 to h6)
+        text = re.sub(r'^###### (.+)$', r'<h6>\1</h6>', text, flags=re.MULTILINE)
+        text = re.sub(r'^##### (.+)$', r'<h5>\1</h5>', text, flags=re.MULTILINE)
+        text = re.sub(r'^#### (.+)$', r'<h4>\1</h4>', text, flags=re.MULTILINE)
+        text = re.sub(r'^### (.+)$', r'<h3>\1</h3>', text, flags=re.MULTILINE)
+        text = re.sub(r'^## (.+)$', r'<h2>\1</h2>', text, flags=re.MULTILINE)
+        text = re.sub(r'^# (.+)$', r'<h1>\1</h1>', text, flags=re.MULTILINE)
+
+        # 4. Bold and Italic
+        text = re.sub(r'\*\*\*(.+?)\*\*\*', r'<strong><em>\1</em></strong>', text)
+        text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+        text = re.sub(r'\*(.+?)\*', r'<em>\1</em>', text)
+
+        # 5. Links
+        text = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href="\2">\1</a>', text)
+
+        # 6. Lists
+        lines = text.split('\n')
         in_list = False
         result = []
         for line in lines:
@@ -254,20 +275,29 @@ class ReportExporter:
         if in_list:
             result.append('</ul>')
 
-        html = '\n'.join(result)
+        text = '\n'.join(result)
 
-        # Paragraphs
-        html = re.sub(r'\n\n+', r'</p>\n<p>', html)
-        html = f'<p>{html}</p>'
+        # 7. Paragraphs
+        text = re.sub(r'\n\n+', r'</p>\n<p>', text)
+        text = f'<p>{text}</p>'
 
-        # Clean up
-        html = re.sub(r'<p>\s*(<h[1-6]>)', r'\1', html)
-        html = re.sub(r'(</h[1-6]>)\s*</p>', r'\1', html)
-        html = re.sub(r'<p>\s*(<ul>)', r'\1', html)
-        html = re.sub(r'(</ul>)\s*</p>', r'\1', html)
-        html = re.sub(r'<p>\s*</p>', '', html)
+        # Clean up tags inside paragraphs
+        text = re.sub(r'<p>\s*(<h[1-6]>)', r'\1', text)
+        text = re.sub(r'(</h[1-6]>)\s*</p>', r'\1', text)
+        text = re.sub(r'<p>\s*(<ul>)', r'\1', text)
+        text = re.sub(r'(</ul>)\s*</p>', r'\1', text)
+        text = re.sub(r'<p>\s*(<pre><code>)', r'\1', text)
+        text = re.sub(r'(</code></pre>)\s*</p>', r'\1', text)
+        text = re.sub(r'<p>\s*</p>', '', text)
 
-        return html
+        # 8. Restore code blocks and inline code
+        for idx, cb_html in enumerate(code_blocks):
+            text = text.replace(f"__CODE_BLOCK_{idx}__", cb_html)
+
+        for idx, ic_html in enumerate(inline_codes):
+            text = text.replace(f"__INLINE_CODE_{idx}__", ic_html)
+
+        return text
 
     def _export_pdf(self, content: str, name: str, title: str, author: str) -> ExportResult:
         """Export to PDF using pandoc or weasyprint."""

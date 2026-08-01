@@ -5,11 +5,16 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased — 2026-08-01]
 
+### Fixed
+- Fixed Markdown-to-HTML exporter in `src/reports/exporter.py` where fenced code blocks and inline code were corrupted by header, bold, italic, and list formatting rules and HTML special characters (`<`, `>`, `&`) were unescaped.
+- Fixed `_build_excerpts` in `src/core/workspace_exporter.py` to safely handle string enum representations of subquery status and query types.
+- Added test suite `tests/test_exporter_html_markdown.py` (82 total pytest tests passing).
+
 ### Documentation & Maintenance
 - Performed Discoverability, README-Design & SEO Check (Path B check).
 - Added Ecosystem (`file-bricks`) and Umbrella (`open-bricks`) Shields.io badges to `README.md` and `README_de.md`.
-- Synchronized Pytest badge count (78 passed) across English and German README files.
-- Updated `llms.txt` header to `Last-checked: 2026-08-01` with 136 passing tests (78 pytest + 58 web companion tests).
+- Synchronized Pytest badge count (82 passed) across English and German README files.
+- Updated `llms.txt` header to `Last-checked: 2026-08-01` with 140 passing tests (82 pytest + 58 web companion tests).
 
 ## [Unreleased — 2026-07-29]
 

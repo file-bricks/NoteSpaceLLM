@@ -140,12 +140,15 @@ def _build_excerpts(project: "Project", doc_id: str) -> List[dict]:
             if sq.document_id != doc_id:
                 continue
             from .sub_query import SubQueryStatus
-            if sq.status != SubQueryStatus.COMPLETED or not sq.result_text:
+            status_val = sq.status.value if hasattr(sq.status, "value") else str(sq.status)
+            if status_val not in (SubQueryStatus.COMPLETED.value, "completed") or not sq.result_text:
                 continue
+            q_type = sq.query_type.value if hasattr(sq.query_type, "value") else str(sq.query_type or "custom")
+            q_text = (sq.query_text or "")[:80]
             excerpts.append({
                 "id": sq.id,
                 "text": sq.result_text[:2000],  # max 2000 Zeichen pro Auszug
-                "source_hint": f"{sq.query_type.value}: {sq.query_text[:80]}",
+                "source_hint": f"{q_type}: {q_text}",
             })
     except Exception:
         pass
