@@ -10,6 +10,11 @@
 - **Fundort:** `web_companion/`
 - **Beleg:**  
   `git status` zeigt 6 modifizierte Icon/Manifest-Dateien und 9 ungetrackte Icon-Dateien.
+- **Aktueller Readback (2026-08-01):**
+  `web_companion/index.html` ist modifiziert; mehrere Companion-Icons und
+  `manifest.json` sind untracked.
+- **Status:** Fremde bzw. nicht zugeordnete Arbeit bleibt unangetastet und
+  ungestaged.
 - **Vorschlag:**  
   TASKSOLVER soll prüfen, ob die `web_companion`-Assets committet werden sollen (`git add`).
 
@@ -22,5 +27,10 @@
 - **Fundort:** `tests/test_store_readiness.py::test_releases_windowsstore_files`
 - **Beleg:**  
   `AssertionError: releases/windowsstore directory missing` (`C:\_Local_DEV\repos\NoteSpaceLLM\releases\windowsstore`).
+- **Aktueller Readback (2026-08-01):**
+  `releases/windowsstore` ist vorhanden; die vollständige Pytest-Suite meldet
+  118 bestanden und 3 optionale Skips, darunter keinen Store-Readiness-Fehler.
+- **Status:** Historischer Befund ist aufgelöst; es wurde dafür keine Datei
+  verändert.
 - **Vorschlag:**  
   TASKSOLVER soll das Verzeichnis `releases/windowsstore` anlegen/anpassen oder die Test-Bedingung in `test_store_readiness.py` prüfen.

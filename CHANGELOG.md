@@ -1,7 +1,16 @@
 # Changelog / Änderungsprotokoll
 
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
-Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).## [Unreleased — 2026-07-26]
+Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
+
+## [Unreleased — 2026-08-01]
+
+### Tests
+- Aktueller Readback: 118 Pytest-Tests bestanden, 3 optionale Tests übersprungen
+  (121 gesammelt); `compileall` sowie die Web/PWA-Companion-Suite mit 67/67
+  Tests sind grün. Das Windows-Store-Verzeichnis ist vorhanden.
+
+## [Unreleased — 2026-07-26]
 
 ### Added
 - Integration des vertiefenden Deep-Research-Services (`src/core/researcher.py`, Ticket TW-NSLLM-03) für mehrschrittige Dokumentanalysen.
