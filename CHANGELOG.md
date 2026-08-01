@@ -3,6 +3,14 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-08-01]
+
+### Documentation & Maintenance
+- Performed Discoverability, README-Design & SEO Check (Path B check).
+- Added Ecosystem (`file-bricks`) and Umbrella (`open-bricks`) Shields.io badges to `README.md` and `README_de.md`.
+- Synchronized Pytest badge count (78 passed) across English and German README files.
+- Updated `llms.txt` header to `Last-checked: 2026-08-01` with 136 passing tests (78 pytest + 58 web companion tests).
+
 ## [Unreleased — 2026-07-29]
 
 ### Documentation & Maintenance

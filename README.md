@@ -6,8 +6,10 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-lightgrey.svg)]()
 [![Offline-first](https://img.shields.io/badge/offline--first-yes-green.svg)]()
-[![Pytest](https://img.shields.io/badge/Pytest-72%20passed-brightgreen.svg)]()
+[![Pytest](https://img.shields.io/badge/Pytest-78%20passed-brightgreen.svg)]()
 [![Web Companion Tests](https://img.shields.io/badge/Web%20Companion-58%20passed-brightgreen.svg)]()
+[![Ecosystem: file-bricks](https://img.shields.io/badge/Ecosystem-file--bricks-blue.svg)](https://github.com/file-bricks)
+[![Umbrella: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-blue.svg)](https://github.com/open-bricks)
 [![LLM Context: llms.txt](https://img.shields.io/badge/LLM%20Context-llms.txt-blue.svg)](llms.txt)
 
 [English](README.md) | [Deutsch](README_de.md)
