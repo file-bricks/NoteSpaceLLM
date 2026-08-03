@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-lightgrey.svg)]()
 [![Offline-first](https://img.shields.io/badge/offline--first-yes-green.svg)]()
-[![Pytest](https://img.shields.io/badge/Pytest-78%20passed-brightgreen.svg)]()
+[![Pytest](https://img.shields.io/badge/Pytest-82%20passed-brightgreen.svg)]()
 [![Web Companion Tests](https://img.shields.io/badge/Web%20Companion-58%20passed-brightgreen.svg)]()
 [![Ecosystem: file-bricks](https://img.shields.io/badge/Ecosystem-file--bricks-blue.svg)](https://github.com/file-bricks)
 [![Umbrella: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-blue.svg)](https://github.com/open-bricks)
@@ -241,8 +241,8 @@ The Android/iOS PWA test plan is documented in `web_companion/PWA_TESTPLAN.md`.
 The desktop app remains the authoritative full version for local documents, RAG
 index, LLM providers and confidential work. For Android, iOS and browser a
 Web/PWA Companion is planned as a separate strand, exchanging data via
-`notespacellm-workspace-v1.json`. Details in `PORTIERUNGSPLAN.md` and
-`EXPORTFORMAT.md`.
+`notespacellm-workspace-v1.json`. The public exchange contract is documented
+in `EXPORTFORMAT.md`.
 
 ### macOS and Linux Source Smokes
 

@@ -9,8 +9,8 @@
   "capabilities": "runFullTrust",
   "category": "Productivity",
   "age_rating": "3+",
-  "privacy_url": "https://github.com/llm-bricks/NoteSpaceLLM/blob/main/PRIVACY_POLICY.md",
-  "support_url": "https://github.com/llm-bricks/NoteSpaceLLM/blob/main/SUPPORT.md",
+  "privacy_url": "https://github.com/file-bricks/NoteSpaceLLM/blob/master/PRIVACY_POLICY.md",
+  "support_url": "https://github.com/file-bricks/NoteSpaceLLM/blob/master/SUPPORT.md",
   "logo": "assets/icon.png",
   "languages": ["de-DE", "en-US", "es-ES", "zh-CN", "ja-JP", "ru-RU"]
 }

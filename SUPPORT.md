@@ -5,9 +5,9 @@
 ### Kundensupport & Kontakt
 Bei Fragen, Anmerkungen oder technischen Problemen zu NoteSpaceLLM nutzen Sie bitte die folgenden Kanäle:
 
-- **GitHub Issue Tracker:** [https://github.com/llm-bricks/NoteSpaceLLM/issues](https://github.com/llm-bricks/NoteSpaceLLM/issues)
-- **Dokumentation:** [https://github.com/llm-bricks/NoteSpaceLLM/blob/main/README.md](https://github.com/llm-bricks/NoteSpaceLLM/blob/main/README.md)
-- **Datenschutzerklärung:** [https://github.com/llm-bricks/NoteSpaceLLM/blob/main/PRIVACY_POLICY.md](https://github.com/llm-bricks/NoteSpaceLLM/blob/main/PRIVACY_POLICY.md)
+- **GitHub Issue Tracker:** [https://github.com/file-bricks/NoteSpaceLLM/issues](https://github.com/file-bricks/NoteSpaceLLM/issues)
+- **Dokumentation:** [https://github.com/file-bricks/NoteSpaceLLM/blob/master/README.md](https://github.com/file-bricks/NoteSpaceLLM/blob/master/README.md)
+- **Datenschutzerklärung:** [https://github.com/file-bricks/NoteSpaceLLM/blob/master/PRIVACY_POLICY.md](https://github.com/file-bricks/NoteSpaceLLM/blob/master/PRIVACY_POLICY.md)
 
 ### Häufig gestellte Fragen (FAQ)
 
@@ -24,9 +24,9 @@ Nein. Die Anwendung ist quelloffen und frei nutzbar. Kosten können lediglich en
 ### Customer Support & Contact
 For inquiries, bug reports, or feature requests regarding NoteSpaceLLM, please use the following support channels:
 
-- **GitHub Issue Tracker:** [https://github.com/llm-bricks/NoteSpaceLLM/issues](https://github.com/llm-bricks/NoteSpaceLLM/issues)
-- **Documentation:** [https://github.com/llm-bricks/NoteSpaceLLM/blob/main/README.md](https://github.com/llm-bricks/NoteSpaceLLM/blob/main/README.md)
-- **Privacy Policy:** [https://github.com/llm-bricks/NoteSpaceLLM/blob/main/PRIVACY_POLICY.md](https://github.com/llm-bricks/NoteSpaceLLM/blob/main/PRIVACY_POLICY.md)
+- **GitHub Issue Tracker:** [https://github.com/file-bricks/NoteSpaceLLM/issues](https://github.com/file-bricks/NoteSpaceLLM/issues)
+- **Documentation:** [https://github.com/file-bricks/NoteSpaceLLM/blob/master/README.md](https://github.com/file-bricks/NoteSpaceLLM/blob/master/README.md)
+- **Privacy Policy:** [https://github.com/file-bricks/NoteSpaceLLM/blob/master/PRIVACY_POLICY.md](https://github.com/file-bricks/NoteSpaceLLM/blob/master/PRIVACY_POLICY.md)
 
 ### Frequently Asked Questions (FAQ)
 

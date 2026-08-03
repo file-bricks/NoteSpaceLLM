@@ -3,6 +3,16 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-08-03]
+
+### Fixed
+- Corrected the public support, privacy, and Windows Store metadata URLs from the obsolete `llm-bricks` organization to `file-bricks` on the repository's `master` branch.
+
+### Documentation & Maintenance
+- Synchronized the English and German README Pytest badges with the verified 82 passing Python tests.
+- Removed the public README reference to the intentionally local-only `PORTIERUNGSPLAN.md`; `EXPORTFORMAT.md` remains the public workspace-exchange reference.
+- Updated `llms.txt` after the repository hygiene verification (82 Python tests, 58 Web Companion tests, Store readiness audit, and compile smoke).
+
 ## [Unreleased — 2026-08-01]
 
 ### Fixed
