@@ -5,6 +5,25 @@
 
 ---
 
+## Aktueller Readback — 2026-08-04
+
+- Der geprüfte Quellstand ist `c2eb419` auf
+  `bugsweep/2026-06-23-notespacellm-desktop`; der Branch steht zwei Commits
+  vor `origin/bugsweep/2026-06-23-notespacellm-desktop`. Es wurde kein Push
+  ausgeführt.
+- Die Dirty-Baseline besteht weiterhin ausschließlich aus der modifizierten
+  `web_companion/index.html` und sieben untracked PWA-Dateien. Die vier darin
+  referenzierten Dateien `favicon.ico`, `favicon.png`,
+  `apple-touch-icon-180.png` und `manifest.json` existieren lokal; die PWA-
+  Arbeit bleibt ungestaged und unangetastet.
+- Es bestehen keine Projekt- oder Git-Aktionslocks.
+- Die vollständige Python-Suite meldet `118 passed, 3 skipped`, Compileall ist
+  erfolgreich und die Companion-Suite besteht mit `67/67` Tests.
+- `releases/windowsstore` ist vorhanden; der historische Store-Readiness-
+  Fehler bleibt damit erledigt.
+
+---
+
 ### Befund 1: Uncommitted & Untracked Assets in web_companion/
 
 - **Fundort:** `web_companion/`
