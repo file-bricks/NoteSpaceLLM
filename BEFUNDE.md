@@ -1,34 +1,41 @@
 # Offene Befunde — NoteSpaceLLM
 
-**Erfasst am:** 2026-07-28  
+**Erfasst am:** 2026-08-10
 **Rolle:** MAINTAINER (TaskMaster Loop)
 
 ---
 
-## Aktueller Readback — 2026-08-04
+## Aktueller Readback — 2026-08-10
 
-- Der geprüfte Quellstand ist `c2eb419` auf
-  `bugsweep/2026-06-23-notespacellm-desktop`; der Branch steht zwei Commits
-  vor `origin/bugsweep/2026-06-23-notespacellm-desktop`. Es wurde kein Push
-  ausgeführt.
+- Der geprüfte Ausgangsstand ist `3e4b314` auf
+  `bugsweep/2026-06-23-notespacellm-desktop`; der Branch stand zu diesem
+  Zeitpunkt drei Commits vor `origin/bugsweep/2026-06-23-notespacellm-desktop`
+  (`98d0e905`). Der lokale Readback bleibt ungepusht.
 - Die Dirty-Baseline besteht weiterhin ausschließlich aus der modifizierten
   `web_companion/index.html` und sieben untracked PWA-Dateien. Die vier darin
   referenzierten Dateien `favicon.ico`, `favicon.png`,
   `apple-touch-icon-180.png` und `manifest.json` existieren lokal; die PWA-
   Arbeit bleibt ungestaged und unangetastet.
 - Es bestehen keine Projekt- oder Git-Aktionslocks.
-- Die vollständige Python-Suite meldet `118 passed, 3 skipped`, Compileall ist
-  erfolgreich und die Companion-Suite besteht mit `67/67` Tests.
-- `releases/windowsstore` ist vorhanden; der historische Store-Readiness-
-  Fehler bleibt damit erledigt.
+- Frische Prüfungen sind erfolgreich: `python -m pytest -q` meldet
+  `118 passed, 3 skipped`, Compileall ist erfolgreich, `npm test` im
+  `web_companion` besteht mit `67/67` Tests und `python tests/platform_smoke.py`
+  endet erfolgreich. Qt meldet dabei nur ein fehlendes optionales Font-
+  Verzeichnis; der Smoke schlägt nicht fehl.
+- `git diff --check` ist sauber; `releases/windowsstore` ist vorhanden.
+- Es gab keinen Geräte-/Emulator-Smoke für Android/iOS, keinen Store-Publish,
+  keinen Push und keine OneDrive-Aktion. Offene Geräte-, BACH-, Lizenz- und
+  Dokumentationsaufgaben in `AUFGABEN.txt` wurden nicht als MAINTAINER-Aufgaben
+  ausgeführt.
 
 ---
 
 ### Befund 1: Uncommitted & Untracked Assets in web_companion/
 
 - **Fundort:** `web_companion/`
-- **Beleg:**  
-  `git status` zeigt 6 modifizierte Icon/Manifest-Dateien und 9 ungetrackte Icon-Dateien.
+- **Beleg (historischer Statusstand 2026-08-01):**
+  `git status` zeigte damals 6 modifizierte Icon/Manifest-Dateien und 9
+  ungetrackte Icon-Dateien; der aktuelle Stand steht im Readback oben.
 - **Aktueller Readback (2026-08-01):**
   `web_companion/index.html` ist modifiziert; mehrere Companion-Icons und
   `manifest.json` sind untracked.
