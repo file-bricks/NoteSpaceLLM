@@ -81,3 +81,36 @@
   `2026-08-10` gesetzt und dieser Befund ergänzt. Geräte-/Emulator-Smokes,
   Store-Publish, Push und die offenen Punkte aus `AUFGABEN.txt` bleiben
   außerhalb dieser Rolle.
+
+---
+
+## Nachprüfung — 2026-08-10T16:05:10+02:00
+
+- **Arbeitsbaum:** HEAD ist `a952188` auf
+  `bugsweep/2026-06-23-notespacellm-desktop`; die live per `git ls-remote`
+  bestätigte Tracking-Referenz ist `98d0e905`. Der Branch liegt fünf eigene
+  Commits davor. Die Dirty-Baseline besteht weiterhin ausschließlich aus der
+  modifizierten `web_companion/index.html` und sieben untracked PWA-Dateien;
+  nichts davon wurde gestaged oder verändert.
+- **Lock-/Remote-Readback:** Beim ersten Baseline-Check wurde kurzzeitig eine
+  leere `.git/index.lock` mit Zeitstempel 16:03:10 gesehen; unmittelbar vor
+  diesem eigenen Dokumentations-Write war kein Git-Lock mehr vorhanden. Im
+  Projektroot gibt es keine fremde `LOCK*.txt`. Es gab keinen Push, Rebase oder
+  Merge.
+- **Frische Qualitätsnachweise:** `python -B -m pytest -q` ergibt `118 passed,
+  3 skipped`; `python -B -m compileall -q main.py manage_translations.py
+  translator.py src` ist erfolgreich; `npm test` in `web_companion/` ergibt
+  `67` von `67` Tests grün; `python -B tests/platform_smoke.py` endet mit
+  `Platform smoke OK`. Der einzige Zusatzhinweis ist ein optional fehlendes
+  Qt-Font-Verzeichnis; der Smoke schlägt nicht fehl. `git diff --check` bleibt
+  sauber.
+- **OneDrive-Projektion:** FileCommander findet die Release-/Social-Projektion
+  `C:\Users\lukas\OneDrive\.TOPICS\.SOFTWARE\RESEARCH\REL-PUB_NoteSpaceLLM_SOCIAL`.
+  Deren `PLAN_D_POINTER.md` weist weiterhin `95bcbf3` vom 2026-07-22/23 als
+  verifizierten Stand aus und enthält keine WORKSTATION-LG-Zeile. Der Pfad
+  steht unter aktivem `cldflt.sys` mit hohem Rename-Risiko; es gab keinen
+  OneDrive-Write, keine Hydration und keinen Transfer. Die dortige
+  `webservice_SpaceNot/backend/spacenotlm.db` und alle übrigen Projektionsdaten
+  blieben unangetastet.
+- **MAINTAINER-Slice:** Dieser datierte Readback korrigiert ausschließlich den
+  eigenen Befundstatus; die fremde PWA-Arbeit bleibt getrennt und offen.
