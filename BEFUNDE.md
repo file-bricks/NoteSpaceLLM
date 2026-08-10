@@ -60,3 +60,24 @@
   verändert.
 - **Vorschlag:**  
   TASKSOLVER soll das Verzeichnis `releases/windowsstore` anlegen/anpassen oder die Test-Bedingung in `test_store_readiness.py` prüfen.
+
+---
+
+## Nachprüfung — 2026-08-10T11:08:18+02:00
+
+- **Arbeitsbaum:** Der aktuelle HEAD ist `a0f7602` auf
+  `bugsweep/2026-06-23-notespacellm-desktop`; der Branch liegt vier Commits
+  vor dem lokalen und live identischen Tracking-Ref `98d0e905`. Die Dirty-
+  Baseline bleibt ausschließlich `web_companion/index.html` plus sieben
+  untracked PWA-Dateien. Diese Arbeit wurde weder gestaged noch verändert.
+- **Remote-/Lock-Readback:** Der Live-Default-Ref ist `7ffd4c12`; es gab keinen
+  Push, Rebase oder Merge. Projekt- und Git-Aktionslocks sowie Unmerged-Einträge
+  wurden nicht gefunden.
+- **Frische Qualitätsnachweise:** `python -B -m pytest -q` ergibt `118 passed,
+  3 skipped`; `python -B -m compileall -q main.py manage_translations.py
+  translator.py src` ist erfolgreich; `npm test` in `web_companion/` ergibt
+  `67` von `67` Tests grün.
+- **MAINTAINER-Slice:** Nur der veraltete `llms.txt`-Datumsmarker wurde auf
+  `2026-08-10` gesetzt und dieser Befund ergänzt. Geräte-/Emulator-Smokes,
+  Store-Publish, Push und die offenen Punkte aus `AUFGABEN.txt` bleiben
+  außerhalb dieser Rolle.
