@@ -284,7 +284,22 @@ class TextExtractor:
             # Tables
             for table in doc.tables:
                 for row in table.rows:
-                    cells = [c.text.strip() for c in row.cells if c.text.strip()]
+                    # row.cells liefert eine ueber mehrere Rasterspalten verbundene
+                    # Zelle einmal PRO SPALTE (python-docx-Verhalten) -- ohne
+                    # Dedup ueber die Identitaet des zugrunde liegenden <w:tc>-
+                    # Elements wird der Zellinhalt so oft wiederholt, wie er
+                    # Spalten ueberspannt (Nebenfund aus T-20260817-825816579,
+                    # dort in BACH DocumentPipeline._extract_docx behoben:
+                    # Faktor 17,8x an einer realen Formular-DOCX gemessen).
+                    seen: set = set()
+                    cells = []
+                    for c in row.cells:
+                        key = id(c._tc)
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        if c.text.strip():
+                            cells.append(c.text.strip())
                     if cells:
                         parts.append(" | ".join(cells))
 
