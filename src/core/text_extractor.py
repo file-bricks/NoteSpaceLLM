@@ -11,7 +11,10 @@ Includes OCR fallback for image-based PDFs.
 import email
 from email import policy
 from email.parser import BytesParser
+import html
+from html.parser import HTMLParser
 from pathlib import Path
+import re
 from typing import Optional, Tuple
 from dataclasses import dataclass
 
@@ -367,17 +370,163 @@ class TextExtractor:
             error=".doc extraction requires antiword or LibreOffice"
         )
 
+    @staticmethod
+    def _html_to_text(html_content: str) -> str:
+        """Strip HTML tags and convert entities to plain text."""
+        if not html_content or not html_content.strip():
+            return ""
+
+        class _HTMLParser(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.result = []
+                self._skip = False
+
+            def handle_starttag(self, tag, attrs):
+                if tag in ('script', 'style', 'head', 'title'):
+                    self._skip = True
+                elif tag in ('p', 'br', 'div', 'tr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li'):
+                    self.result.append('\n')
+
+            def handle_endtag(self, tag):
+                if tag in ('script', 'style', 'head', 'title'):
+                    self._skip = False
+                elif tag in ('p', 'div', 'tr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li'):
+                    self.result.append('\n')
+
+            def handle_data(self, data):
+                if not self._skip:
+                    self.result.append(data)
+
+            def get_text(self) -> str:
+                text = ''.join(self.result)
+                lines = [re.sub(r'[ \t]+', ' ', line).strip() for line in text.split('\n')]
+                return '\n'.join(line for line in lines if line)
+
+        try:
+            parser = _HTMLParser()
+            parser.feed(html_content)
+            parsed_text = parser.get_text()
+            if parsed_text.strip():
+                return parsed_text
+        except Exception:
+            pass
+
+        # Fallback regex strip
+        clean = re.sub(r'<(script|style)[^>]*>.*?</\1>', '', html_content, flags=re.DOTALL | re.IGNORECASE)
+        clean = re.sub(r'<[^>]+>', ' ', clean)
+        clean = html.unescape(clean)
+        lines = [re.sub(r'[ \t]+', ' ', line).strip() for line in clean.split('\n')]
+        return '\n'.join(line for line in lines if line)
+
+    @staticmethod
+    def _parse_rtf_bytes(raw_bytes: bytes) -> str:
+        """Extract plain text from RTF byte stream, handling codepages, hex escapes and unicode."""
+        text = raw_bytes.decode('latin-1', errors='replace')
+
+        cp_match = re.search(r'\\ansicpg(\d+)', text)
+        encoding = f'cp{cp_match.group(1)}' if cp_match else 'cp1252'
+
+        skip_destinations = {
+            'fonttbl', 'colortbl', 'stylesheet', 'info', 'generator',
+            'pict', 'header', 'footer', 'headerl', 'headerr', 'headerf',
+            'footerl', 'footerr', 'footerf', 'object', 'template', 'themedata'
+        }
+
+        stack = []
+        ignorable = False
+        skip_depth = 0
+        uc_skip = 1
+
+        out = []
+        i = 0
+        n = len(text)
+
+        while i < n:
+            c = text[i]
+            if c == '{':
+                stack.append((skip_depth, uc_skip))
+                i += 1
+            elif c == '}':
+                if stack:
+                    skip_depth, uc_skip = stack.pop()
+                i += 1
+            elif c == '\\':
+                i += 1
+                if i >= n:
+                    break
+                ch = text[i]
+                if ch in ('\\', '{', '}'):
+                    if skip_depth == 0:
+                        out.append(ch)
+                    i += 1
+                elif ch == '~':
+                    if skip_depth == 0:
+                        out.append(' ')
+                    i += 1
+                elif ch == '_':
+                    if skip_depth == 0:
+                        out.append('-')
+                    i += 1
+                elif ch == '*':
+                    i += 1
+                    ignorable = True
+                elif ch == "'":
+                    hex_str = text[i+1:i+3]
+                    i += 3
+                    if skip_depth == 0 and len(hex_str) == 2:
+                        try:
+                            byte_val = bytes.fromhex(hex_str)
+                            out.append(byte_val.decode(encoding, errors='replace'))
+                        except Exception:
+                            pass
+                else:
+                    match = re.match(r'([a-zA-Z]+)(-?\d+)? ?', text[i:])
+                    if match:
+                        word = match.group(1)
+                        param = match.group(2)
+                        full_len = match.end()
+                        i += full_len
+
+                        if word in ('par', 'line', 'row', 'sect'):
+                            if skip_depth == 0:
+                                out.append('\n')
+                        elif word in ('tab', 'cell'):
+                            if skip_depth == 0:
+                                out.append('\t')
+                        elif word == 'uc':
+                            if param:
+                                uc_skip = max(0, int(param))
+                        elif word == 'u':
+                            if param:
+                                code_point = int(param)
+                                if code_point < 0:
+                                    code_point += 65536
+                                if skip_depth == 0:
+                                    try:
+                                        out.append(chr(code_point))
+                                    except Exception:
+                                        pass
+                                i += uc_skip
+                        elif word in skip_destinations or ignorable:
+                            skip_depth += 1
+                        ignorable = False
+                    else:
+                        i += 1
+            else:
+                if skip_depth == 0 and c not in ('\r', '\n'):
+                    out.append(c)
+                i += 1
+
+        res = ''.join(out)
+        lines = [re.sub(r'[ \t]+', ' ', line).strip() for line in res.split('\n')]
+        return '\n'.join(line for line in lines if line)
+
     def _extract_rtf(self, filepath: Path) -> ExtractionResult:
-        """Extract text from RTF files by stripping control codes."""
+        """Extract text from RTF files with proper control code stripping, unicode and hex escape decoding."""
         try:
             raw = filepath.read_bytes()
-            # Simple RTF text extraction: strip control words
-            import re
-            text = raw.decode("utf-8", errors="replace")
-            # Remove RTF header/control groups
-            text = re.sub(r'\\[a-z]+\d*\s?', ' ', text)
-            text = re.sub(r'[{}]', '', text)
-            text = re.sub(r'\s+', ' ', text).strip()
+            text = self._parse_rtf_bytes(raw)
 
             if not text:
                 return ExtractionResult(False, "", error="RTF enthielt keinen extrahierbaren Text")
@@ -483,24 +632,42 @@ class TextExtractor:
 
             parts.append("")
 
-            # Extract body
+            def _decode_part(part) -> str:
+                charset = part.get_content_charset() or 'utf-8'
+                payload = part.get_payload(decode=True)
+                if isinstance(payload, bytes):
+                    for enc in (charset, 'utf-8', 'latin-1', 'cp1252'):
+                        try:
+                            return payload.decode(enc)
+                        except (UnicodeDecodeError, LookupError):
+                            continue
+                    return payload.decode('utf-8', errors='replace')
+                return str(payload or '')
+
+            # Extract body (plain text prioritized, HTML fallback)
+            plain_body = ""
+            html_body = ""
+
             if msg.is_multipart():
                 for part in msg.walk():
-                    if part.get_content_type() == 'text/plain':
-                        charset = part.get_content_charset() or 'utf-8'
-                        try:
-                            body = part.get_payload(decode=True).decode(charset)
-                            parts.append(body)
-                            break
-                        except Exception:
-                            pass
+                    content_type = part.get_content_type()
+                    if content_type == 'text/plain' and not plain_body:
+                        plain_body = _decode_part(part)
+                    elif content_type == 'text/html' and not html_body:
+                        html_body = _decode_part(part)
             else:
-                charset = msg.get_content_charset() or 'utf-8'
-                try:
-                    body = msg.get_payload(decode=True).decode(charset)
-                    parts.append(body)
-                except Exception:
-                    parts.append(str(msg.get_payload()))
+                content_type = msg.get_content_type()
+                if content_type == 'text/html':
+                    html_body = _decode_part(msg)
+                else:
+                    plain_body = _decode_part(msg)
+
+            if plain_body.strip():
+                parts.append(plain_body.strip())
+            elif html_body.strip():
+                extracted_html_text = self._html_to_text(html_body)
+                if extracted_html_text:
+                    parts.append(extracted_html_text)
 
             text = "\n".join(parts)
             return ExtractionResult(
@@ -538,8 +705,17 @@ class TextExtractor:
 
             parts.append("")
 
+            body_text = ""
             if msg.body:
-                parts.append(msg.body)
+                body_text = msg.body
+            elif getattr(msg, 'htmlBody', None):
+                html_raw = msg.htmlBody
+                if isinstance(html_raw, bytes):
+                    html_raw = html_raw.decode('utf-8', errors='replace')
+                body_text = self._html_to_text(str(html_raw))
+
+            if body_text:
+                parts.append(body_text)
 
             msg.close()
 

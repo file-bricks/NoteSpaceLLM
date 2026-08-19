@@ -192,7 +192,15 @@ ANTWORT:"""
                     "total_chunks": chunk.metadata.total_chunks
                 }
                 if metadata:
-                    doc_metadata.update(metadata)
+                    for k, v in metadata.items():
+                        if isinstance(v, (str, int, float, bool)):
+                            doc_metadata[k] = v
+                        elif isinstance(v, (list, tuple, set)):
+                            doc_metadata[k] = ", ".join(str(item) for item in v)
+                        elif v is None:
+                            doc_metadata[k] = ""
+                        else:
+                            doc_metadata[k] = str(v)
 
                 lc_documents.append(LangChainDocument(
                     page_content=chunk.content,

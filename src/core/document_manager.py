@@ -550,7 +550,7 @@ class DocumentManager:
                 metadata={
                     "name": doc.name,
                     "extension": doc.extension,
-                    "tags": doc.tags
+                    "tags": ", ".join(doc.tags) if isinstance(doc.tags, list) else str(doc.tags or "")
                 }
             )
 
