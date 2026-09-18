@@ -1,31 +1,231 @@
 NoteSpaceLLM — Third-Party Licenses Inventory
 =============================================
-Stand: 2026-07-27
+Stand: 2026-09-18
+Project License: GNU Affero General Public License v3.0 (AGPL-3.0)
+Repository: https://github.com/file-bricks/NoteSpaceLLM
 
-1. PySide6
-   Version: 6.8.0+
-   Project: https://wiki.qt.io/Qt_for_Python
-   License: LGPL-3.0-only / GPL-2.0-only / GPL-3.0-only
-   Usage in project: GUI Desktop Framework
+--------------------------------------------------------------------------------
+License Compatibility & Copyleft Analysis
+--------------------------------------------------------------------------------
+NoteSpaceLLM is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
+This license structure ensures compatibility across all runtime components:
 
-2. pypdfium2
-   Version: 4.0.0+
-   Project: https://github.com/pypdfium2-team/pypdfium2
-   License: Apache-2.0 / BSD-3-Clause
-   Usage in project: PDF extraction and rendering backend
+1. PyMuPDF is licensed under GNU AGPL-3.0-or-later. NoteSpaceLLM's AGPL-3.0 license
+   is directly and fully compliant with PyMuPDF's copyleft requirements.
+2. PySide6 (Qt for Python) is licensed under the GNU Lesser General Public License v3
+   (LGPL-3.0-only). NoteSpaceLLM utilizes dynamic imports / shared libraries without
+   modifying Qt source code, satisfying LGPL-3.0 section 4 requirements.
+3. LangChain, ChromaDB, python-docx, openpyxl, extract-msg, pypdf, and pypdfium2
+   are distributed under permissive licenses (MIT, Apache-2.0, BSD-3-Clause),
+   which are fully compatible with incorporation into an AGPL-3.0 licensed application.
+4. Optional cloud integrations (OpenAI, Anthropic) and packaging tools (PyInstaller
+   with PyInstaller Special Exception) preserve these licensing boundaries.
 
-3. pypdf
-   Version: 4.0.0+
-   Project: https://github.com/py-pdf/pypdf
-   License: BSD-3-Clause
-   Usage in project: Lightweight PDF text extraction backend
+--------------------------------------------------------------------------------
+1. Runtime Dependencies
+--------------------------------------------------------------------------------
 
-4. PyMuPDF (Optional)
-   Version: 1.23.0+
-   Project: https://github.com/pymupdf/PyMuPDF
-   License: AGPL-3.0-only (Optional user opt-in)
-   Usage in project: Optional high-performance PDF backend
+1.1 PySide6
+    License: LGPL-3.0-only / GPL-2.0-only / GPL-3.0-only
+    SPDX: LGPL-3.0-only
+    URL: https://wiki.qt.io/Qt_for_Python
+    Usage: Desktop GUI presentation layer, signals and widgets.
 
-5. ChromaDB / LangChain Core Components
-   License: Apache-2.0 / MIT
-   Usage in project: Local RAG vector store & document splitter utilities
+1.2 shiboken6
+    License: LGPL-3.0-only
+    SPDX: LGPL-3.0-only
+    URL: https://wiki.qt.io/Qt_for_Python
+    Usage: CPython bindings generator and runtime support for PySide6.
+
+1.3 PyMuPDF (fitz)
+    License: GNU AGPL-3.0-or-later
+    SPDX: AGPL-3.0-or-later
+    URL: https://github.com/pymupdf/PyMuPDF
+    Usage: High-performance PDF document parsing and text extraction.
+
+1.4 python-docx
+    License: MIT License
+    SPDX: MIT
+    URL: https://github.com/python-openxml/python-docx
+    Usage: Word (.docx) document extraction and report generation.
+
+1.5 openpyxl
+    License: MIT License
+    SPDX: MIT
+    URL: https://foss.heptapod.net/openpyxl/openpyxl
+    Usage: Excel spreadsheet reading and structured data extraction.
+
+1.6 extract-msg
+    License: MIT License
+    SPDX: MIT
+    URL: https://github.com/TeamMsgExtractor/msg-extractor
+    Usage: Parsing and content extraction from Outlook .msg email archives.
+
+1.7 langchain
+    License: MIT License
+    SPDX: MIT
+    URL: https://github.com/langchain-ai/langchain
+    Usage: RAG pipeline coordination and prompt structuring.
+
+1.8 langchain-core
+    License: MIT License
+    SPDX: MIT
+    URL: https://github.com/langchain-ai/langchain
+    Usage: Core abstractions and schemas for document chunks and prompts.
+
+1.9 langchain-community
+    License: MIT License
+    SPDX: MIT
+    URL: https://github.com/langchain-ai/langchain-community
+    Usage: Community loaders and integration utilities.
+
+1.10 langchain-ollama
+    License: MIT License
+    SPDX: MIT
+    URL: https://github.com/langchain-ai/langchain-ollama
+    Usage: Local LLM orchestration via Ollama HTTP API.
+
+1.11 langchain-chroma
+    License: MIT License
+    SPDX: MIT
+    URL: https://github.com/langchain-ai/langchain-chroma
+    Usage: ChromaDB vector store connector for similarity search.
+
+1.12 langchain-text-splitters
+    License: MIT License
+    SPDX: MIT
+    URL: https://github.com/langchain-ai/langchain-text-splitters
+    Usage: Recursive and token-based document chunking.
+
+1.13 chromadb
+    License: Apache-2.0
+    SPDX: Apache-2.0
+    URL: https://github.com/chroma-core/chroma
+    Usage: Local vector database and embedding index.
+
+--------------------------------------------------------------------------------
+2. Optional Integrations & Backends
+--------------------------------------------------------------------------------
+
+2.1 pypdfium2 (Alternative PDF Backend)
+    License: Apache-2.0 / BSD-3-Clause
+    SPDX: Apache-2.0 OR BSD-3-Clause
+    URL: https://github.com/pypdfium2-team/pypdfium2
+    Usage: Optional fallback PDF extraction and rendering engine.
+
+2.2 pypdf (Alternative PDF Backend)
+    License: BSD-3-Clause
+    SPDX: BSD-3-Clause
+    URL: https://github.com/py-pdf/pypdf
+    Usage: Lightweight pure-Python PDF text extraction fallback.
+
+2.3 openai (Optional)
+    License: Apache-2.0
+    SPDX: Apache-2.0
+    URL: https://github.com/openai/openai-python
+    Usage: Client for optional OpenAI API endpoints.
+
+2.4 anthropic (Optional)
+    License: MIT License
+    SPDX: MIT
+    URL: https://github.com/anthropics/anthropic-sdk-python
+    Usage: Client for optional Anthropic API endpoints.
+
+2.5 tiktoken (Optional)
+    License: MIT License
+    SPDX: MIT
+    URL: https://github.com/openai/tiktoken
+    Usage: Fast BPE token counting for model context windows.
+
+2.6 Pillow (Optional)
+    License: HPND
+    SPDX: HPND
+    URL: https://github.com/python-pillow/Pillow
+    Usage: Image pre-processing for optical character recognition.
+
+2.7 pytesseract (Optional)
+    License: Apache-2.0
+    SPDX: Apache-2.0
+    URL: https://github.com/madmaze/pytesseract
+    Usage: Wrapper for Tesseract OCR on scanned documents.
+
+2.8 WeasyPrint (Optional)
+    License: BSD-3-Clause
+    SPDX: BSD-3-Clause
+    URL: https://weasyprint.org/
+    Usage: HTML to styled PDF rendering engine.
+
+--------------------------------------------------------------------------------
+3. Development, Build & Test Dependencies
+--------------------------------------------------------------------------------
+
+3.1 pytest
+    License: MIT License
+    SPDX: MIT
+    URL: https://github.com/pytest-dev/pytest
+    Usage: Automated test framework and verification suite.
+
+3.2 iniconfig
+    License: MIT License
+    SPDX: MIT
+    URL: https://github.com/pytest-dev/iniconfig
+    Usage: Brain-dead INI parser used by pytest.
+
+3.3 pluggy
+    License: MIT License
+    SPDX: MIT
+    URL: https://github.com/pytest-dev/pluggy
+    Usage: Plugin management system for pytest.
+
+3.4 ruff
+    License: MIT / Apache-2.0
+    SPDX: MIT OR Apache-2.0
+    URL: https://github.com/astral-sh/ruff
+    Usage: High-performance linter and code formatter.
+
+3.5 PyInstaller
+    License: GPL-2.0-or-later with PyInstaller Bootloader Exception
+    SPDX: GPL-2.0-or-later
+    URL: https://pyinstaller.org/
+    Usage: Standalone desktop executable bundling.
+
+--------------------------------------------------------------------------------
+License Texts and Notices
+--------------------------------------------------------------------------------
+
+MIT License:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+Apache License 2.0:
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+GNU LGPL v3.0:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+GNU AGPL v3.0:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+PyInstaller Special Exception:
+As a special exception, the copyright holders of this library give you permission
+to link this library with independent modules to produce an executable, regardless
+of the license terms of these independent modules, and to copy and distribute the
+resulting executable under terms of your choice.

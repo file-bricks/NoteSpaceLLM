@@ -9,6 +9,25 @@ dist/
 build/
 *.spec
 
+# Test & Linting Caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Multi-Agent Lock System
+LOCK*
+LOCK.*
+LOCK*.txt
+*.lock
+
+# Multi-Host Sync & Conflict Defense
+*-WORKSTATION-LG*
+*-ASUS-GEI*
+*.conflict
+*.sync-conflict-*
+*.sync-temp-*
+
 # Daten & Output
 /data/
 /output/
@@ -19,7 +38,7 @@ build/
 /chroma_db/
 *.db
 
-# Secrets
+# Secrets & Keys
 .env
 .env.*
 credentials.json
@@ -27,7 +46,12 @@ client_secret*.json
 token.json
 *.pem
 *.key
+*.pfx
+*.p12
+*.cer
+*.crt
 keyring/
+secrets.*
 
 # Logs
 *.log
