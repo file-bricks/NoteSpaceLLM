@@ -3,6 +3,26 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-09-22]
+
+### Added
+- Created canonical root `NOTICE` file with copyright attribution to Lukas Geiger (file-bricks / open-bricks), AGPL-3.0 license declaration, and explicit system invariants INV-LOCAL-01 through INV-LOCAL-10.
+- Generated Level 1 Software Bill of Materials (SBOM) in `THIRD_PARTY_LICENSES.md` documenting component licensing, PyMuPDF AGPL-3.0 copyleft compatibility, PySide6 LGPL-3.0 dynamic linking isolation, and invariant verification matrix.
+- Implemented comprehensive contract test suite in `tests/test_metadata.py` verifying canonical NOTICE integrity, Level 1 SBOM coverage, PEP 621 metadata, version freeze discipline, multi-host sync guards, CI hardening, and statutory disclaimers.
+- Added automated `web-companion-tests` CI job in `.github/workflows/tests.yml` to execute Web/PWA companion test suite (`npm test`) on Node.js 20 in CI matrix.
+- Established local marketing, discoverability, and positioning ledger in `MARKETING-LOG.txt`.
+
+### Fixed & Hardened
+- Restored truncated introductory sentence in root `README.md`.
+- Enriched `pyproject.toml` with PEP 621 classifiers, complete project URLs, license-files declarations, and isolated `--basetemp=.pytest_temp` test configuration.
+- Hardened `.gitignore` against multi-host sync conflicts (`*conflicted copy*`, `*-WORKSTATION*`, `*-ASUS*`, `*-LAPTOP*`, `*-Mac*`), scoped lock files (`LOCK.user.*`, `LOCK.until.*`, `LOCK.condition.*`), and local test caches.
+- Hardened GitHub Actions workflows (`tests.yml`, `stale.yml`, `welcome.yml`) with concurrency groups, job timeouts (`timeout-minutes`), and least-privilege `contents: read` permissions.
+- Anchored statutory disclaimer under § 521 BGB (liability restricted to intent and gross negligence for gratuitous open-source donation) and 48-hour security response SLA in `SECURITY.md`, `README.md`, and `README_de.md`.
+
+### Documentation & Maintenance
+- Synchronized README test badges with empirical measured test results: 103 passing pytest tests and 58 passing Web Companion tests across English (`README.md`) and German (`README_de.md`) documentation.
+- Updated `llms.txt` header to `Last-checked: 2026-09-22` with 161 total verified tests (103 Python pytest + 58 Web Companion Node.js tests).
+
 ## [Unreleased — 2026-08-03]
 
 ### Fixed

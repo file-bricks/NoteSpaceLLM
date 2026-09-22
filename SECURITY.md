@@ -39,6 +39,10 @@ Wenn Sie eine Sicherheitslücke in NoteSpaceLLM entdecken, melden Sie diese bitt
 - **Triage & Schweregrad-Einstufung**: Innerhalb von **5 Werktagen**.
 - **Sicherheits-Patch**: Kritische Schwachstellen werden prioritär behoben und mit einem Patch-Release bereitgestellt.
 
+### Gesetzlicher Haftungsausschluss (§ 521 BGB)
+
+NoteSpaceLLM wird als unentgeltliche Open-Source-Software bereitgestellt. Gemäß § 521 BGB haftet der Urheber bei unentgeltlicher Überlassung der Software nur für Vorsatz und grobe Fahrlässigkeit.
+
 ---
 
 ## English
@@ -74,3 +78,7 @@ If you discover a security vulnerability in NoteSpaceLLM, please report it confi
 - **Initial Confirmation**: Within **48 hours** of receiving the report.
 - **Triage & Severity Assessment**: Within **5 business days**.
 - **Security Patch**: Critical vulnerabilities receive top priority and will be released in an expedited patch update.
+
+### Statutory Disclaimer (§ 521 BGB)
+
+NoteSpaceLLM is provided as free and open-source software without financial compensation. Under German statutory law (§ 521 BGB), liability in case of gratuitous software provision is strictly limited to intentional misconduct and gross negligence.

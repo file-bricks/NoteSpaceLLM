@@ -9,6 +9,12 @@ description = "Local NotebookLM alternative for private document analysis, RAG-a
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "AGPL-3.0" }
+license-files = [
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_LICENSES.md",
+    "THIRD_PARTY_LICENSES.txt"
+]
 authors = [
     { name = "Lukas Geiger", email = "lukas@um-bruch.org" }
 ]
@@ -23,9 +29,31 @@ keywords = [
     "chromadb",
     "llm",
     "pwa",
-    "python"
+    "python",
+    "offline-first",
+    "research-tools",
+    "report-generator",
+    "zero-egress"
 ]
-urls = { Homepage = "https://github.com/file-bricks/NoteSpaceLLM", Repository = "https://github.com/file-bricks/NoteSpaceLLM", Issues = "https://github.com/file-bricks/NoteSpaceLLM/issues" }
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Win32 (MS Windows)",
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU Affero General Public License v3 (AGPLv3)",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Office/Business",
+    "Topic :: Text Processing :: General"
+]
+urls = { Homepage = "https://github.com/file-bricks/NoteSpaceLLM", Repository = "https://github.com/file-bricks/NoteSpaceLLM", Documentation = "https://github.com/file-bricks/NoteSpaceLLM#readme", Issues = "https://github.com/file-bricks/NoteSpaceLLM/issues", Changelog = "https://github.com/file-bricks/NoteSpaceLLM/blob/master/CHANGELOG.md", Notice = "https://github.com/file-bricks/NoteSpaceLLM/blob/master/NOTICE", "Third-Party Licenses" = "https://github.com/file-bricks/NoteSpaceLLM/blob/master/THIRD_PARTY_LICENSES.md" }
 
 dependencies = [
     "PySide6>=6.5.0",
@@ -63,8 +91,17 @@ dev = [
     "ruff>=0.9.0",
 ]
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
 [tool.pytest.ini_options]
 minversion = "7.0"
 testpaths = ["tests"]
 pythonpath = "."
 python_files = ["test_*.py"]
+addopts = "--basetemp=.pytest_temp"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

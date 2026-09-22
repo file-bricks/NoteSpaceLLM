@@ -6,8 +6,10 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-lightgrey.svg)]()
 [![Offline-first](https://img.shields.io/badge/offline--first-yes-green.svg)]()
-[![Pytest](https://img.shields.io/badge/Pytest-82%20passed-brightgreen.svg)]()
+[![Pytest](https://img.shields.io/badge/Pytest-103%20passed-brightgreen.svg)]()
 [![Web Companion Tests](https://img.shields.io/badge/Web%20Companion-58%20passed-brightgreen.svg)]()
+[![Notice: Invariants](https://img.shields.io/badge/Notice-INV--LOCAL--01..10-blue.svg)](NOTICE)
+[![SBOM: Level 1](https://img.shields.io/badge/SBOM-Level%201-blue.svg)](THIRD_PARTY_LICENSES.md)
 [![Ecosystem: file-bricks](https://img.shields.io/badge/Ecosystem-file--bricks-blue.svg)](https://github.com/file-bricks)
 [![Umbrella: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-blue.svg)](https://github.com/open-bricks)
 [![LLM Context: llms.txt](https://img.shields.io/badge/LLM%20Context-llms.txt-blue.svg)](llms.txt)
@@ -21,6 +23,7 @@
 > NoteSpaceLLM provides machine-readable architecture and feature specifications in [`llms.txt`](llms.txt).
 > Python unit tests (`pytest`) and Web Companion tests (`npm test` in `web_companion/`) run 100% offline without external network dependencies.
 
+NoteSpaceLLM is an offline-first PySide6 desktop app for working with PDFs,
 Word files, Markdown, mail exports, notes, and research folders. It keeps
 project data local by default, supports local or remote Ollama, OpenAI,
 Anthropic and Claude Code workflows, and exports analysis results to Markdown,

@@ -1,0 +1,79 @@
+NoteSpaceLLM
+=============
+
+Copyright (c) 2026 Lukas Geiger (c/o file-bricks / open-bricks)
+Licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
+See LICENSE for the full license text.
+
+This NOTICE file is provided for informational and attribution purposes
+alongside the license and must be preserved in redistributions of the
+source code and in substantial portions of the software.
+
+--------------------------------------------------------------------
+1. Purpose & Architecture
+--------------------------------------------------------------------
+
+NoteSpaceLLM is an unprivileged, local-first PySide6 desktop application
+and offline research companion designed as a private alternative to Google
+NotebookLM. It enables document analysis, multi-document synthesis, RAG-assisted
+inquiries, and structured report generation across PDF, Word (DOCX), Markdown,
+plain text, spreadsheets (XLSX), and email archives (EML, MSG). A lightweight
+Web/PWA Companion provides zero-server mobile review of exported workspaces.
+
+The software is engineered with the following explicit invariants:
+  * Local-First Privacy Boundary (INV-LOCAL-01): Documents, extracted texts,
+    ChromaDB vector stores, and SQLite workspace indexes remain strictly on the
+    local machine and are never transmitted to external cloud systems without
+    explicit user configuration.
+  * Unprivileged User-Space Execution (INV-LOCAL-02): RunAsInvoker non-elevation;
+    both PySide6 desktop GUI and CLI run with regular user privileges without
+    requiring administrator or elevated operating system rights.
+  * Zero Unsolicited Egress (INV-LOCAL-03): Core document parsing, text chunking,
+    and local vector retrieval perform zero unsolicited network calls; optional
+    cloud LLM integrations (OpenAI, Anthropic) activate only upon explicit user
+    selection and key provisioning.
+  * Offline-First Local Model Execution (INV-LOCAL-04): Native integration with
+    local Ollama instances provides private LLM synthesis without requiring an
+    active internet connection.
+  * Hardened Parser Security (INV-LOCAL-05): Dependency floors for document
+    parsers (openpyxl>=3.1.3, PyMuPDF>=1.24.10, python-docx>=1.1.0) guard
+    against XML entity expansion (CVE-2024-34064) and archive bombs.
+  * Portable Workspace Serialization (INV-LOCAL-06): Standardized JSON workspace
+    format (`notespacellm-workspace-v1.json`) allows safe, schema-validated
+    interchange with external tools and mobile review companions.
+  * PWA Offline Isolation (INV-LOCAL-07): The Web Companion operates 100%
+    client-side via Service Worker caching with zero telemetry or tracking.
+  * AGPL-3.0 & LGPL-3.0 Boundary Purity (INV-LOCAL-08): Full compliance with
+    PyMuPDF AGPL-3.0 copyleft and PySide6 LGPL-3.0 dynamic linking isolation.
+  * Version Freeze Discipline (INV-LOCAL-09): Strict compliance with policy
+    T-20260920-167562623; hygiene and marketing passes never modify the
+    application version outside authorized release ceremonies.
+  * Statutory Disclaimer & SLA (INV-LOCAL-10): Unpaid open-source software under
+    §§ 516 ff. BGB with liability governed by § 521 BGB; vulnerability reports
+    are subject to a 48-hour acknowledgment and 5-day triage SLA.
+
+--------------------------------------------------------------------
+2. Organizational & Umbrella Context
+--------------------------------------------------------------------
+
+This software is maintained under the file-bricks organization as part of
+the open-bricks software federation:
+  * Primary Organization: file-bricks (https://github.com/file-bricks)
+  * Umbrella Federation: open-bricks (https://github.com/open-bricks)
+  * Canonical Repository: https://github.com/file-bricks/NoteSpaceLLM
+
+--------------------------------------------------------------------
+3. Third-Party Licenses & Acknowledgements
+--------------------------------------------------------------------
+
+NoteSpaceLLM utilizes open-source components:
+  * PySide6 / shiboken6 (The Qt Company) - LGPL-3.0-only
+  * PyMuPDF / fitz (Artifex Software) - AGPL-3.0-or-later
+  * ChromaDB (Chroma) - Apache-2.0
+  * LangChain ecosystem (Harrison Chase) - MIT
+  * python-docx (Steve Canny) - MIT
+  * openpyxl (Eric Gazoni, Charlie Clark) - MIT
+  * extract-msg (Ian Coleman) - MIT
+
+Detailed licenses, runtime package matrices, and SBOM disclosures are
+maintained in THIRD_PARTY_LICENSES.md and THIRD_PARTY_LICENSES.txt.

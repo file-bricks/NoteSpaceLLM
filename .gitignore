@@ -11,19 +11,30 @@ build/
 
 # Test & Linting Caches
 .pytest_cache/
+.pytest_temp/
 .ruff_cache/
 .coverage
 htmlcov/
 
-# Multi-Agent Lock System
+# Multi-Agent Lock System & Coordination
+LOCK
 LOCK*
 LOCK.*
 LOCK*.txt
+LOCK.user.*
+LOCK.until.*
+LOCK.condition.*
+.automation-lock
 *.lock
 
 # Multi-Host Sync & Conflict Defense
+*conflicted copy*
+*-WORKSTATION*
 *-WORKSTATION-LG*
+*-ASUS*
 *-ASUS-GEI*
+*-LAPTOP*
+*-Mac*
 *.conflict
 *.sync-conflict-*
 *.sync-temp-*

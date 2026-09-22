@@ -1,0 +1,85 @@
+# MARKETING-LOG — NoteSpaceLLM
+
+Stand: 2026-09-22
+Kanonisches Repo: https://github.com/file-bricks/NoteSpaceLLM
+Organisations-Kontext: file-bricks / open-bricks
+Distributionsmodus: GitHub Source + PySide6 Desktop GUI + Web/PWA Companion
+
+===============================================================================
+1. POSITIONIERUNG & MARKTKONTEXT
+===============================================================================
+
+NoteSpaceLLM adressiert die fundamentale Privatsphäre-Lücke cloudbasierter
+Recherche- und Dokumentenanalysewerkzeuge wie Google NotebookLM.
+
+Ziel: Ein vollwertiges, unprivilegiertes, lokales Desktop-Werkzeug (PySide6 GUI)
+sowie ein leichtgewichtiger Web/PWA-Companion zur privaten Analyse, RAG-gestützten
+Recherche und automatisierten Berichterstellung über heterogene Dokumente
+(PDF, DOCX, XLSX, TXT, Markdown, EML, MSG) ohne Cloud-Zwang.
+
+Kern-Mehrwerte & Invarianten:
+1. Local-First Privacy Boundary (INV-LOCAL-01): Dokumente, Extrakte, ChromaDB
+   und SQLite-Indizes verbleiben vollständig auf der lokalen Maschine.
+2. Unprivilegierte Ausführung (INV-LOCAL-02): GUI und CLI laufen mit regulären
+   Nutzerrechten (`RunAsInvoker`), keine administrativen Rechte erforderlich.
+3. Zero Unsolicited Egress (INV-LOCAL-03): Keine automatische Telemetrie; externe
+   APIs (OpenAI, Anthropic) nur nach expliziter Nutzerkonfiguration.
+4. Offline-First Local Model Execution (INV-LOCAL-04): Nahtlose Anbindung lokaler
+   Ollama-Instanzen für 100% netzwerkunabhängige LLM-Synthese.
+5. Hardened Parser Security (INV-LOCAL-05): Gehärtete Abhängigkeitsböden (openpyxl,
+   PyMuPDF, python-docx) gegen XML Entity Expansion und DoS-Angriffe.
+6. Portable Workspace Serialization (INV-LOCAL-06): Standardisierte Spezifikation
+   `notespacellm-workspace-v1.json` für sicheren Austausch und Review.
+7. PWA Offline Isolation (INV-LOCAL-07): Web Companion läuft 100% client-seitig
+   über Service Worker ohne Tracking oder Server-Uploads.
+8. AGPL-3.0 & LGPL-3.0 Boundary Purity (INV-LOCAL-08): Volle Lizenzkompatibilität
+   mit PyMuPDF (AGPL-3.0) und dynamischer Qt-Bindung (LGPL-3.0).
+9. Version Freeze Discipline (INV-LOCAL-09): Keine Versionserhöhung bei Pfad A/B (T-20260920-167562623).
+10. Statutory Disclaimer & SLA (INV-LOCAL-10): § 521 BGB Haftungsprivileg und 48h/5d SLA.
+
+===============================================================================
+2. ZIELGRUPPEN & PERSONAS (PERSONA-01 BIS PERSONA-03)
+===============================================================================
+
+[PERSONA-01] Datenschutzbewusste Forscher & Wissensarbeiter
+- Problem: Müssen vertrauliche Forschungsarbeiten, Notizen und Vorabmanuskripte
+  analysieren, dürfen diese jedoch nicht auf fremde Server hochladen.
+- Lösung: Lokales RAG mit ChromaDB und lokaler Ollama-Inferenz im PySide6 GUI.
+
+[PERSONA-02] Analysten & Berater für Rechts- und Finanzdokumente
+- Problem: Heterogene Dokumentensätze (Verträge als PDF, Word-Berichte, Excel-Bilanzen,
+  Outlook-Mails) müssen selektiv abgefragt und in Berichte synthetisiert werden.
+- Lösung: Drag & Drop Dokumentenverwaltung, Selektivfilter und Multi-Format-Export
+  (Markdown, PDF, DOCX, HTML, TXT).
+
+[PERSONA-03] Mobile Wissensarbeiter mit Multi-Device-Bedarf
+- Problem: Möchten Analyseergebnisse und Workspace-Notizen auch unterwegs auf
+  Smartphone oder Tablet (Android/iOS) durchsehen, ohne Cloud-Synchronisation.
+- Lösung: Export als JSON-Workspace und Offline-Review über den Web/PWA-Companion.
+
+===============================================================================
+3. DISCOVERABILITY & KEYWORDS
+===============================================================================
+
+- local NotebookLM alternative
+- private document analysis and chat
+- offline-first PySide6 RAG application
+- local ChromaDB document synthesis
+- privacy-preserving PDF and docx analysis
+- Ollama local document research tool
+- multi-format AI report generator
+- notespacellm pwa companion
+
+===============================================================================
+4. AUDIT & PFAD-A-HYGIENE HISTORIE
+===============================================================================
+
+- 2026-09-22 (Pfad A — Hygiene, PEP 621, CI-Härtung & Vertragstest-Audit):
+  * Kanonische Wurzel-Attribution NOTICE im Repo-Root erstellt.
+  * Level 1 SBOM THIRD_PARTY_LICENSES.md mit Invarianten-Matrix erstellt.
+  * PEP 621 pyproject.toml mit license-files, project.urls, classifiers, ruff und basetemp gehärtet.
+  * Pytest-Konfiguration mit isoliertem tempdir (.pytest_temp) harmonisiert.
+  * Multi-Host Sync-, Lock- und Cache-Guards in .gitignore integriert.
+  * CI-Workflows (.github/workflows/tests.yml, stale.yml, welcome.yml) mit Concurrency, Timeouts und Web Companion Tests gehärtet.
+  * Gesetzlichen Haftungsausschluss (§ 521 BGB) und 48h Security SLA in SECURITY.md, README.md und README_de.md verankert.
+  * Vertragstest-Suite tests/test_metadata.py implementiert (100% grün).

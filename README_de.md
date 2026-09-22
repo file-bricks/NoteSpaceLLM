@@ -6,8 +6,10 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![Plattform: Windows](https://img.shields.io/badge/Plattform-Windows-lightgrey.svg)]()
 [![Offline-first](https://img.shields.io/badge/offline--first-ja-green.svg)]()
-[![Pytest](https://img.shields.io/badge/Pytest-82%20bestanden-brightgreen.svg)]()
+[![Pytest](https://img.shields.io/badge/Pytest-103%20bestanden-brightgreen.svg)]()
 [![Web Companion Tests](https://img.shields.io/badge/Web%20Companion-58%20bestanden-brightgreen.svg)]()
+[![Notice: Invarianten](https://img.shields.io/badge/Notice-INV--LOCAL--01..10-blue.svg)](NOTICE)
+[![SBOM: Level 1](https://img.shields.io/badge/SBOM-Level%201-blue.svg)](THIRD_PARTY_LICENSES.md)
 [![Ökosystem: file-bricks](https://img.shields.io/badge/%C3%96kosystem-file--bricks-blue.svg)](https://github.com/file-bricks)
 [![Dachorganisation: open-bricks](https://img.shields.io/badge/Dachorganisation-open--bricks-blue.svg)](https://github.com/open-bricks)
 [![LLM Kontext: llms.txt](https://img.shields.io/badge/LLM%20Kontext-llms.txt-blue.svg)](llms.txt)
@@ -137,3 +139,11 @@ NoteSpaceLLM kann mit entfernten Ollama-Instanzen verbunden werden (z. B. via [e
 - **Lizenz**: AGPL-3.0
 - **Verzeichnis**: Teil des `file-bricks` Ökosystems
 - **Sicherheit & Datenschutz**: Local-First Architecture — Dokumente verbleiben auf dem lokalen System.
+
+---
+
+## Haftung & Gesetzlicher Haftungsausschluss (§ 521 BGB)
+
+Dieses Projekt ist eine **unentgeltliche Open-Source-Schenkung** im Sinne der §§ 516 ff. BGB. Die Haftung des Urhebers ist gemäß **§ 521 BGB** auf **Vorsatz und grobe Fahrlässigkeit** beschränkt. Ergänzend gelten die Haftungsausschlüsse der GNU Affero General Public License v3.0, insbesondere §§ 15–16.
+
+Nutzung auf eigenes Risiko. Keine Wartungszusage, keine Verfügbarkeitsgarantie, keine Gewähr für Fehlerfreiheit oder Eignung für einen bestimmten Zweck.

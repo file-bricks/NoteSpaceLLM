@@ -6,12 +6,17 @@ on:
   pull_request:
     branches: [master, main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   compile:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       QT_QPA_PLATFORM: offscreen
     strategy:
@@ -20,8 +25,8 @@ jobs:
         python-version: ['3.10', '3.11', '3.12']
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -38,10 +43,11 @@ jobs:
 
   macos-source-smoke:
     runs-on: macos-latest
+    timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -60,12 +66,13 @@ jobs:
 
   linux-source-smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       QT_QPA_PLATFORM: offscreen
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -81,3 +88,18 @@ jobs:
 
       - name: Run Linux desktop source smoke
         run: python tests/linux_platform_smoke.py
+
+  web-companion-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Web Companion tests
+        run: |
+          cd web_companion
+          npm test
