@@ -53,12 +53,19 @@ class TranslationSystem:
             re.compile(r'text\s*=\s*"([^"]+)"'),
         ]
 
+        # Nur eindeutig deutsche Wörter -- englisch identische Begriffe wie
+        # "ok", "start", "stop", "pause", "filter", "export", "import" würden
+        # englische UI-Texte fälschlich als deutsch einstufen.
         self.german_hints = [
             "datei", "bearbeiten", "ansicht", "hilfe", "öffnen", "speichern",
-            "schließen", "einstellungen", "abbrechen", "ok", "ja", "nein",
-            "start", "stop", "pause", "fortsetzen", "laden", "aktualisieren",
-            "filter", "fehler", "export", "import", "optionen", "anzeigen",
+            "schließen", "einstellungen", "abbrechen", "ja", "nein",
+            "fortsetzen", "laden", "aktualisieren",
+            "fehler", "optionen", "anzeigen",
         ]
+        # Ganzwort-Abgleich: "ja" darf nicht in "Jakarta", "laden" nicht in "Paladin" greifen
+        self._german_hint_re = re.compile(
+            r"\b(?:" + "|".join(re.escape(h) for h in self.german_hints) + r")\b"
+        )
 
         self.translations = {}
         self._load_translations()
@@ -100,7 +107,12 @@ class TranslationSystem:
                 if lang != 'de':
                     entry[lang] = ""
             self.translations[key] = entry
-            self._save_translations()
+            try:
+                self._save_translations()
+            except OSError:
+                # z.B. schreibgeschütztes Installationsverzeichnis -- Übersetzen
+                # darf deshalb nie fehlschlagen
+                pass
 
         return key
 
@@ -174,8 +186,7 @@ class TranslationSystem:
         # Echte deutsche Sonderzeichen oder klare deutsche Schlüsselwörter.
         if any(ch in text for ch in "\u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df"):
             return True
-        text_lower = text.lower()
-        return any(hint in text_lower for hint in self.german_hints)
+        return bool(self._german_hint_re.search(text.lower()))
 
     def get_missing_translations(self, lang: str = None) -> Dict[str, List[str]]:
         """Gibt fehlende Übersetzungen zurück. Ohne Argument: alle Sprachen."""

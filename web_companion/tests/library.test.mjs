@@ -209,3 +209,30 @@ test("app.js speichert komplette Workspace-Payloads nicht in localStorage", () =
     "Workspace-JSON darf wegen Dokumentinhalten und Berichtstext nicht persistent in localStorage landen"
   );
 });
+
+test("normalizeWorkspacePayload übernimmt die optionale Projekt-ID", () => {
+  const withId = normalizeWorkspacePayload({
+    schema_version: "notespacellm-workspace-v1",
+    workspace: { id: "proj-123", title: "Gleicher Titel" }
+  });
+  const withoutId = normalizeWorkspacePayload({
+    schema_version: "notespacellm-workspace-v1",
+    workspace: { title: "Gleicher Titel" }
+  });
+
+  assert.equal(withId.workspace.id, "proj-123");
+  assert.equal(withoutId.workspace.id, "");
+});
+
+test("app.js speichert Review-Notizen pro Projekt-ID (Titel nur als Legacy-Fallback)", () => {
+  assert.match(
+    appSource,
+    /\$\{STORAGE_PREFIX\}id:\$\{id\}/,
+    "Notizen müssen bei vorhandener Projekt-ID unter einem ID-Schlüssel liegen"
+  );
+  assert.match(
+    appSource,
+    /payload\?\.workspace\?\.id/,
+    "workspaceStorageKey muss workspace.id auswerten"
+  );
+});

@@ -47,6 +47,7 @@ Review-Notizen als Markdown exportiert.
     "exported_at": "2026-05-26T00:00:00Z"
   },
   "workspace": {
+    "id": "8f0c6a2e-…",
     "title": "Projektname",
     "question": "Zentrale Fragestellung",
     "workflow_type": "analysis",

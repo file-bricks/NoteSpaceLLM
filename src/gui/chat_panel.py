@@ -13,7 +13,8 @@ Features:
 """
 
 from datetime import datetime
-from typing import List, Optional, Callable, TYPE_CHECKING
+from pathlib import Path
+from typing import Dict, List, Optional, Callable, TYPE_CHECKING
 from dataclasses import dataclass, field
 import logging
 
@@ -30,6 +31,7 @@ try:
     )
     from PySide6.QtCore import Qt, Signal, QThread, QTimer
     from PySide6.QtGui import QTextCursor, QFont
+    from .worker_utils import retain_until_finished, stop_workers
     PYSIDE_AVAILABLE = True
 except ImportError:
     PYSIDE_AVAILABLE = False
@@ -122,8 +124,10 @@ class MessageWidget(QFrame if PYSIDE_AVAILABLE else object):
 
         layout.addLayout(header)
 
-        # Content
-        self.content_label = QLabel(self.message.content)
+        # Content (PlainText: LLM-/Dokumenttext darf kein Rich-Text/HTML rendern)
+        self.content_label = QLabel()
+        self.content_label.setTextFormat(Qt.TextFormat.PlainText)
+        self.content_label.setText(self.message.content)
         self.content_label.setWordWrap(True)
         self.content_label.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse |
@@ -133,19 +137,27 @@ class MessageWidget(QFrame if PYSIDE_AVAILABLE else object):
 
         # Document references
         if self.message.document_refs:
-            refs_label = QLabel(f"Dokumente: {', '.join(self.message.document_refs)}")
+            refs_label = QLabel()
+            refs_label.setTextFormat(Qt.TextFormat.PlainText)
+            refs_label.setText(f"Dokumente: {', '.join(self.message.document_refs)}")
             refs_label.setStyleSheet("color: #666; font-size: 10px; font-style: italic;")
             layout.addWidget(refs_label)
 
         # RAG Sources
         if self.message.sources:
             sources_text = "Quellen: "
-            source_names = list(set(s.get('source', 'Unbekannt').split('/')[-1] for s in self.message.sources[:3]))
+            # Reihenfolge stabil halten, nur Dateinamen anzeigen (auch bei Windows-Pfaden)
+            source_names = list(dict.fromkeys(
+                Path(s.get('source') or 'Unbekannt').name or 'Unbekannt'
+                for s in self.message.sources[:3]
+            ))
             sources_text += ", ".join(source_names)
             if self.message.confidence > 0:
                 sources_text += f" (Konfidenz: {self.message.confidence:.0%})"
 
-            sources_label = QLabel(sources_text)
+            sources_label = QLabel()
+            sources_label.setTextFormat(Qt.TextFormat.PlainText)
+            sources_label.setText(sources_text)
             sources_label.setStyleSheet("color: #27ae60; font-size: 10px; font-style: italic;")
             sources_label.setWordWrap(True)
             layout.addWidget(sources_label)
@@ -253,6 +265,8 @@ class ChatPanel(QWidget if PYSIDE_AVAILABLE else object):
         self._llm_client = None
         self._document_context = ""
         self._current_worker: Optional[LLMWorker] = None
+        # Hält Worker bis zum Thread-Ende (verhindert "QThread: Destroyed while running")
+        self._workers: Dict[int, QThread] = {}
         self._streaming_widget: Optional[MessageWidget] = None
 
         # RAG Integration
@@ -382,15 +396,20 @@ class ChatPanel(QWidget if PYSIDE_AVAILABLE else object):
         """Set the LLM client for chat."""
         self._llm_client = client
 
-    def set_rag_engine(self, rag_engine: 'RAGEngine'):
-        """Set the RAG engine for semantic search."""
+    def set_rag_engine(self, rag_engine: Optional['RAGEngine']):
+        """Set (or clear with None) the RAG engine for semantic search."""
         self._rag_engine = rag_engine
         self._update_rag_status()
-        logger.info("RAG Engine im Chat-Panel verbunden")
+        self._update_status()
+        if rag_engine is None:
+            logger.info("RAG Engine im Chat-Panel getrennt")
+        else:
+            logger.info("RAG Engine im Chat-Panel verbunden")
 
-    def set_document_manager(self, doc_manager: 'DocumentManager'):
+    def set_document_manager(self, doc_manager: Optional['DocumentManager']):
         """Set the document manager for RAG queries."""
         self._document_manager = doc_manager
+        self._update_status()
 
     def set_document_context(self, context: str):
         """Set the document context for the chat."""
@@ -412,6 +431,8 @@ class ChatPanel(QWidget if PYSIDE_AVAILABLE else object):
                 f"ChromaDB: {stats.get('total_chunks', 0)} Chunks indexiert\n"
                 f"Embedding: {stats.get('embedding_model', 'N/A')}"
             )
+        else:
+            self.rag_toggle.setToolTip("RAG-Engine nicht verfügbar")
 
     def _update_status(self):
         """Update status label."""
@@ -481,6 +502,7 @@ SPRACHE: Deutsch.
 
         # Start worker
         self._current_worker = LLMWorker(self._llm_client, prompt, context_prompt)
+        retain_until_finished(self._workers, self._current_worker, self._on_worker_finished)
         self._current_worker.response_chunk.connect(self._on_response_chunk)
         self._current_worker.response_complete.connect(self._on_response_complete)
         self._current_worker.error_occurred.connect(self._on_response_error)
@@ -524,23 +546,23 @@ SPRACHE: Deutsch.
         self.send_btn.setEnabled(False)
         self.status_label.setText("🔍 RAG-Suche...")
 
-        # Get selected document IDs for filtering
+        # Get selected document IDs for filtering. Ohne Dokument-Manager wird NICHT
+        # ungefiltert gesucht -- die Chroma-Collection ist projektübergreifend.
         doc_ids = None
         if self._document_manager:
             selected_docs = self._document_manager.selected_documents
-            indexed_docs = [d for d in selected_docs if d.is_indexed]
-            if indexed_docs:
-                doc_ids = [d.id for d in indexed_docs]
-            else:
-                # Keine indexierten Dokumente
-                self._add_system_message(
-                    "⚠️ Keine indexierten Dokumente gefunden. "
-                    "Bitte Dokumente laden und indexieren (automatisch bei Text-Extraktion)."
-                )
-                self.input_edit.setEnabled(True)
-                self.send_btn.setEnabled(True)
-                self._update_status()
-                return
+            doc_ids = [d.id for d in selected_docs if d.is_indexed]
+
+        if not doc_ids:
+            # Keine indexierten Dokumente
+            self._add_system_message(
+                "⚠️ Keine indexierten Dokumente gefunden. "
+                "Bitte Dokumente laden und indexieren (automatisch bei Text-Extraktion)."
+            )
+            self.input_edit.setEnabled(True)
+            self.send_btn.setEnabled(True)
+            self._update_status()
+            return
 
         # Start RAG worker
         self._current_worker = RAGWorker(
@@ -549,6 +571,7 @@ SPRACHE: Deutsch.
             document_ids=doc_ids,
             k=self._rag_k
         )
+        retain_until_finished(self._workers, self._current_worker, self._on_worker_finished)
         self._current_worker.response_ready.connect(self._on_rag_response)
         self._current_worker.error_occurred.connect(self._on_rag_error)
         self._current_worker.start()
@@ -623,12 +646,28 @@ SPRACHE: Deutsch.
 
         self._add_system_message("Verlauf gelöscht. Stelle eine neue Frage.")
 
+    def _on_worker_finished(self, worker):
+        """Drop the current-worker reference once its thread has really finished."""
+        if self._current_worker is worker:
+            self._current_worker = None
+
     def stop_generation(self):
         """Stop the current generation."""
         if self._current_worker and self._current_worker.isRunning():
-            self._current_worker.stop()
-            self._current_worker.wait()
+            stop_workers([self._current_worker], timeout_ms=10000)
             self._on_response_error("Abgebrochen")
+
+    def shutdown_workers(self, timeout_ms: int = 3000) -> bool:
+        """Stop all chat workers (e.g. on application exit).
+
+        Returns:
+            True, wenn kein Worker mehr läuft
+        """
+        return stop_workers(list(self._workers.values()), timeout_ms)
+
+    def has_running_workers(self) -> bool:
+        """True, wenn noch ein Chat-Worker läuft."""
+        return any(w.isRunning() for w in self._workers.values())
 
     def get_messages(self) -> List[ChatMessage]:
         """Get all messages."""

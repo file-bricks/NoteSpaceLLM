@@ -4,6 +4,7 @@ Kombiniert LangChain, ChromaDB und Ollama Embeddings
 """
 import os
 import logging
+import uuid
 from typing import List, Optional, Dict, Any, Tuple
 from pathlib import Path
 from dataclasses import dataclass
@@ -165,9 +166,6 @@ ANTWORT:"""
             DocumentIndexResult mit Status
         """
         try:
-            # Entferne vorhandene Chunks für dieses Dokument
-            self._remove_document_chunks(document_id)
-
             # Splitte Text in Chunks
             chunks = self.splitter.split_text(
                 text=content,
@@ -176,6 +174,8 @@ ANTWORT:"""
             )
 
             if not chunks:
+                # Leeres Dokument: alte Chunks sind veraltet
+                self._remove_document_chunks(document_id)
                 return DocumentIndexResult(
                     document_id=document_id,
                     chunks_created=0,
@@ -207,8 +207,22 @@ ANTWORT:"""
                     metadata=doc_metadata
                 ))
 
-            # Füge zu ChromaDB hinzu
-            self.vectorstore.add_documents(lc_documents)
+            # Erst einbetten (Netzwerk, kann fehlschlagen), DANN alte Chunks
+            # ersetzen -- schlägt das Embedding fehl, bleibt der alte Index intakt.
+            texts = [d.page_content for d in lc_documents]
+            vectors = self.embeddings_manager.embeddings.embed_documents(texts)
+            if len(vectors) != len(lc_documents):
+                raise RuntimeError(
+                    f"Embedding lieferte {len(vectors)} Vektoren für {len(lc_documents)} Chunks"
+                )
+
+            self._remove_document_chunks(document_id)
+            self.vectorstore._collection.add(
+                ids=[str(uuid.uuid4()) for _ in lc_documents],
+                embeddings=[list(v) for v in vectors],
+                metadatas=[d.metadata for d in lc_documents],
+                documents=texts,
+            )
 
             logger.info(f"Dokument indexiert: {document_id} ({len(chunks)} Chunks)")
 
@@ -290,18 +304,43 @@ ANTWORT:"""
         if document_ids:
             filter_dict = {"document_id": {"$in": document_ids}}
 
-        # Führe Suche durch
-        results = self.vectorstore.similarity_search_with_score(
-            query=query,
-            k=k,
-            filter=filter_dict
-        )
+        # Führe Suche durch -- Scores sind Relevanzwerte (0..1, höher = besser)
+        results = self._search_with_relevance(query=query, k=k, filter_dict=filter_dict)
 
-        # Filtere nach Score
+        # Filtere nach Relevanz
         if score_threshold > 0:
             results = [(doc, score) for doc, score in results if score >= score_threshold]
 
         return results
+
+    @staticmethod
+    def _distance_to_relevance(distance: float) -> float:
+        """Wandelt eine Distanz (kleiner = besser) in eine Relevanz (0..1, größer = besser)."""
+        distance = max(0.0, float(distance))
+        return 1.0 / (1.0 + distance)
+
+    def _search_with_relevance(
+        self,
+        query: str,
+        k: int,
+        filter_dict: Optional[Dict[str, Any]]
+    ) -> List[Tuple[LangChainDocument, float]]:
+        """Semantische Suche, die Relevanz-Scores statt Distanzen liefert."""
+        store = self.vectorstore
+        relevance_fn = getattr(store, "similarity_search_with_relevance_scores", None)
+        if callable(relevance_fn):
+            try:
+                results = relevance_fn(query, k=k, filter=filter_dict)
+                return [
+                    (doc, min(1.0, max(0.0, float(score))))
+                    for doc, score in results
+                ]
+            except (NotImplementedError, ValueError):
+                pass  # Kein Relevanz-Mapping für diese Distanzfunktion
+
+        # Fallback: Distanz -> Relevanz umrechnen
+        results = store.similarity_search_with_score(query=query, k=k, filter=filter_dict)
+        return [(doc, self._distance_to_relevance(score)) for doc, score in results]
 
     def query(
         self,
@@ -356,7 +395,7 @@ ANTWORT:"""
         prompt_text = self.prompt.format(context=context, question=question)
         response = self.llm.invoke(prompt_text)
 
-        # Berechne durchschnittliche Konfidenz
+        # Berechne durchschnittliche Konfidenz (Relevanz 0..1)
         avg_score = sum(d["score"] for d in source_docs) / len(source_docs) if source_docs else 0
 
         return RetrievalResult(
@@ -423,6 +462,20 @@ ANTWORT:"""
             }
             for doc in results
         ]
+
+    def get_indexed_document_ids(self, document_ids: List[str]) -> set:
+        """Gibt die Teilmenge der Dokument-IDs zurück, für die Chunks im Index existieren."""
+        if not document_ids:
+            return set()
+        result = self.vectorstore._collection.get(
+            where={"document_id": {"$in": list(document_ids)}},
+            include=["metadatas"],
+        )
+        return {
+            (meta or {}).get("document_id")
+            for meta in (result.get("metadatas") or [])
+            if (meta or {}).get("document_id")
+        }
 
     def get_statistics(self) -> Dict[str, Any]:
         """Gibt Statistiken über den Index zurück"""

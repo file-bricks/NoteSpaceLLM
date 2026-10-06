@@ -355,7 +355,7 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
             self,
             "Dateien hinzufügen",
             "",
-            "Alle unterstützten (*.pdf *.docx *.doc *.rtf *.txt *.md *.xlsx *.xls *.pptx *.py *.csv *.json *.xml *.eml *.msg);;Dokumente (*.pdf *.docx *.doc *.rtf *.txt *.md);;Tabellen (*.xlsx *.xls *.csv);;Code (*.py *.js *.java *.cpp *.c *.h);;Alle Dateien (*)"
+            "Alle unterstützten (*.pdf *.docx *.doc *.rtf *.txt *.md *.xlsx *.xls *.pptx *.html *.htm *.py *.csv *.json *.xml *.eml *.msg);;Dokumente (*.pdf *.docx *.doc *.rtf *.txt *.md *.pptx *.html *.htm);;Tabellen (*.xlsx *.xls *.csv);;Code (*.py *.js *.java *.cpp *.c *.h);;Alle Dateien (*)"
         )
 
         if files and self._document_manager:
@@ -369,6 +369,7 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
 
         if folder and self._document_manager:
             self._document_manager.add_directory(Path(folder))
+            self.files_added.emit()  # startet die asynchrone Extraktion
 
     def _on_select_all(self):
         """Select all documents."""

@@ -83,6 +83,12 @@ function applyStaticTranslations() {
 }
 
 function workspaceStorageKey(payload) {
+  // Neue Exporte tragen eine Projekt-ID: Notizen gleichnamiger Projekte bleiben getrennt.
+  // Ältere Exporte ohne ID behalten den bisherigen Titel-Schlüssel (rückwärtskompatibel).
+  const id = payload?.workspace?.id;
+  if (id) {
+    return `${STORAGE_PREFIX}id:${id}`;
+  }
   const title = payload?.workspace?.title || "workspace";
   return `${STORAGE_PREFIX}${title}`;
 }

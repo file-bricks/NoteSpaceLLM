@@ -2,7 +2,7 @@
 
 ## Last-checked: 2026-09-22
 
-> Local NotebookLM alternative for private document analysis, RAG-assisted research, and multi-format report generation. Verified with 161 passing unit tests (103 Python pytest + 58 Web Companion Node.js tests).
+> Local NotebookLM alternative for private document analysis, RAG-assisted research, and multi-format report generation. Verified with 207 passing unit tests (147 Python pytest + 60 Web Companion Node.js tests).
 
 ## Description
 

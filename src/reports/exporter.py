@@ -8,6 +8,7 @@ Supports: Markdown, PDF, DOCX, HTML, TXT
 """
 
 import html as html_lib
+import json
 import re
 import subprocess
 import tempfile
@@ -109,9 +110,9 @@ class ReportExporter:
             if title or author:
                 header = "---\n"
                 if title:
-                    header += f"title: {title}\n"
+                    header += f"title: {self._yaml_quote(title)}\n"
                 if author:
-                    header += f"author: {author}\n"
+                    header += f"author: {self._yaml_quote(author)}\n"
                 header += f"date: {datetime.now().strftime('%Y-%m-%d')}\n"
                 header += "---\n\n"
 
@@ -127,36 +128,43 @@ class ReportExporter:
         try:
             filepath = self.output_dir / f"{name}.txt"
 
-            # Strip Markdown formatting
-            plain = content
-            plain = re.sub(r'^#+\s+', '', plain, flags=re.MULTILINE)  # Headers
-            plain = re.sub(r'\*\*(.+?)\*\*', r'\1', plain)  # Bold
-            plain = re.sub(r'\*(.+?)\*', r'\1', plain)  # Italic
-            plain = re.sub(r'`(.+?)`', r'\1', plain)  # Code
-            plain = re.sub(r'\[(.+?)\]\(.+?\)', r'\1', plain)  # Links
-            plain = re.sub(r'^\s*[-*]\s+', '- ', plain, flags=re.MULTILINE)  # Lists
-
-            filepath.write_text(plain, encoding="utf-8")
+            filepath.write_text(self.markdown_to_plain_text(content), encoding="utf-8")
 
             return ExportResult(True, filepath, "txt")
 
         except Exception as e:
             return ExportResult(False, format="txt", error=str(e))
 
-    def _export_html(self, content: str, name: str, title: str) -> ExportResult:
-        """Export to HTML."""
-        try:
-            filepath = self.output_dir / f"{name}.html"
+    @staticmethod
+    def _yaml_quote(value: str) -> str:
+        """Quote a scalar for YAML front matter (JSON strings are valid YAML)."""
+        return json.dumps(str(value), ensure_ascii=False)
 
-            # Convert Markdown to HTML
-            html_content = self._markdown_to_html(content)
+    @staticmethod
+    def markdown_to_plain_text(content: str) -> str:
+        """Strip Markdown syntax only -- literal characters like C#, #12 or file_name stay."""
+        plain = content
+        plain = re.sub(r'^[ \t]*(```|~~~)[^\n]*$\n?', '', plain, flags=re.MULTILINE)  # Fences
+        plain = re.sub(r'^[ \t]{0,3}#{1,6}[ \t]+', '', plain, flags=re.MULTILINE)  # Headers
+        plain = re.sub(r'^([ \t]*)[-*+][ \t]+', r'\1- ', plain, flags=re.MULTILINE)  # Lists
+        plain = re.sub(r'\*\*(?=\S)(.+?)(?<=\S)\*\*', r'\1', plain)  # Bold
+        plain = re.sub(r'(?<![\w*])\*(?=\S)(.+?)(?<=\S)\*(?![\w*])', r'\1', plain)  # Italic
+        plain = re.sub(r'`([^`\n]+)`', r'\1', plain)  # Inline code
+        plain = re.sub(r'!?\[([^\]\n]+)\]\([^)\n]+\)', r'\1', plain)  # Links/Bilder
+        return plain
 
-            html = f"""<!DOCTYPE html>
+    @classmethod
+    def render_html_document(cls, content: str, title: str = "") -> str:
+        """Render Markdown content as a complete, escaped HTML document."""
+        html_content = cls.markdown_to_html(content)
+        safe_title = html_lib.escape(title or 'Bericht')
+
+        return f"""<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{title or 'Bericht'}</title>
+    <title>{safe_title}</title>
     <style>
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -207,6 +215,11 @@ class ReportExporter:
 </body>
 </html>"""
 
+    def _export_html(self, content: str, name: str, title: str) -> ExportResult:
+        """Export to HTML."""
+        try:
+            filepath = self.output_dir / f"{name}.html"
+            html = self.render_html_document(content, title)
             filepath.write_text(html, encoding="utf-8")
 
             return ExportResult(True, filepath, "html")
@@ -214,10 +227,31 @@ class ReportExporter:
         except Exception as e:
             return ExportResult(False, format="html", error=str(e))
 
+    # Erlaubte Link-Schemata; Links ohne Schema (relativ, #anker) sind ebenfalls erlaubt.
+    SAFE_LINK_SCHEMES = ("http", "https", "mailto")
+
+    @classmethod
+    def _safe_href(cls, escaped_url: str) -> Optional[str]:
+        """Return the (already escaped) URL if its scheme is safe, else None."""
+        raw = html_lib.unescape(escaped_url)
+        # Browser ignorieren Steuerzeichen/Whitespace im Schema ("java\tscript:")
+        normalized = re.sub(r'[\x00-\x20\x7f]', '', raw)
+        scheme_match = re.match(r'^([a-zA-Z][a-zA-Z0-9+.\-]*):', normalized)
+        if scheme_match and scheme_match.group(1).lower() not in cls.SAFE_LINK_SCHEMES:
+            return None
+        return escaped_url
+
     def _markdown_to_html(self, markdown: str) -> str:
-        """Convert Markdown to HTML."""
+        """Convert Markdown to HTML (kompatibler Instanz-Aufruf)."""
+        return self.markdown_to_html(markdown)
+
+    @classmethod
+    def markdown_to_html(cls, markdown: str) -> str:
+        """Convert Markdown to HTML. Der gesamte Text wird HTML-escaped."""
         code_blocks = []
         inline_codes = []
+        # NUL dient intern als Platzhalter-Begrenzer
+        markdown = markdown.replace("\x00", "")
 
         # 1. Extract fenced code blocks first with HTML escaping
         def _store_code_block(match):
@@ -225,7 +259,7 @@ class ReportExporter:
             escaped_code = html_lib.escape(code_text)
             idx = len(code_blocks)
             code_blocks.append(f'<pre><code>{escaped_code}</code></pre>')
-            return f"__CODE_BLOCK_{idx}__"
+            return f"\x00CODEBLOCK{idx}\x00"
 
         text = re.sub(r'```(\w*)\n?(.*?)```', _store_code_block, markdown, flags=re.DOTALL)
 
@@ -235,9 +269,12 @@ class ReportExporter:
             escaped_code = html_lib.escape(code_text)
             idx = len(inline_codes)
             inline_codes.append(f'<code>{escaped_code}</code>')
-            return f"__INLINE_CODE_{idx}__"
+            return f"\x00INLINECODE{idx}\x00"
 
         text = re.sub(r'`([^`]+)`', _store_inline_code, text)
+
+        # 2b. Restlichen Text escapen -- verhindert HTML-/Script-Injection aus LLM-Ausgaben
+        text = html_lib.escape(text)
 
         # 3. Headers (h1 to h6)
         text = re.sub(r'^###### (.+)$', r'<h6>\1</h6>', text, flags=re.MULTILINE)
@@ -252,8 +289,15 @@ class ReportExporter:
         text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
         text = re.sub(r'\*(.+?)\*', r'<em>\1</em>', text)
 
-        # 5. Links
-        text = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href="\2">\1</a>', text)
+        # 5. Links (nur sichere Schemata)
+        def _render_link(match):
+            label, url = match.group(1), match.group(2)
+            href = cls._safe_href(url)
+            if href is None:
+                return label
+            return f'<a href="{href}">{label}</a>'
+
+        text = re.sub(r'\[(.+?)\]\((.+?)\)', _render_link, text)
 
         # 6. Lists
         lines = text.split('\n')
@@ -292,10 +336,10 @@ class ReportExporter:
 
         # 8. Restore code blocks and inline code
         for idx, cb_html in enumerate(code_blocks):
-            text = text.replace(f"__CODE_BLOCK_{idx}__", cb_html)
+            text = text.replace(f"\x00CODEBLOCK{idx}\x00", cb_html)
 
         for idx, ic_html in enumerate(inline_codes):
-            text = text.replace(f"__INLINE_CODE_{idx}__", ic_html)
+            text = text.replace(f"\x00INLINECODE{idx}\x00", ic_html)
 
         return text
 
@@ -332,22 +376,23 @@ class ReportExporter:
                 # Add metadata
                 header = "---\n"
                 if title:
-                    header += f"title: '{title}'\n"
+                    header += f"title: {self._yaml_quote(title)}\n"
                 if author:
-                    header += f"author: '{author}'\n"
+                    header += f"author: {self._yaml_quote(author)}\n"
                 header += f"date: '{datetime.now().strftime('%d.%m.%Y')}'\n"
                 header += "---\n\n"
 
                 f.write(header + content)
                 md_path = f.name
 
-            result = subprocess.run(
-                ['pandoc', md_path, '-o', str(filepath), '--pdf-engine=xelatex'],
-                capture_output=True,
-                timeout=60
-            )
-
-            Path(md_path).unlink(missing_ok=True)
+            try:
+                result = subprocess.run(
+                    ['pandoc', md_path, '-o', str(filepath), '--pdf-engine=xelatex'],
+                    capture_output=True,
+                    timeout=60
+                )
+            finally:
+                Path(md_path).unlink(missing_ok=True)
             return result.returncode == 0 and filepath.exists()
 
         except Exception:
@@ -363,7 +408,7 @@ class ReportExporter:
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{title or 'Bericht'}</title>
+    <title>{html_lib.escape(title or 'Bericht')}</title>
     <style>
         @page {{ margin: 2cm; }}
         body {{ font-family: sans-serif; line-height: 1.6; }}

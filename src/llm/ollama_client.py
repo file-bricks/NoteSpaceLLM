@@ -8,6 +8,7 @@ Connects to a local Ollama instance for LLM inference.
 """
 
 import json
+import time
 from typing import Iterator, Optional
 import urllib.request
 import urllib.error
@@ -23,6 +24,8 @@ class OllamaClient(LLMClient):
     """
 
     DEFAULT_URL = "http://localhost:11434"
+    # Nach einer fehlgeschlagenen Prüfung frühestens nach so vielen Sekunden erneut prüfen
+    RECHECK_INTERVAL = 5.0
 
     def __init__(self, model: str = "llama3", base_url: str = DEFAULT_URL,
                  api_key: str = ""):
@@ -37,7 +40,9 @@ class OllamaClient(LLMClient):
         super().__init__(model)
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
-        self._check_availability()
+        # Erreichbarkeit wird lazy beim ersten Aufruf geprüft (im Worker-Thread,
+        # nicht im GUI-Thread) und nach Fehlschlägen erneut geprüft.
+        self._last_check: Optional[float] = None
 
     def _auth_headers(self) -> dict:
         """Build request headers including auth if configured."""
@@ -55,10 +60,32 @@ class OllamaClient(LLMClient):
                 self._is_available = response.status == 200
         except Exception:
             self._is_available = False
+        self._last_check = time.monotonic()
+
+    def _ensure_available(self) -> bool:
+        """Prüft die Erreichbarkeit erneut, solange der Server als nicht erreichbar gilt.
+
+        Ein einmal fehlgeschlagener Check wird NICHT dauerhaft gecacht: wird
+        Ollama nach dem App-Start gestartet, funktioniert der nächste Aufruf.
+        """
+        if self._is_available:
+            return True
+        last = getattr(self, "_last_check", None)
+        if last is None or time.monotonic() - last >= self.RECHECK_INTERVAL:
+            self._check_availability()
+        return self._is_available
+
+    def _mark_unavailable_on(self, exc: Exception) -> None:
+        """Verbindungsfehler bei echten Requests als 'nicht erreichbar' merken."""
+        if isinstance(exc, (urllib.error.URLError, ConnectionError, TimeoutError)) and not (
+            isinstance(exc, urllib.error.HTTPError)
+        ):
+            self._is_available = False
+            self._last_check = time.monotonic()
 
     def chat(self, prompt: str, context: str = "") -> str:
         """Send a chat message and get a response."""
-        if not self._is_available:
+        if not self._ensure_available():
             raise ConnectionError("Ollama is not available")
 
         messages = []
@@ -78,13 +105,17 @@ class OllamaClient(LLMClient):
             headers=self._auth_headers()
         )
 
-        with urllib.request.urlopen(req, timeout=300) as response:
-            result = json.loads(response.read().decode("utf-8"))
-            return result.get("message", {}).get("content", "")
+        try:
+            with urllib.request.urlopen(req, timeout=300) as response:
+                result = json.loads(response.read().decode("utf-8"))
+                return result.get("message", {}).get("content", "")
+        except Exception as e:
+            self._mark_unavailable_on(e)
+            raise
 
     def stream_chat(self, prompt: str, context: str = "") -> Iterator[str]:
         """Stream a chat response."""
-        if not self._is_available:
+        if not self._ensure_available():
             raise ConnectionError("Ollama is not available")
 
         messages = []
@@ -104,20 +135,24 @@ class OllamaClient(LLMClient):
             headers=self._auth_headers()
         )
 
-        with urllib.request.urlopen(req, timeout=300) as response:
-            for line in response:
-                if line:
-                    try:
-                        chunk = json.loads(line.decode("utf-8"))
-                        content = chunk.get("message", {}).get("content", "")
-                        if content:
-                            yield content
-                    except json.JSONDecodeError:
-                        pass
+        try:
+            with urllib.request.urlopen(req, timeout=300) as response:
+                for line in response:
+                    if line:
+                        try:
+                            chunk = json.loads(line.decode("utf-8"))
+                            content = chunk.get("message", {}).get("content", "")
+                            if content:
+                                yield content
+                        except json.JSONDecodeError:
+                            pass
+        except Exception as e:
+            self._mark_unavailable_on(e)
+            raise
 
     def get_models(self) -> list:
         """Get available models from Ollama."""
-        if not self._is_available:
+        if not self._ensure_available():
             return []
 
         try:
@@ -167,7 +202,7 @@ class OllamaClient(LLMClient):
         Returns:
             Generated text
         """
-        if not self._is_available:
+        if not self._ensure_available():
             raise ConnectionError("Ollama is not available")
 
         data = {
@@ -185,6 +220,10 @@ class OllamaClient(LLMClient):
             headers=self._auth_headers()
         )
 
-        with urllib.request.urlopen(req, timeout=300) as response:
-            result = json.loads(response.read().decode("utf-8"))
-            return result.get("response", "")
+        try:
+            with urllib.request.urlopen(req, timeout=300) as response:
+                result = json.loads(response.read().decode("utf-8"))
+                return result.get("response", "")
+        except Exception as e:
+            self._mark_unavailable_on(e)
+            raise

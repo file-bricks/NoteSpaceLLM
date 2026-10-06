@@ -29,18 +29,55 @@ class ExtractionResult:
     method: str = ""  # e.g., "native", "ocr", "conversion"
 
 
+# Dateiendungen, die als Klartext gelesen werden (Encoding-Erkennung inklusive).
+PLAIN_TEXT_EXTENSIONS = frozenset({
+    ".txt", ".md", ".rst", ".log", ".py", ".js", ".ts",
+    ".java", ".cpp", ".c", ".h", ".json", ".xml", ".yaml",
+    ".yml", ".csv", ".css",
+})
+
+# HTML wird gelesen und anschließend in Klartext umgewandelt.
+HTML_EXTENSIONS = frozenset({".html", ".htm"})
+
+# Einzige Quelle der Wahrheit für unterstützte Dateitypen (auch DocumentManager nutzt sie).
+SUPPORTED_EXTENSIONS = frozenset(
+    PLAIN_TEXT_EXTENSIONS
+    | HTML_EXTENSIONS
+    | {".pdf", ".docx", ".doc", ".rtf", ".pptx", ".xlsx", ".xls", ".eml", ".msg"}
+)
+
+
+def decode_text_bytes(raw: bytes) -> str:
+    """Decode text bytes: BOM detection (UTF-8/UTF-16), then utf-8, cp1252, latin-1."""
+    if raw.startswith(b"\xef\xbb\xbf"):
+        return raw[3:].decode("utf-8", errors="replace")
+    if raw.startswith(b"\xff\xfe"):
+        return raw[2:].decode("utf-16-le", errors="replace")
+    if raw.startswith(b"\xfe\xff"):
+        return raw[2:].decode("utf-16-be", errors="replace")
+    for encoding in ("utf-8", "cp1252"):
+        try:
+            return raw.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return raw.decode("latin-1")
+
+
 class TextExtractor:
     """
     Extract text content from various document formats.
 
     Supports:
     - Plain text: .txt, .md, .rst, .log
-    - Documents: .pdf, .docx, .doc, .rtf
+    - Documents: .pdf, .docx, .doc, .rtf, .pptx
+    - Web: .html, .htm
     - Data: .json, .xml, .yaml, .csv
     - Spreadsheets: .xlsx, .xls
     - Email: .eml, .msg
     - Code: .py, .js, .java, etc.
     """
+
+    SUPPORTED_EXTENSIONS = SUPPORTED_EXTENSIONS
 
     def __init__(self, enable_ocr: bool = True):
         """
@@ -117,10 +154,12 @@ class TextExtractor:
 
         try:
             # Plain text files
-            if suffix in {".txt", ".md", ".rst", ".log", ".py", ".js", ".ts",
-                         ".java", ".cpp", ".c", ".h", ".json", ".xml", ".yaml",
-                         ".yml", ".csv", ".html", ".css"}:
+            if suffix in PLAIN_TEXT_EXTENSIONS:
                 return self._extract_text_file(filepath)
+
+            # HTML -> Klartext
+            elif suffix in HTML_EXTENSIONS:
+                return self._extract_html_file(filepath)
 
             # PDF
             elif suffix == ".pdf":
@@ -164,13 +203,25 @@ class TextExtractor:
     def _extract_text_file(self, filepath: Path) -> ExtractionResult:
         """Extract text from plain text files."""
         try:
-            text = filepath.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
-            try:
-                text = filepath.read_text(encoding="latin-1")
-            except Exception as e:
-                return ExtractionResult(False, "", error=f"Encoding error: {e}")
+            text = decode_text_bytes(filepath.read_bytes())
+        except Exception as e:
+            return ExtractionResult(False, "", error=f"Encoding error: {e}")
 
+        return ExtractionResult(
+            success=True,
+            text=text,
+            word_count=len(text.split()),
+            method="native"
+        )
+
+    def _extract_html_file(self, filepath: Path) -> ExtractionResult:
+        """Extract readable text from HTML files (tags, scripts and styles stripped)."""
+        try:
+            raw_html = decode_text_bytes(filepath.read_bytes())
+        except Exception as e:
+            return ExtractionResult(False, "", error=f"Encoding error: {e}")
+
+        text = self._html_to_text(raw_html)
         return ExtractionResult(
             success=True,
             text=text,
@@ -191,15 +242,13 @@ class TextExtractor:
         try:
             doc = fitz.open(str(filepath))
             text_parts = []
-            pages_with_text = 0
-
-            for page in doc:
-                page_text = page.get_text().strip()
-                if page_text:
-                    text_parts.append(page_text)
-                    pages_with_text += 1
-
-            doc.close()
+            try:
+                for page in doc:
+                    page_text = page.get_text().strip()
+                    if page_text:
+                        text_parts.append(page_text)
+            finally:
+                doc.close()
 
             # If no text found, try OCR
             if not text_parts and self.enable_ocr:
@@ -236,20 +285,21 @@ class TextExtractor:
             doc = fitz.open(str(filepath))
             text_parts = []
 
-            for page_num, page in enumerate(doc):
-                # Render page to image
-                mat = fitz.Matrix(2, 2)  # 2x zoom for better OCR
-                pix = page.get_pixmap(matrix=mat)
-                img_data = pix.tobytes("png")
+            try:
+                for page_num, page in enumerate(doc):
+                    # Render page to image
+                    mat = fitz.Matrix(2, 2)  # 2x zoom for better OCR
+                    pix = page.get_pixmap(matrix=mat)
+                    img_data = pix.tobytes("png")
 
-                # OCR the image
-                image = Image.open(io.BytesIO(img_data))
-                page_text = pytesseract.image_to_string(image, lang="deu+eng")
+                    # OCR the image
+                    with Image.open(io.BytesIO(img_data)) as image:
+                        page_text = pytesseract.image_to_string(image, lang="deu+eng")
 
-                if page_text.strip():
-                    text_parts.append(f"--- Page {page_num + 1} ---\n{page_text}")
-
-            doc.close()
+                    if page_text.strip():
+                        text_parts.append(f"--- Page {page_num + 1} ---\n{page_text}")
+            finally:
+                doc.close()
 
             if not text_parts:
                 return ExtractionResult(False, "", error="OCR found no text")
@@ -422,16 +472,23 @@ class TextExtractor:
     @staticmethod
     def _parse_rtf_bytes(raw_bytes: bytes) -> str:
         """Extract plain text from RTF byte stream, handling codepages, hex escapes and unicode."""
+        import codecs
+
         text = raw_bytes.decode('latin-1', errors='replace')
 
         cp_match = re.search(r'\\ansicpg(\d+)', text)
         encoding = f'cp{cp_match.group(1)}' if cp_match else 'cp1252'
+        try:
+            codecs.lookup(encoding)
+        except LookupError:
+            encoding = 'cp1252'
 
         skip_destinations = {
             'fonttbl', 'colortbl', 'stylesheet', 'info', 'generator',
             'pict', 'header', 'footer', 'headerl', 'headerr', 'headerf',
             'footerl', 'footerr', 'footerf', 'object', 'template', 'themedata'
         }
+        control_word_re = re.compile(r'([a-zA-Z]+)(-?\d+)? ?')
 
         stack = []
         ignorable = False
@@ -439,15 +496,55 @@ class TextExtractor:
         uc_skip = 1
 
         out = []
+        # Aufeinanderfolgende \'hh-Bytes werden gesammelt und gemeinsam dekodiert,
+        # damit Mehrbyte-Codepages (z.B. cp932/cp936) korrekt funktionieren.
+        pending_bytes = bytearray()
+
+        def flush_bytes():
+            if pending_bytes:
+                out.append(bytes(pending_bytes).decode(encoding, errors='replace'))
+                pending_bytes.clear()
+
+        def emit(value: str):
+            flush_bytes()
+            out.append(value)
+
+        def skip_fallback_units(pos: int, count: int) -> int:
+            """Skip `count` RTF units after \\uN (a char, an \\'hh escape or a control word)."""
+            for _ in range(count):
+                if pos >= n:
+                    break
+                ch0 = text[pos]
+                if ch0 in ('{', '}'):
+                    break  # Gruppengrenzen nie überspringen
+                if ch0 in ('\r', '\n'):
+                    # Zeilenumbrüche sind in RTF bedeutungslos und zählen nicht
+                    pos += 1
+                    continue
+                if ch0 == '\\' and pos + 1 < n:
+                    nxt = text[pos + 1]
+                    if nxt == "'":
+                        pos += 4
+                    elif nxt.isalpha():
+                        m = control_word_re.match(text, pos + 1)
+                        pos = m.end() if m else pos + 2
+                    else:
+                        pos += 2
+                else:
+                    pos += 1
+            return pos
+
         i = 0
         n = len(text)
 
         while i < n:
             c = text[i]
             if c == '{':
+                flush_bytes()
                 stack.append((skip_depth, uc_skip))
                 i += 1
             elif c == '}':
+                flush_bytes()
                 if stack:
                     skip_depth, uc_skip = stack.pop()
                 i += 1
@@ -458,15 +555,15 @@ class TextExtractor:
                 ch = text[i]
                 if ch in ('\\', '{', '}'):
                     if skip_depth == 0:
-                        out.append(ch)
+                        emit(ch)
                     i += 1
                 elif ch == '~':
                     if skip_depth == 0:
-                        out.append(' ')
+                        emit(' ')
                     i += 1
                 elif ch == '_':
                     if skip_depth == 0:
-                        out.append('-')
+                        emit('-')
                     i += 1
                 elif ch == '*':
                     i += 1
@@ -476,24 +573,22 @@ class TextExtractor:
                     i += 3
                     if skip_depth == 0 and len(hex_str) == 2:
                         try:
-                            byte_val = bytes.fromhex(hex_str)
-                            out.append(byte_val.decode(encoding, errors='replace'))
-                        except Exception:
+                            pending_bytes.extend(bytes.fromhex(hex_str))
+                        except ValueError:
                             pass
                 else:
-                    match = re.match(r'([a-zA-Z]+)(-?\d+)? ?', text[i:])
+                    match = control_word_re.match(text, i)
                     if match:
                         word = match.group(1)
                         param = match.group(2)
-                        full_len = match.end()
-                        i += full_len
+                        i = match.end()
 
                         if word in ('par', 'line', 'row', 'sect'):
                             if skip_depth == 0:
-                                out.append('\n')
+                                emit('\n')
                         elif word in ('tab', 'cell'):
                             if skip_depth == 0:
-                                out.append('\t')
+                                emit('\t')
                         elif word == 'uc':
                             if param:
                                 uc_skip = max(0, int(param))
@@ -504,10 +599,10 @@ class TextExtractor:
                                     code_point += 65536
                                 if skip_depth == 0:
                                     try:
-                                        out.append(chr(code_point))
-                                    except Exception:
+                                        emit(chr(code_point))
+                                    except (ValueError, OverflowError):
                                         pass
-                                i += uc_skip
+                                i = skip_fallback_units(i, uc_skip)
                         elif word in skip_destinations or ignorable:
                             skip_depth += 1
                         ignorable = False
@@ -515,9 +610,10 @@ class TextExtractor:
                         i += 1
             else:
                 if skip_depth == 0 and c not in ('\r', '\n'):
-                    out.append(c)
+                    emit(c)
                 i += 1
 
+        flush_bytes()
         res = ''.join(out)
         lines = [re.sub(r'[ \t]+', ' ', line).strip() for line in res.split('\n')]
         return '\n'.join(line for line in lines if line)
@@ -549,12 +645,14 @@ class TextExtractor:
             parts = []
             with ZipFile(str(filepath)) as z:
                 # pptx slides are in ppt/slides/slide*.xml
-                slide_names = sorted([
-                    n for n in z.namelist()
-                    if n.startswith("ppt/slides/slide") and n.endswith(".xml")
-                ])
-
-                ns = {"a": "http://schemas.openxmlformats.org/drawingml/2006/main"}
+                # Numerisch sortieren: slide2.xml vor slide10.xml
+                slide_names = sorted(
+                    (
+                        n for n in z.namelist()
+                        if re.fullmatch(r"ppt/slides/slide\d+\.xml", n)
+                    ),
+                    key=lambda n: int(re.search(r"(\d+)\.xml$", n).group(1)),
+                )
 
                 for i, slide_name in enumerate(slide_names, 1):
                     with z.open(slide_name) as f:
@@ -591,16 +689,18 @@ class TextExtractor:
             wb = openpyxl.load_workbook(str(filepath), data_only=True)
             parts = []
 
-            for sheet_name in wb.sheetnames:
-                sheet = wb[sheet_name]
-                parts.append(f"[Sheet: {sheet_name}]")
+            try:
+                for sheet_name in wb.sheetnames:
+                    sheet = wb[sheet_name]
+                    parts.append(f"[Sheet: {sheet_name}]")
 
-                for row in sheet.iter_rows(values_only=True):
-                    cells = [str(c) if c else "" for c in row]
-                    if any(cells):
-                        parts.append(" | ".join(cells))
-
-            wb.close()
+                    for row in sheet.iter_rows(values_only=True):
+                        # 0 und False sind gültige Zellwerte -- nur None ist leer
+                        cells = ["" if c is None else str(c) for c in row]
+                        if any(cells):
+                            parts.append(" | ".join(cells))
+            finally:
+                wb.close()
 
             text = "\n".join(parts)
             return ExtractionResult(
@@ -694,30 +794,31 @@ class TextExtractor:
             msg = extract_msg.Message(str(filepath))
             parts = []
 
-            if msg.date:
-                parts.append(f"Date: {msg.date}")
-            if msg.sender:
-                parts.append(f"From: {msg.sender}")
-            if msg.to:
-                parts.append(f"To: {msg.to}")
-            if msg.subject:
-                parts.append(f"Subject: {msg.subject}")
+            try:
+                if msg.date:
+                    parts.append(f"Date: {msg.date}")
+                if msg.sender:
+                    parts.append(f"From: {msg.sender}")
+                if msg.to:
+                    parts.append(f"To: {msg.to}")
+                if msg.subject:
+                    parts.append(f"Subject: {msg.subject}")
 
-            parts.append("")
+                parts.append("")
 
-            body_text = ""
-            if msg.body:
-                body_text = msg.body
-            elif getattr(msg, 'htmlBody', None):
-                html_raw = msg.htmlBody
-                if isinstance(html_raw, bytes):
-                    html_raw = html_raw.decode('utf-8', errors='replace')
-                body_text = self._html_to_text(str(html_raw))
+                body_text = ""
+                if msg.body:
+                    body_text = msg.body
+                elif getattr(msg, 'htmlBody', None):
+                    html_raw = msg.htmlBody
+                    if isinstance(html_raw, bytes):
+                        html_raw = html_raw.decode('utf-8', errors='replace')
+                    body_text = self._html_to_text(str(html_raw))
 
-            if body_text:
-                parts.append(body_text)
-
-            msg.close()
+                if body_text:
+                    parts.append(body_text)
+            finally:
+                msg.close()
 
             text = "\n".join(parts)
             return ExtractionResult(
