@@ -34,6 +34,8 @@ except ImportError:
 if PYSIDE_AVAILABLE:
     from PySide6.QtCore import QThread, Signal
 
+    from .worker_utils import retain_until_finished, stop_workers
+
     class AnalysisWorker(QThread):
         """Worker thread for batch sub-query analysis."""
         query_complete = Signal(str, str, str)  # query_id, response, error
@@ -46,6 +48,8 @@ if PYSIDE_AVAILABLE:
 
         def run(self):
             for query_id, prompt in self._tasks:
+                if self.isInterruptionRequested():
+                    break
                 try:
                     response = self._llm_client.chat(prompt, "")
                     self.query_complete.emit(query_id, response, "")
@@ -67,6 +71,8 @@ if PYSIDE_AVAILABLE:
         def run(self):
             total = len(self._docs)
             for i, (doc_id, doc_path, doc_name) in enumerate(self._docs):
+                if self.isInterruptionRequested():
+                    break
                 self.progress.emit(i, total, doc_name)
                 try:
                     result = self._extractor.extract(doc_path)
@@ -94,6 +100,8 @@ if PYSIDE_AVAILABLE:
             total = len(self._docs)
             indexed = 0
             for i, (doc_id, doc_name) in enumerate(self._docs):
+                if self.isInterruptionRequested():
+                    break
                 self.progress.emit(i, total, doc_name)
                 try:
                     success = self._doc_manager.index_document(doc_id)
@@ -396,6 +404,12 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         self._analysis_worker = None
         self._extraction_worker = None
         self._index_worker = None
+        self._model_load_worker = None
+        # Hält alle QThread-Worker bis zu ihrem finished-Signal am Leben
+        self._workers = {}
+        # Callbacks von _extract_all_text-Aufrufen, die auf einen laufenden Worker warten
+        self._deferred_extraction_callbacks = []
+        self._close_pending = False
 
         # RAG Engine — lazy init nach erstem GUI-Render (verhindert Startup-Freeze
         # bei Remote-Ollama oder langsamer Netzwerkverbindung)
@@ -674,25 +688,46 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
 
     def _create_default_project(self):
         """Create a default project on startup."""
-        self._current_project = self._project_manager.create_project(
+        project = self._project_manager.create_project(
             "Neues Projekt",
             "Was soll analysiert werden?",
             "analysis"
         )
-
-        # Connect managers to panels
-        self.document_panel.set_managers(
-            self._current_project.documents,
-            self._current_project.subqueries
-        )
-
-        # RAG-Engine mit Document Manager verbinden
-        if self._rag_engine:
-            self._current_project.documents.set_rag_engine(self._rag_engine)
-            self.chat_panel.set_rag_engine(self._rag_engine)
-            self.chat_panel.set_document_manager(self._current_project.documents)
-
+        self._activate_project(project)
         self.statusbar.showMessage("Neues Projekt erstellt")
+
+    def _activate_project(self, project, load_main_question: bool = False):
+        """Verbindet ein (neues oder geöffnetes) Projekt mit allen Panels und Diensten."""
+        self._current_project = project
+
+        self.document_panel.set_managers(project.documents, project.subqueries)
+        if load_main_question:
+            self.workflow_panel.set_main_question(project.main_question)
+
+        # RAG-Engine (oder None) und Dokument-Manager immer an alle Konsumenten geben
+        self._connect_rag_engine()
+
+        # LLM-Client mit den Projekt-/App-Einstellungen initialisieren, damit
+        # der Chat sofort funktioniert (OllamaClient prüft Erreichbarkeit lazy)
+        self._init_llm_client()
+
+        self._update_document_context()
+
+    def _connect_rag_engine(self):
+        """Gibt die aktuelle RAG-Engine (auch None) an Dokumente und Chat weiter."""
+        if not hasattr(self, "chat_panel"):
+            return
+        engine = self._rag_engine
+        if self._current_project:
+            documents = self._current_project.documents
+            documents.set_rag_engine(engine)
+            if engine is not None:
+                # is_indexed-Flags mit dem (projektübergreifenden) Index abgleichen
+                documents.sync_index_flags()
+            self.chat_panel.set_document_manager(documents)
+        else:
+            self.chat_panel.set_document_manager(None)
+        self.chat_panel.set_rag_engine(engine)
 
     # Menu actions
     def _new_project(self):
@@ -700,20 +735,25 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         name, ok = QInputDialog.getText(self, "Neues Projekt", "Projektname:")
         if ok and name:
             self._project_manager.close_project()
-            self._current_project = self._project_manager.create_project(name)
-
-            self.document_panel.set_managers(
-                self._current_project.documents,
-                self._current_project.subqueries
-            )
-
-            # RAG-Engine verbinden
-            if self._rag_engine:
-                self._current_project.documents.set_rag_engine(self._rag_engine)
-                self.chat_panel.set_rag_engine(self._rag_engine)
-                self.chat_panel.set_document_manager(self._current_project.documents)
-
+            project = self._project_manager.create_project(name)
+            self._activate_project(project)
             self.statusbar.showMessage(f"Projekt '{name}' erstellt")
+
+    @staticmethod
+    def _project_choice_labels(projects: list) -> dict:
+        """Eindeutige Anzeige-Labels -> Projekt-ID (Namen sind nicht eindeutig)."""
+        name_counts = {}
+        for p in projects:
+            name_counts[p["name"]] = name_counts.get(p["name"], 0) + 1
+
+        labels = {}
+        for p in projects:
+            label = p["name"]
+            if name_counts[p["name"]] > 1:
+                modified = str(p.get("modified_at", ""))[:16].replace("T", " ")
+                label = f"{p['name']} ({modified}, {p['id'][:8]})"
+            labels[label] = p["id"]
+        return labels
 
     def _open_project(self):
         """Open an existing project."""
@@ -722,28 +762,20 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             QMessageBox.information(self, "Projekt öffnen", "Keine Projekte vorhanden.")
             return
 
-        names = [p["name"] for p in projects]
-        name, ok = QInputDialog.getItem(
-            self, "Projekt öffnen", "Projekt wählen:", names, editable=False
+        labels = self._project_choice_labels(projects)
+        label, ok = QInputDialog.getItem(
+            self, "Projekt öffnen", "Projekt wählen:", list(labels.keys()), editable=False
         )
 
-        if ok and name:
-            project = self._project_manager.open_project(name)
+        if ok and label in labels:
+            # Aktuelles Projekt sichern, bevor es ersetzt wird
+            self._project_manager.save_current()
+            project = self._project_manager.open_project(labels[label])
             if project:
-                self._current_project = project
-                self.document_panel.set_managers(
-                    project.documents,
-                    project.subqueries
-                )
-                self.workflow_panel.set_main_question(project.main_question)
-
-                # RAG-Engine verbinden
-                if self._rag_engine:
-                    project.documents.set_rag_engine(self._rag_engine)
-                    self.chat_panel.set_rag_engine(self._rag_engine)
-                    self.chat_panel.set_document_manager(project.documents)
-
-                self.statusbar.showMessage(f"Projekt '{name}' geöffnet")
+                self._activate_project(project, load_main_question=True)
+                self.statusbar.showMessage(f"Projekt '{project.name}' geöffnet")
+            else:
+                self.statusbar.showMessage("Projekt konnte nicht geöffnet werden")
 
     def _save_project(self):
         """Save the current project."""
@@ -761,7 +793,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             self,
             "Dateien hinzufügen",
             "",
-            "Alle unterstützten (*.pdf *.docx *.doc *.rtf *.txt *.md *.xlsx *.xls *.pptx *.py *.csv *.json *.xml *.eml *.msg);;Dokumente (*.pdf *.docx *.doc *.rtf *.txt *.md);;Tabellen (*.xlsx *.xls *.csv);;Code (*.py *.js *.java *.cpp *.c *.h);;Alle Dateien (*)"
+            "Alle unterstützten (*.pdf *.docx *.doc *.rtf *.txt *.md *.xlsx *.xls *.pptx *.html *.htm *.py *.csv *.json *.xml *.eml *.msg);;Dokumente (*.pdf *.docx *.doc *.rtf *.txt *.md *.pptx *.html *.htm);;Tabellen (*.xlsx *.xls *.csv);;Code (*.py *.js *.java *.cpp *.c *.h);;Alle Dateien (*)"
         )
 
         if files:
@@ -769,6 +801,8 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
                 self._current_project.documents.add_file(Path(f))
             self.statusbar.showMessage(f"{len(files)} Dateien hinzugefügt")
             self._update_pipeline_phase()
+            # Asynchrone Extraktion für die neuen Dokumente starten
+            self._on_files_added()
 
     def _add_folder(self):
         """Add a folder to the project."""
@@ -779,6 +813,9 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         if folder:
             docs = self._current_project.documents.add_directory(Path(folder))
             self.statusbar.showMessage(f"{len(docs)} Elemente hinzugefügt")
+            self._update_pipeline_phase()
+            # Asynchrone Extraktion für die neuen Dokumente starten
+            self._on_files_added()
 
     def _export(self):
         """Export the report."""
@@ -797,23 +834,53 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         if self._current_project:
             self._current_project.documents.deselect_all()
 
+    # ==================== Worker-Lebensdauer ====================
+
+    def _start_tracked_worker(self, attr: Optional[str], worker, on_finished=None):
+        """Startet einen Worker und hält ihn bis zum finished-Signal am Leben.
+
+        Args:
+            attr: Optionaler Attributname (z.B. "_extraction_worker"), der nach
+                  Thread-Ende automatisch auf None gesetzt wird
+            worker: Der QThread-Worker
+            on_finished: Optionaler Callback nach Thread-Ende (GUI-Thread),
+                         erhält den beendeten Worker als Argument
+        """
+        if self._close_pending:
+            logger.info("Worker-Start während des Beendens übersprungen: %s", type(worker).__name__)
+            return None
+        if attr:
+            setattr(self, attr, worker)
+
+        def _finished(finished_worker):
+            if attr and getattr(self, attr, None) is finished_worker:
+                setattr(self, attr, None)
+            if on_finished is not None:
+                on_finished(finished_worker)
+            if self._close_pending:
+                self._finish_pending_close()
+
+        retain_until_finished(self._workers, worker, _finished)
+        worker.start()
+        return worker
+
+    def _running_workers(self) -> list:
+        """Alle noch laufenden Worker (inkl. Chat-Panel)."""
+        return [w for w in self._workers.values() if w.isRunning()]
+
     def _refresh_models(self):
         """Refresh the list of available models (async — no GUI freeze)."""
-        if hasattr(self, '_model_load_worker') and self._model_load_worker and self._model_load_worker.isRunning():
+        if self._model_load_worker and self._model_load_worker.isRunning():
             return
 
         self.statusbar.showMessage("Modelle werden abgefragt...")
         url = self._get_ollama_url()
         api_key = self._current_project.settings.ollama_api_key if self._current_project else ""
 
-        self._model_load_worker = ModelLoadWorker(url, api_key)
-
-        def _on_models(models, msg):
-            self.statusbar.showMessage(f"Ollama: {msg}")
-            self._model_load_worker = None
-
-        self._model_load_worker.models_loaded.connect(_on_models)
-        self._model_load_worker.start()
+        worker = ModelLoadWorker(url, api_key)
+        worker.models_loaded.connect(
+            lambda models, msg: self.statusbar.showMessage(f"Ollama: {msg}"))
+        self._start_tracked_worker("_model_load_worker", worker)
 
     def _llm_settings(self):
         """Show LLM settings dialog with provider, model, profiles and embedding config."""
@@ -1059,11 +1126,15 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
                         model_combo.addItems(models)
                     status_label.setText(msg)
                     _select_current_model()
-                    _settings_model_worker[0] = None
+
+                def _on_worker_done(finished_worker):
+                    if _settings_model_worker[0] is finished_worker:
+                        _settings_model_worker[0] = None
 
                 worker.models_loaded.connect(_on_ollama_models)
                 _settings_model_worker[0] = worker
-                worker.start()
+                # Referenz liegt in self._workers -- auch wenn der Dialog vorher schließt
+                self._start_tracked_worker(None, worker, _on_worker_done)
                 return  # combo will be filled once worker finishes
 
             elif provider == "openai":
@@ -1125,16 +1196,20 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             app_cfg.claude_code_mode = new_claude_mode
             app_cfg.save()
 
-            # Re-init RAG engine with new embedding model
+            # Re-init RAG engine with new embedding model. _init_rag_engine gibt die
+            # neue Engine (oder None, z.B. bei Nicht-Ollama-Provider) an
+            # Dokumente und Chat weiter -- keine veraltete Engine bleibt zurück.
             self._init_rag_engine()
             if self._rag_engine and self._current_project:
-                self._current_project.documents.set_rag_engine(self._rag_engine)
-                self.chat_panel.set_rag_engine(self._rag_engine)
                 # Nachindexierung: Dokumente mit Text aber ohne Index
                 unindexed = [d for d in self._current_project.documents.documents
                              if d.extracted_text and not d.is_indexed and not d.is_directory]
                 if unindexed:
-                    self._start_index_worker([(d.id, d.name) for d in unindexed])
+                    if self._index_worker and self._index_worker.isRunning():
+                        self.statusbar.showMessage(
+                            "Indexierung läuft bereits – Nachindexierung später über das RAG-Menü")
+                    else:
+                        self._start_index_worker([(d.id, d.name) for d in unindexed])
 
             self._init_llm_client()
             self.statusbar.showMessage(f"LLM: {new_provider} / {new_model}")
@@ -1164,12 +1239,14 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         """Handle files added — start async extraction for pending docs."""
         if not self._current_project:
             return
-        pending = self._current_project.documents.pop_pending_extractions()
-        if not pending:
+
+        # Läuft bereits eine Extraktion, bleibt die Queue erhalten und wird
+        # nach Ende des laufenden Workers abgearbeitet (_on_extraction_finished).
+        if self._extraction_worker and self._extraction_worker.isRunning():
             return
 
-        # Skip if extraction already running — queue will be picked up next time
-        if self._extraction_worker and self._extraction_worker.isRunning():
+        pending = self._current_project.documents.pop_pending_extractions()
+        if not pending:
             return
 
         self.statusbar.showMessage(f"Extrahiere Text aus {len(pending)} Dokumenten...")
@@ -1178,27 +1255,58 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         if not hasattr(self, '_text_extractor') or self._text_extractor is None:
             self._text_extractor = TextExtractor()
 
-        self._extraction_worker = ExtractionWorker(self._text_extractor, pending)
+        documents = self._current_project.documents
+        worker = ExtractionWorker(self._text_extractor, pending)
 
         def _on_doc_extracted(doc_id, text, error):
             from ..core.document_manager import DocumentStatus
             if error:
-                self._current_project.documents.set_status(doc_id, DocumentStatus.ERROR, error)
+                documents.set_status(doc_id, DocumentStatus.ERROR, error)
             else:
-                self._current_project.documents.update_content(doc_id, text)
+                documents.update_content(doc_id, text)
 
         def _on_extraction_complete():
-            self._extraction_worker = None
             self._update_document_context()
             self._update_pipeline_phase()
             self.statusbar.showMessage(f"Extraktion abgeschlossen: {len(pending)} Dokumente")
+            self._start_pending_indexing()
 
-        self._extraction_worker.doc_extracted.connect(_on_doc_extracted)
-        self._extraction_worker.progress.connect(
+        worker.doc_extracted.connect(_on_doc_extracted)
+        worker.progress.connect(
             lambda cur, total, name: self.statusbar.showMessage(
                 f"Extrahiere ({cur+1}/{total}): {name}") if name else None)
-        self._extraction_worker.all_complete.connect(_on_extraction_complete)
-        self._extraction_worker.start()
+        worker.all_complete.connect(_on_extraction_complete)
+        self._start_tracked_worker(
+            "_extraction_worker", worker, lambda _w: self._on_extraction_finished())
+
+    def _on_extraction_finished(self):
+        """Nach Thread-Ende: zurückgestellte Extraktions-Anfragen abarbeiten."""
+        if self._close_pending:
+            return
+        if self._deferred_extraction_callbacks:
+            callbacks = self._deferred_extraction_callbacks
+            self._deferred_extraction_callbacks = []
+
+            def _run_callbacks():
+                for callback in callbacks:
+                    if callback:
+                        callback()
+
+            self._extract_all_text(on_complete=_run_callbacks)
+            if self._extraction_worker and self._extraction_worker.isRunning():
+                return
+        # Dateien, die während der Extraktion hinzugefügt wurden
+        self._on_files_added()
+
+    def _start_pending_indexing(self):
+        """Indexiert frisch extrahierte Dokumente im Hintergrund (Auto-Index)."""
+        if self._close_pending or not self._current_project or not self._rag_engine:
+            return
+        if self._index_worker and self._index_worker.isRunning():
+            return  # Queue bleibt erhalten, wird nach Ende des Workers abgearbeitet
+        pending = self._current_project.documents.pop_pending_index()
+        if pending:
+            self._start_index_worker(pending, silent=True)
 
     def _on_subquery_requested(self, doc_id: str, query_type: str, query_text: str):
         """Handle sub-query request."""
@@ -1247,7 +1355,10 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             output_dir.mkdir(parents=True, exist_ok=True)
             formats_and_paths = [(fmt, output_dir / f"{base_name.strip()}.{fmt}") for fmt in formats]
 
+        from ..reports.exporter import ReportExporter
+
         exported = []
+        failed = []
         for fmt, filepath in formats_and_paths:
             filepath.parent.mkdir(parents=True, exist_ok=True)
             try:
@@ -1256,8 +1367,8 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
                     exported.append(filepath.name)
 
                 elif fmt == "txt":
-                    import re
-                    plain = re.sub(r'[#*`_]', '', content)
+                    # Nur Markdown-Syntax entfernen (C#, #12, file_name bleiben erhalten)
+                    plain = ReportExporter.markdown_to_plain_text(content)
                     filepath.write_text(plain, encoding="utf-8")
                     exported.append(filepath.name)
 
@@ -1267,15 +1378,24 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
                     exported.append(filepath.name)
 
                 elif fmt == "pdf":
-                    if self._export_pdf(content, filepath):
-                        exported.append(filepath.name)
+                    self._export_pdf(content, filepath)
+                    exported.append(filepath.name)
 
                 elif fmt == "docx":
                     if self._export_docx(content, filepath):
                         exported.append(filepath.name)
+                    else:
+                        failed.append(f"{fmt}: python-docx nicht installiert")
 
             except Exception as e:
+                failed.append(f"{fmt}: {e}")
                 self.statusbar.showMessage(f"Fehler bei {fmt}: {e}")
+
+        if failed:
+            QMessageBox.warning(
+                self, "Export",
+                "Folgende Formate konnten nicht exportiert werden:\n" + "\n".join(failed)
+            )
 
         if exported:
             out_dir = str(formats_and_paths[0][1].parent)
@@ -1286,46 +1406,45 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             )
 
     def _md_to_html(self, content: str) -> str:
-        """Convert markdown to simple HTML."""
-        import re
+        """Convert markdown to a complete, HTML-escaped document.
 
-        html = content
-        # Headers
-        html = re.sub(r'^### (.+)$', r'<h3>\1</h3>', html, flags=re.MULTILINE)
-        html = re.sub(r'^## (.+)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
-        html = re.sub(r'^# (.+)$', r'<h1>\1</h1>', html, flags=re.MULTILINE)
-        # Bold
-        html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html)
-        # Italic
-        html = re.sub(r'\*(.+?)\*', r'<em>\1</em>', html)
-        # Code
-        html = re.sub(r'`(.+?)`', r'<code>\1</code>', html)
-        # Paragraphs
-        html = re.sub(r'\n\n', r'</p><p>', html)
+        Nutzt dieselbe gehärtete Umsetzung wie ReportExporter (Escaping,
+        nur http/https/mailto/relative Links).
+        """
+        from ..reports.exporter import ReportExporter
 
-        return f"<!DOCTYPE html><html><head><meta charset='utf-8'><title>Report</title></head><body><p>{html}</p></body></html>"
+        title = self._current_project.name if self._current_project else "Bericht"
+        return ReportExporter.render_html_document(content, title)
 
-    def _export_pdf(self, content: str, filepath: Path) -> bool:
-        """Export to PDF."""
+    def _export_pdf(self, content: str, filepath: Path) -> None:
+        """Export to PDF via pandoc.
+
+        Raises:
+            RuntimeError: mit verständlicher Fehlermeldung, wenn der Export scheitert
+        """
+        import subprocess
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8') as f:
+            f.write(content)
+            md_path = f.name
+
         try:
-            # Try markdown2pdf or pandoc
-            import subprocess
-            import tempfile
-
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8') as f:
-                f.write(content)
-                md_path = f.name
-
             result = subprocess.run(
                 ['pandoc', md_path, '-o', str(filepath)],
-                capture_output=True
+                capture_output=True,
+                timeout=120,
             )
+        except FileNotFoundError:
+            raise RuntimeError("pandoc nicht gefunden – bitte pandoc installieren") from None
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("pandoc hat das Zeitlimit (120 s) überschritten") from None
+        finally:
+            Path(md_path).unlink(missing_ok=True)
 
-            Path(md_path).unlink()
-            return result.returncode == 0
-
-        except Exception:
-            return False
+        if result.returncode != 0:
+            stderr = (result.stderr or b"").decode("utf-8", errors="replace").strip()
+            raise RuntimeError(f"pandoc-Fehler: {stderr[:500] or f'Exit-Code {result.returncode}'}")
 
     def _export_docx(self, content: str, filepath: Path) -> bool:
         """Export to DOCX."""
@@ -1435,6 +1554,13 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
                 on_complete()
             return
 
+        # Laufenden Worker nie ersetzen: Anfrage zurückstellen und nach dessen Ende
+        # erneut ausführen (_on_extraction_finished).
+        if self._extraction_worker and self._extraction_worker.isRunning():
+            self._deferred_extraction_callbacks.append(on_complete)
+            self.statusbar.showMessage("Extraktion läuft bereits – Anfrage wird danach ausgeführt")
+            return
+
         docs = self._current_project.documents.selected_documents
         if not docs:
             if on_complete:
@@ -1454,16 +1580,19 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         total = len(tasks)
         self.statusbar.showMessage(f"Extrahiere Text aus {total} Dokumenten...")
 
+        documents = self._current_project.documents
+        # Diese Dokumente nicht zusätzlich über die Datei-Queue extrahieren
+        documents.discard_pending_extractions(d.id for d in docs_to_extract)
         for d in docs_to_extract:
-            self._current_project.documents.set_status(d.id, DocumentStatus.EXTRACTING)
+            documents.set_status(d.id, DocumentStatus.EXTRACTING)
 
-        self._extraction_worker = ExtractionWorker(self._text_extractor, tasks)
+        worker = ExtractionWorker(self._text_extractor, tasks)
 
         def _on_doc_extracted(doc_id, text, error):
             if error:
-                self._current_project.documents.set_status(doc_id, DocumentStatus.ERROR, error)
+                documents.set_status(doc_id, DocumentStatus.ERROR, error)
             else:
-                self._current_project.documents.update_content(doc_id, text)
+                documents.update_content(doc_id, text)
 
         def _on_extraction_progress(current, total_count, filename):
             if filename:
@@ -1472,14 +1601,15 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         def _on_extraction_complete():
             self._update_document_context()
             self.statusbar.showMessage(f"Textextraktion abgeschlossen: {total} Dokumente")
-            self._extraction_worker = None
+            self._start_pending_indexing()
             if on_complete:
                 on_complete()
 
-        self._extraction_worker.doc_extracted.connect(_on_doc_extracted)
-        self._extraction_worker.progress.connect(_on_extraction_progress)
-        self._extraction_worker.all_complete.connect(_on_extraction_complete)
-        self._extraction_worker.start()
+        worker.doc_extracted.connect(_on_doc_extracted)
+        worker.progress.connect(_on_extraction_progress)
+        worker.all_complete.connect(_on_extraction_complete)
+        self._start_tracked_worker(
+            "_extraction_worker", worker, lambda _w: self._on_extraction_finished())
 
     def _run_analysis(self):
         """Run sub-query analyses in background thread."""
@@ -1516,11 +1646,11 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         total = len(tasks)
         self.statusbar.showMessage(f"Führe {total} Analysen durch...")
 
-        self._analysis_worker = AnalysisWorker(self._llm_client, tasks)
-        self._analysis_worker.query_complete.connect(self._on_analysis_result)
-        self._analysis_worker.all_complete.connect(
+        worker = AnalysisWorker(self._llm_client, tasks)
+        worker.query_complete.connect(self._on_analysis_result)
+        worker.all_complete.connect(
             lambda: self.statusbar.showMessage(f"Analysen abgeschlossen: {total}"))
-        self._analysis_worker.start()
+        self._start_tracked_worker("_analysis_worker", worker)
 
     def _generate_report(self):
         """Generate the main report (fully async, no GUI freeze)."""
@@ -1551,6 +1681,8 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
 
     def _generate_report_step2(self):
         """Build prompt and start LLM generation (called after extraction)."""
+        if self._close_pending or not self._current_project:
+            return
         # Build the main prompt
         main_question = self.workflow_panel.get_main_question()
         if not main_question:
@@ -1615,14 +1747,14 @@ Verwende Markdown-Formatierung."""
         self.output_panel.set_status("Generiere Bericht...")
 
         from .chat_panel import LLMWorker
-        self._report_worker = LLMWorker(self._llm_client, prompt, "")
+        worker = LLMWorker(self._llm_client, prompt, "")
         self._report_workflow = workflow
 
-        self._report_worker.response_chunk.connect(
+        worker.response_chunk.connect(
             lambda chunk: self.output_panel.append_content(chunk))
-        self._report_worker.response_complete.connect(self._on_report_complete)
-        self._report_worker.error_occurred.connect(self._on_report_error)
-        self._report_worker.start()
+        worker.response_complete.connect(self._on_report_complete)
+        worker.error_occurred.connect(self._on_report_error)
+        self._start_tracked_worker("_report_worker", worker)
 
     def _on_analysis_result(self, query_id: str, response: str, error: str):
         """Handle a single analysis result from the worker."""
@@ -1638,13 +1770,12 @@ Verwende Markdown-Formatierung."""
             for step in self._report_workflow.steps:
                 self.workflow_panel.update_step_status(step.id, "completed")
         self.statusbar.showMessage("Bericht erfolgreich erstellt")
-        self._report_worker = None
+        # Referenz wird erst nach Thread-Ende freigegeben (_start_tracked_worker)
 
     def _on_report_error(self, error: str):
         """Handle report generation error."""
         self.output_panel.set_status(f"Fehler: {error}")
         self.statusbar.showMessage(f"Fehler bei Berichterstellung: {error}")
-        self._report_worker = None
 
     def _export_prompt(self):
         """Export the analysis prompt as .md file for manual LLM usage."""
@@ -1782,10 +1913,34 @@ Verwende Markdown-Formatierung."""
             self.statusbar.showMessage(f"Workspace-Export fehlgeschlagen: {e}")
 
     def closeEvent(self, event):
-        """Handle window close."""
+        """Handle window close: Worker stoppen/abwarten, dann Projekt speichern."""
+        self._close_pending = True
+        workers_stopped = stop_workers(self._running_workers(), timeout_ms=3000)
+        chat_stopped = self.chat_panel.shutdown_workers(timeout_ms=3000)
+
+        if not (workers_stopped and chat_stopped):
+            # Ein Worker hängt noch in einem Netzwerkaufruf. Den QThread jetzt zu
+            # zerstören würde die App abstürzen lassen -> Fenster ausblenden und
+            # schließen, sobald alle Worker beendet sind (_finish_pending_close).
+            self._project_manager.save_current()
+            self.statusbar.showMessage("Warte auf laufende Hintergrundaufgaben …")
+            event.ignore()
+            self.hide()
+            QTimer.singleShot(500, self._finish_pending_close)
+            return
+
         # Save project
         self._project_manager.close_project()
         event.accept()
+
+    def _finish_pending_close(self):
+        """Schließt das Fenster, sobald nach closeEvent keine Worker mehr laufen."""
+        if not self._close_pending:
+            return
+        if self._running_workers() or self.chat_panel.has_running_workers():
+            QTimer.singleShot(500, self._finish_pending_close)
+            return
+        self.close()
 
     # ==================== RAG Methods ====================
 
@@ -1812,6 +1967,8 @@ Verwende Markdown-Formatierung."""
             if app_cfg.llm_provider not in ("ollama",):
                 logger.info("RAG Engine übersprungen (Provider ist nicht Ollama)")
                 self._rag_engine = None
+                self._rag_engine_ready = False
+                self._connect_rag_engine()
                 if hasattr(self, "statusbar"):
                     self.statusbar.showMessage("Bereit (RAG nicht aktiv — kein Ollama-Provider)")
                 return
@@ -1829,6 +1986,7 @@ Verwende Markdown-Formatierung."""
                 api_key=app_cfg.ollama_api_key
             )
             self._rag_engine_ready = True
+            self._connect_rag_engine()
             logger.info(f"RAG Engine initialisiert (URL: {ollama_url}, Embedding: {embedding_model})")
             if hasattr(self, "statusbar"):
                 self.statusbar.showMessage(f"RAG-Engine bereit ({embedding_model} @ {ollama_url})", 5000)
@@ -1836,6 +1994,8 @@ Verwende Markdown-Formatierung."""
         except Exception as e:
             logger.error(f"RAG Engine Initialisierung fehlgeschlagen: {e}")
             self._rag_engine = None
+            self._rag_engine_ready = False
+            self._connect_rag_engine()
             if hasattr(self, "statusbar"):
                 self.statusbar.showMessage(f"RAG-Engine nicht verfügbar: {e}", 8000)
 
@@ -1877,23 +2037,32 @@ Verwende Markdown-Formatierung."""
 
         self._start_index_worker([(d.id, d.name) for d in docs_with_text])
 
-    def _start_index_worker(self, doc_ids_and_names):
-        """Start the index worker thread."""
+    def _start_index_worker(self, doc_ids_and_names, silent: bool = False):
+        """Start the index worker thread.
+
+        Args:
+            doc_ids_and_names: [(doc_id, doc_name), ...]
+            silent: Nur Statusleiste statt Dialog (für Auto-Indexierung)
+        """
         self.statusbar.showMessage(f"Indexiere {len(doc_ids_and_names)} Dokumente...")
 
-        self._index_worker = IndexWorker(self._current_project.documents, doc_ids_and_names)
+        worker = IndexWorker(self._current_project.documents, doc_ids_and_names)
 
-        self._index_worker.progress.connect(
+        worker.progress.connect(
             lambda cur, total, name: self.statusbar.showMessage(
                 f"Indexiere ({cur+1}/{total}): {name}") if name else None)
-        self._index_worker.all_complete.connect(self._on_index_complete)
-        self._index_worker.start()
+        worker.all_complete.connect(
+            lambda indexed, total: self._on_index_complete(indexed, total, silent))
+        # Nach Thread-Ende: inzwischen vorgemerkte Dokumente indexieren
+        self._start_tracked_worker(
+            "_index_worker", worker, lambda _w: self._start_pending_indexing())
 
-    def _on_index_complete(self, indexed, total):
+    def _on_index_complete(self, indexed, total, silent: bool = False):
         """Handle index worker completion."""
-        self._index_worker = None
         self.statusbar.showMessage(f"RAG: {indexed}/{total} Dokumente indexiert")
-        QMessageBox.information(self, "RAG", f"{indexed}/{total} Dokumente erfolgreich indexiert.")
+        self.chat_panel._update_status()
+        if not silent and not self._close_pending:
+            QMessageBox.information(self, "RAG", f"{indexed}/{total} Dokumente erfolgreich indexiert.")
 
     def _clear_rag_index(self):
         """Clear the RAG index."""

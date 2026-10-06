@@ -61,6 +61,11 @@ class ProjectSettings:
         }
 
     @classmethod
+    def from_app_config(cls) -> "ProjectSettings":
+        """Neue Projekt-Settings mit den gespeicherten LLM-Einstellungen der App."""
+        return cls.from_dict({})
+
+    @classmethod
     def from_dict(cls, data: dict) -> "ProjectSettings":
         from .app_config import get_app_config
         app_cfg = get_app_config()
@@ -126,7 +131,9 @@ class Project:
             id=str(uuid.uuid4()),
             name=name,
             main_question=main_question,
-            report_type=report_type
+            report_type=report_type,
+            # LLM-Provider/Modell/URL aus der gespeicherten App-Konfiguration
+            settings=ProjectSettings.from_app_config(),
         )
 
     @property
@@ -359,22 +366,34 @@ class ProjectManager:
         Returns:
             The project if found
         """
-        # Search by ID or name
-        for item in self.projects_dir.iterdir():
+        # ID hat Vorrang vor dem (nicht eindeutigen) Namen
+        by_name = []
+        for item in sorted(self.projects_dir.iterdir()):
             if item.is_dir():
                 project_file = item / "project.json"
                 if project_file.exists():
                     try:
                         data = json.loads(project_file.read_text(encoding="utf-8"))
-                        if data["id"] == project_id_or_name or data["name"] == project_id_or_name:
-                            project = Project.load(item)
-                            if project:
-                                self._current_project = project
-                                return project
-                    except Exception:
-                        pass
+                    except (OSError, ValueError):
+                        continue  # beschädigte project.json überspringen
+                    if data.get("id") == project_id_or_name:
+                        return self._load_as_current(item)
+                    if data.get("name") == project_id_or_name:
+                        by_name.append((data.get("modified_at", data.get("created_at", "")), item))
+
+        if by_name:
+            # Bei Namensdubletten das zuletzt geänderte Projekt öffnen
+            by_name.sort(key=lambda entry: entry[0], reverse=True)
+            return self._load_as_current(by_name[0][1])
 
         return None
+
+    def _load_as_current(self, directory: Path) -> Optional[Project]:
+        """Load a project directory and make it the current project."""
+        project = Project.load(directory)
+        if project:
+            self._current_project = project
+        return project
 
     def save_current(self) -> bool:
         """Save the current project."""
@@ -438,9 +457,9 @@ class ProjectManager:
         safe = "".join(c for c in name if c.isalnum() or c in " -_").strip()
         safe = safe.replace(" ", "_")
 
-        # Add timestamp for uniqueness
+        # Timestamp + Kurz-UUID: zwei Projekte in derselben Sekunde kollidieren nicht
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return f"{safe}_{timestamp}"
+        return f"{safe or 'Projekt'}_{timestamp}_{uuid.uuid4().hex[:8]}"
 
     # Output profiles
     def get_output_profiles(self) -> List[OutputProfile]:

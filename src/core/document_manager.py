@@ -25,6 +25,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Callable, TYPE_CHECKING
 import uuid
 
+from .text_extractor import SUPPORTED_EXTENSIONS as _EXTRACTOR_SUPPORTED_EXTENSIONS
+
 if TYPE_CHECKING:
     from ..rag.engine import RAGEngine
 
@@ -147,21 +149,8 @@ class DocumentManager:
     - Manage sub-query associations
     """
 
-    # Supported file types
-    SUPPORTED_EXTENSIONS = {
-        # Text
-        ".txt", ".md", ".rst", ".log",
-        # Documents
-        ".pdf", ".docx", ".doc", ".odt", ".rtf",
-        # Data
-        ".json", ".xml", ".yaml", ".yml", ".csv",
-        # Code (for analysis)
-        ".py", ".js", ".ts", ".java", ".cpp", ".c", ".h",
-        # Spreadsheets
-        ".xlsx", ".xls", ".ods",
-        # Email
-        ".eml", ".msg"
-    }
+    # Supported file types -- abgeleitet aus dem TextExtractor (eine Quelle der Wahrheit)
+    SUPPORTED_EXTENSIONS = _EXTRACTOR_SUPPORTED_EXTENSIONS
 
     def __init__(self, project_path: Optional[Path] = None, rag_engine: Optional['RAGEngine'] = None):
         """
@@ -179,6 +168,7 @@ class DocumentManager:
         self._auto_extract: bool = True  # Automatisch Text extrahieren bei add_file
         self._text_extractor = None  # Lazy-loaded
         self._pending_extractions: List[str] = []  # doc_ids waiting for async extraction
+        self._pending_index: List[str] = []  # doc_ids waiting for async (re-)indexing
 
         if project_path:
             self._cache_dir = project_path / ".cache"
@@ -492,15 +482,41 @@ class DocumentManager:
             self._notify_change("update", doc)
             logger.error(f"Auto-Extraktion Fehler: {doc.name}: {e}")
 
-    def set_rag_engine(self, rag_engine: 'RAGEngine') -> None:
+    def set_rag_engine(self, rag_engine: Optional['RAGEngine']) -> None:
         """
         Setzt die RAG Engine für semantische Suche.
 
         Args:
-            rag_engine: Die RAG Engine Instanz
+            rag_engine: Die RAG Engine Instanz oder None zum Trennen
         """
         self._rag_engine = rag_engine
-        logger.info("RAG Engine verbunden")
+        if rag_engine is None:
+            self._pending_index.clear()
+            logger.info("RAG Engine getrennt")
+        else:
+            logger.info("RAG Engine verbunden")
+
+    def sync_index_flags(self) -> None:
+        """Gleicht is_indexed mit dem tatsächlichen Inhalt des Vektor-Index ab.
+
+        Nötig, weil der Index projektübergreifend geleert werden kann und
+        documents.json dann veraltete is_indexed-Flags enthält.
+        """
+        if not self._rag_engine:
+            return
+        flagged = [d for d in self._documents.values() if d.is_indexed and not d.is_directory]
+        if not flagged:
+            return
+        try:
+            present = self._rag_engine.get_indexed_document_ids([d.id for d in flagged])
+        except Exception as e:
+            logger.warning("Index-Abgleich fehlgeschlagen: %s", e)
+            return
+        for doc in flagged:
+            if doc.id not in present:
+                doc.is_indexed = False
+                doc.chunk_count = 0
+                self._notify_change("deindexed", doc)
 
     def pop_pending_extractions(self) -> List[tuple]:
         """Gibt ausstehende Extraktionen zurück und leert die Queue.
@@ -515,6 +531,38 @@ class DocumentManager:
                 result.append((doc.id, doc.path, doc.name))
         self._pending_extractions.clear()
         return result
+
+    def has_pending_extractions(self) -> bool:
+        """True, wenn Dokumente auf die asynchrone Extraktion warten."""
+        return any(
+            doc_id in self._documents and not self._documents[doc_id].is_directory
+            for doc_id in self._pending_extractions
+        )
+
+    def discard_pending_extractions(self, doc_ids) -> None:
+        """Entfernt Dokumente aus der Extraktions-Queue (z.B. weil sie bereits extrahiert werden)."""
+        ids = set(doc_ids)
+        self._pending_extractions = [d for d in self._pending_extractions if d not in ids]
+
+    def pop_pending_index(self) -> List[tuple]:
+        """Gibt Dokumente zurück, die (neu) indexiert werden sollen, und leert die Queue.
+
+        Returns:
+            Liste von (doc_id, doc_name) Tupeln
+        """
+        result = []
+        seen = set()
+        for doc_id in self._pending_index:
+            doc = self._documents.get(doc_id)
+            if doc and not doc.is_directory and doc.extracted_text and doc_id not in seen:
+                seen.add(doc_id)
+                result.append((doc.id, doc.name))
+        self._pending_index.clear()
+        return result
+
+    def index_pending_documents(self) -> Dict[str, bool]:
+        """Indexiert alle wartenden Dokumente synchron (nur außerhalb des GUI-Threads nutzen)."""
+        return {doc_id: self.index_document(doc_id) for doc_id, _ in self.pop_pending_index()}
 
     def set_auto_index(self, enabled: bool) -> None:
         """Aktiviert/Deaktiviert automatische Indexierung."""
@@ -562,11 +610,20 @@ class DocumentManager:
                 return True
             else:
                 logger.error(f"Indexierung fehlgeschlagen: {result.error}")
+                self._mark_not_indexed(doc)
                 return False
 
         except Exception as e:
             logger.error(f"Fehler bei Indexierung von {doc_id}: {e}")
+            self._mark_not_indexed(doc)
             return False
+
+    def _mark_not_indexed(self, doc: DocumentItem) -> None:
+        """Setzt den Index-Status nach einem Fehlschlag zurück."""
+        if doc.is_indexed or doc.chunk_count:
+            doc.is_indexed = False
+            doc.chunk_count = 0
+            self._notify_change("deindexed", doc)
 
     def index_all_documents(self) -> Dict[str, bool]:
         """
@@ -741,17 +798,30 @@ class DocumentManager:
 
         return stats
 
-    # Override update_content to auto-index
     def update_content(self, doc_id: str, text: str) -> None:
-        """Update extracted text for a document."""
+        """Update extracted text for a document.
+
+        Indexiert NICHT synchron (Embedding-Aufrufe gehen über HTTP und würden
+        den GUI-Thread blockieren). Bei aktivem Auto-Index wird das Dokument in
+        eine Queue gestellt, die die GUI per IndexWorker abarbeitet
+        (pop_pending_index) bzw. Nicht-GUI-Aufrufer per index_pending_documents().
+        """
         doc = self._documents.get(doc_id)
         if doc:
+            new_hash = hashlib.md5(text.encode()).hexdigest()
+            content_changed = new_hash != doc.content_hash
             doc.extracted_text = text
             doc.text_length = len(text)
-            doc.content_hash = hashlib.md5(text.encode()).hexdigest()
+            doc.content_hash = new_hash
             doc.status = DocumentStatus.READY
+            if content_changed and doc.is_indexed:
+                # Vorhandene Chunks passen nicht mehr zum Text
+                doc.is_indexed = False
+                doc.chunk_count = 0
             self._notify_change("update", doc)
 
-            # Auto-indexieren wenn aktiviert
-            if self._auto_index and self._rag_engine and text:
-                self.index_document(doc_id)
+            # Auto-Indexierung vormerken (asynchron)
+            needs_index = content_changed or not doc.is_indexed
+            if (self._auto_index and self._rag_engine and text and needs_index
+                    and doc_id not in self._pending_index):
+                self._pending_index.append(doc_id)

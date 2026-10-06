@@ -3,6 +3,20 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-10-06]
+
+### Fixed
+- GUI workers (`QThread`) are now kept alive until `finished` (`src/gui/worker_utils.py`); a running extraction is never replaced, queued files are no longer dropped, and `closeEvent` stops and waits for all workers before saving.
+- HTML export escapes all Markdown text and the document title and only renders `http`/`https`/`mailto`/relative links; the GUI HTML export uses the same `ReportExporter` implementation. TXT export strips Markdown syntax only (keeps `C#`, `#12`, `file_name`).
+- Text extraction no longer triggers synchronous embedding on the GUI thread; documents are queued and indexed by the `IndexWorker`. Re-indexing embeds before deleting old chunks; failed indexing resets `is_indexed`; stale `is_indexed` flags are reconciled with the vector index when a project is activated.
+- RAG search uses relevance scores (higher = better) instead of raw distances for confidence and thresholds.
+- Chat always receives the current project's document manager (no unfiltered queries over the shared collection) and a disabled RAG engine is propagated as `None`.
+- New projects inherit provider/model/URL from the saved app config; the LLM client is initialised at startup; projects are opened by ID, the current project is saved first, and project directories get a unique suffix.
+- Supported file types come from one shared set (adds `.pptx`, `.html`, `.htm`; drops unsupported `.odt`, `.ods`); HTML is converted to plain text.
+- Extractor: Excel `0`/`False` cells kept, RTF `\uN` fallback skipping and multi-byte code pages fixed, BOM/cp1252 detection for plain text, PPTX slides sorted numerically, PDF/Excel/MSG handles closed reliably.
+- Ollama availability is re-checked lazily instead of being cached forever after a failed start-up check.
+- YAML front matter quotes title/author, GUI PDF export has a timeout, error message and temp-file cleanup, chat messages render as plain text, translator hint matching uses whole words, and the Web Companion stores review notes per project ID (new optional `workspace.id` in the export).
+
 ## [Unreleased — 2026-09-22]
 
 ### Added

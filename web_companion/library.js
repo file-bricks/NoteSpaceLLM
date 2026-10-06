@@ -562,6 +562,7 @@ const UI_TEXT = Object.freeze({
 });
 
 const DEFAULT_WORKSPACE = Object.freeze({
+  id: "",
   title: "Unbenannter Workspace",
   question: "",
   workflow_type: "",
@@ -697,6 +698,7 @@ export function normalizeWorkspacePayload(payload, locale = "de") {
     },
     workspace: {
       ...DEFAULT_WORKSPACE,
+      id: asString(payload.workspace?.id, DEFAULT_WORKSPACE.id),
       title: asString(payload.workspace?.title, uiText.untitledWorkspace),
       question: asString(payload.workspace?.question, DEFAULT_WORKSPACE.question),
       workflow_type: asString(payload.workspace?.workflow_type, DEFAULT_WORKSPACE.workflow_type),

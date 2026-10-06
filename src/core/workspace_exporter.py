@@ -95,6 +95,9 @@ def build_workspace_export_payload(
             "exported_at": now_iso,
         },
         "workspace": {
+            # Stabile Projekt-ID (optional im Schema): Companion-Notizen werden
+            # damit pro Projekt statt pro (nicht eindeutigem) Titel gespeichert.
+            "id": str(getattr(project, "id", "") or ""),
             "title": project.name,
             "question": project.main_question or "",
             "workflow_type": project.report_type or "analysis",
