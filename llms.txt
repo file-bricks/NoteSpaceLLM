@@ -2,28 +2,28 @@
 
 ## Last-checked: 2026-09-22
 
-> Local NotebookLM alternative for private document analysis, RAG-assisted research, and multi-format report generation. Verified with 207 passing unit tests (147 Python pytest + 60 Web Companion Node.js tests).
+> Local-first document notebook for document research and report generation with configurable local or remote language models. Latest full Windows run (2026-10-12): 200 Python tests passed and 0 were skipped. Separately on 2026-10-12, all 62 Web Companion tests passed.
 
 ## Description
 
-NoteSpaceLLM is an offline-first PySide6 desktop application for private document analysis. It keeps all project data local by default, supports Ollama (local and remote), OpenAI, Anthropic, and Claude Code workflows, and exports results to Markdown, PDF, DOCX, HTML, and TXT. A Web/PWA Companion is available for reviewing exported workspaces on Android, iOS, and browser devices without uploading documents to a server.
+NoteSpaceLLM is a local-first PySide6 desktop application for document analysis. Project files and the ChromaDB index are stored locally by default. When a remote model or embedding endpoint is configured, the text and prompts used for that operation are sent to the selected endpoint. The app supports Ollama (local and remote), OpenAI, Anthropic, and Claude Code workflows, and exports results to Markdown, PDF, DOCX, HTML, and TXT. A Web/PWA Companion reviews user-created workspace exports on Android, iOS, and browser devices without a document-upload service.
 
 ## Type
 
 - Desktop application (PySide6, Python)
 - Web/PWA Companion (static, JavaScript)
-- Open source (AGPL-3.0)
+- Open source (AGPL-3.0-only)
 
 ## Language / Platform
 
 - Python 3.10+
-- PySide6 (LGPL)
+- PySide6 (multiple upstream licensing options; see resolved distribution license files)
 - Windows, macOS, Linux
 
 ## Key Features
 
-- Offline-first document management: PDF, DOCX, TXT, Markdown, XLSX, EML, MSG
-- Local RAG with ChromaDB — no cloud upload required
+- Local document management: PDF, DOCX, TXT, Markdown, XLSX, EML, MSG
+- ChromaDB stores the vector index locally; the configured embedding endpoint may be remote
 - Multi-provider LLM support: Ollama (local + remote), OpenAI, Anthropic, Claude Code
 - Auto-indexing: new documents are processed and indexed immediately on add
 - Sub-queries: right-click a document for document-specific research
@@ -32,7 +32,7 @@ NoteSpaceLLM is an offline-first PySide6 desktop application for private documen
 - Multi-format export: MD, PDF, DOCX, HTML, TXT
 - Prompt export for external LLM workflows (Claude Code integration)
 - Web/PWA Companion for mobile review of exported workspaces
-- 6-language i18n infrastructure (de, en, es, zh, ja, ru)
+- The Web/PWA Companion has a six-language UI (de, en, es, zh, ja, ru); the desktop UI is currently primarily German, and report language does not select a desktop UI language
 - PEP 621 pyproject.toml configuration with pytest pythonpath integration
 - macOS and Linux source smoke tests in GitHub Actions
 - Community workflows use `actions/stale@v10` and `actions/first-interaction@v3`
@@ -40,30 +40,34 @@ NoteSpaceLLM is an offline-first PySide6 desktop application for private documen
 ## Audience
 
 - Privacy-conscious researchers and knowledge workers who need a local NotebookLM alternative
-- Developers evaluating offline-first PySide6 desktop apps with ChromaDB and multi-provider LLM support
-- Teams running local LLM infrastructure (Ollama, ellmos-stack) wanting document analysis without cloud upload
-- Anyone who wants offline AI document analysis, report generation, and mobile review via PWA Companion
+- Developers evaluating local-first PySide6 desktop apps with ChromaDB and configurable LLM providers
+- Teams using local Ollama endpoints for document analysis without cloud-provider transfer
+- Anyone who wants local-model document analysis, report generation, and mobile review via PWA Companion
 
 ## Search Phrases
 
 ```
-local NotebookLM alternative offline privacy
-private document analysis RAG desktop app Python
+local NotebookLM alternative document analysis
+local-first document analysis with configurable remote providers
 PySide6 ChromaDB document research tool
-offline RAG document analysis desktop app
+local RAG document analysis desktop app
 local LLM document analysis Python
 NotebookLM alternative open source
-offline AI report generator Python
+local-model report generator Python
 local-first document workflow LLM
 Ollama document chat desktop PySide6
 ```
 
 ## Topics
 
-notebooklm-alternative, rag, local-first, pyside6, document-analysis, document-chat, ai-report-generator, privacy-first, chromadb, llm, pwa, python, desktop-app, ai
+notebooklm-alternative, rag, local-first, pyside6, document-analysis, document-chat, ai-report-generator, chromadb, llm, pwa, python, desktop-app, ai
 
 ## Repository
 
 - URL: https://github.com/file-bricks/NoteSpaceLLM
 - Organization: file-bricks
-- License: AGPL-3.0
+- License: AGPL-3.0-only
+
+## Related Projects
+
+- [KnowledgeDigest](https://github.com/file-bricks/KnowledgeDigest): separate local knowledge database with SQLite/FTS5 search and optional LLM summaries; no integration with NoteSpaceLLM is documented.

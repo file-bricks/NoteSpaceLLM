@@ -109,9 +109,11 @@ class OllamaClient(LLMClient):
             with urllib.request.urlopen(req, timeout=300) as response:
                 result = json.loads(response.read().decode("utf-8"))
                 return result.get("message", {}).get("content", "")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - hide provider URL/auth details
             self._mark_unavailable_on(e)
-            raise
+            raise RuntimeError(
+                f"Ollama chat request failed ({type(e).__name__})."
+            ) from None
 
     def stream_chat(self, prompt: str, context: str = "") -> Iterator[str]:
         """Stream a chat response."""
@@ -146,9 +148,11 @@ class OllamaClient(LLMClient):
                                 yield content
                         except json.JSONDecodeError:
                             pass
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - hide provider URL/auth details
             self._mark_unavailable_on(e)
-            raise
+            raise RuntimeError(
+                f"Ollama streaming request failed ({type(e).__name__})."
+            ) from None
 
     def get_models(self) -> list:
         """Get available models from Ollama."""
@@ -224,6 +228,8 @@ class OllamaClient(LLMClient):
             with urllib.request.urlopen(req, timeout=300) as response:
                 result = json.loads(response.read().decode("utf-8"))
                 return result.get("response", "")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - hide provider URL/auth details
             self._mark_unavailable_on(e)
-            raise
+            raise RuntimeError(
+                f"Ollama generation request failed ({type(e).__name__})."
+            ) from None

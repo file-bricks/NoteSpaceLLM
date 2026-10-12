@@ -9,6 +9,7 @@ from typing import List, Optional, Dict, Any, Tuple
 from pathlib import Path
 from dataclasses import dataclass
 
+from chromadb.config import Settings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document as LangChainDocument
 from langchain_ollama import ChatOllama
@@ -116,8 +117,20 @@ ANTWORT:"""
 
         try:
             self.llm = ChatOllama(**llm_kwargs)
-        except Exception as e:
-            logger.warning(f"ChatOllama mit client_kwargs fehlgeschlagen: {e}")
+        except Exception as exc:
+            if headers:
+                logger.warning(
+                    "Authenticated ChatOllama client setup failed (%s); "
+                    "not retrying without its authentication headers.",
+                    type(exc).__name__,
+                )
+                raise RuntimeError(
+                    "The authenticated Ollama chat client could not be configured."
+                ) from None
+            logger.warning(
+                "ChatOllama client setup failed (%s); retrying without optional headers.",
+                type(exc).__name__,
+            )
             self.llm = ChatOllama(
                 model=llm_model,
                 base_url=ollama_base_url,
@@ -142,7 +155,8 @@ ANTWORT:"""
             self._vectorstore = Chroma(
                 collection_name=self.collection_name,
                 embedding_function=self.embeddings_manager.embeddings,
-                persist_directory=self.persist_directory
+                persist_directory=self.persist_directory,
+                client_settings=Settings(anonymized_telemetry=False),
             )
         return self._vectorstore
 
@@ -232,13 +246,17 @@ ANTWORT:"""
                 success=True
             )
 
-        except Exception as e:
-            logger.error(f"Fehler bei Indexierung von {document_id}: {e}")
+        except Exception as exc:
+            logger.error(
+                "Document indexing failed for %s (%s).",
+                document_id,
+                type(exc).__name__,
+            )
             return DocumentIndexResult(
                 document_id=document_id,
                 chunks_created=0,
                 success=False,
-                error=str(e)
+                error=f"Indexing failed ({type(exc).__name__})."
             )
 
     def index_documents(
@@ -490,9 +508,9 @@ ANTWORT:"""
                 "embedding_model": self.embeddings_manager.model_name,
                 "llm_model": self.llm.model
             }
-        except Exception as e:
-            logger.error(f"Fehler beim Abrufen der Statistiken: {e}")
-            return {"error": str(e)}
+        except Exception as exc:
+            logger.error("Index statistics failed (%s).", type(exc).__name__)
+            return {"error": f"Index statistics failed ({type(exc).__name__})."}
 
     def clear_index(self) -> bool:
         """

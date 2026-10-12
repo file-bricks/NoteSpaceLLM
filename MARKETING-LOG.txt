@@ -5,6 +5,16 @@ Kanonisches Repo: https://github.com/file-bricks/NoteSpaceLLM
 Organisations-Kontext: file-bricks / open-bricks
 Distributionsmodus: GitHub Source + PySide6 Desktop GUI + Web/PWA Companion
 
+Geltungsbereich aktualisiert: 2026-10-12
+Die folgenden Einträge dokumentieren frühere Positionierungen und Annahmen vom
+22.09.2026. Sie sind keine aktuellen, verifizierten Produktgarantien oder
+vollständigen Sicherheits-, Lizenz- oder Rechtsprüfungen. Insbesondere die
+früheren INV-LOCAL-/Zero-Egress-/Offline-/Parserhärtungs-/SBOM-/Lizenzkompatibilitäts-
+und § 521-/SLA-Aussagen sind überholt und nicht als heutige Zusicherung zu lesen.
+Aktuelle, begrenzte Produkt- und Datenflussbeschreibungen stehen in README.md,
+README_de.md, SECURITY.md, PRIVACY_POLICY.md, NOTICE und THIRD_PARTY_LICENSES.*.
+Die Datumsangaben der historischen Einträge bleiben erhalten.
+
 ===============================================================================
 1. POSITIONIERUNG & MARKTKONTEXT
 ===============================================================================

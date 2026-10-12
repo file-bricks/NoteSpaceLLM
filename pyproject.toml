@@ -1,14 +1,14 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=77.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "notespacellm"
 version = "1.0.0"
-description = "Local NotebookLM alternative for private document analysis, RAG-assisted research, and multi-format report generation."
+description = "Local-first document notebook and research desktop app with configurable local or remote LLM providers."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "AGPL-3.0" }
+license = "AGPL-3.0-only"
 license-files = [
     "LICENSE",
     "NOTICE",
@@ -25,15 +25,12 @@ keywords = [
     "pyside6",
     "document-analysis",
     "document-chat",
-    "privacy-first",
     "chromadb",
     "llm",
     "pwa",
     "python",
-    "offline-first",
     "research-tools",
     "report-generator",
-    "zero-egress"
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -41,7 +38,6 @@ classifiers = [
     "Environment :: X11 Applications :: Qt",
     "Intended Audience :: End Users/Desktop",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU Affero General Public License v3 (AGPLv3)",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
@@ -67,6 +63,7 @@ dependencies = [
     "langchain-ollama>=0.2.0",
     "langchain-chroma>=0.1.0",
     "chromadb>=0.5.4",
+    "keyring>=25.7.0",
 ]
 
 [project.optional-dependencies]
@@ -86,6 +83,8 @@ test = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-timeout>=2.4.0",
+    "build>=1.2",
+    "setuptools>=77.0.0",
 ]
 dev = [
     "ruff>=0.9.0",

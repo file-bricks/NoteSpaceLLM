@@ -6,18 +6,18 @@
 NoteSpaceLLM — Lokaler RAG-Recherche-Arbeitsplatz & Dokument-Analysator
 
 ### Kurzbeschreibung
-Lokale Dokumenten-Recherche, Vektor-Suche (RAG), automatisierte Berichterstellung und LLM-Integration mit kompromisslosem Datenschutz.
+Lokale Dokumenten-Recherche, Vektor-Suche (RAG) und Berichterstellung mit lokalen Modellen oder ausdrücklich konfigurierten externen LLM-Anbietern.
 
 ### Ausführliche Beschreibung
-NoteSpaceLLM ist die professionelle Desktop-Anwendung für vertrauliche Dokumentenanalyse, Literatur-Recherche und KI-gestützte Berichterstellung. Die Software kombiniert eine leistungsfähige lokale RAG-Engine (Retrieval-Augmented Generation) mit einem flexiblen Multi-Provider-LLM-Backend (Ollama, Claude Code, OpenAI, Anthropic).
+NoteSpaceLLM ist eine lokale Desktop-Anwendung für Dokumentenanalyse, Literatur-Recherche und KI-gestützte Berichterstellung. Sie verbindet einen lokal gespeicherten ChromaDB-Vektorindex mit einem konfigurierbaren LLM-Backend. Je nach Einstellung laufen Ollama und Embeddings lokal oder über einen externen Endpunkt.
 
 **Hauptfunktionen:**
 - **Lokale Dokumenten-Extraktion:** Unterstützung für PDF, RTF, PPTX, TXT, MD, CSV, JSON, XML, EML und MSG.
-- **Privacy-First RAG-Engine:** Lokale Vektorindizierung mit ChromaDB und automatischem Embedding-Guard.
-- **Flexible LLM-Anbindung:** Arbeiten Sie vollständig offline mit lokalen Ollama-Modellen oder binden Sie externe Cloud-Modelle sicher an.
-- **Automatisierte Berichte:** Erstellung strukturierter Forschungsberichte, Zusammenfassungen und Quellenanalysen in PDF, HTML, Markdown und YAML.
-- **Workspace-Export (PWA-Companion):** Redigierter Daten-Export (`notespacellm-workspace-v1.json`) zur sicheren mobilen Ansicht ohne Übertragung vertraulicher Rohdaten.
-- **Multilinguales Interface:** Vollständig in 6 Sprachen verfügbar (Deutsch, Englisch, Spanisch, Chinesisch, Japanisch, Russisch).
+- **Lokaler Vektorspeicher:** ChromaDB speichert den Index lokal. Der Embedding-Endpunkt kann lokal oder extern konfiguriert sein.
+- **Flexible LLM-Anbindung:** Arbeiten Sie mit lokalen Ollama-Modellen oder konfigurieren Sie ausdrücklich einen externen Anbieter. Dokumenttext und Prompts werden an den ausgewählten entfernten Anbieter gesendet.
+- **Automatisierte Berichte:** Erstellung strukturierter Forschungsberichte, Zusammenfassungen und Quellenanalysen in PDF, HTML, Markdown, DOCX und TXT.
+- **Workspace-Export (PWA-Companion):** Nach einer Inhaltsbestätigung kann der Export den Bericht, Chatverlauf und ausgewählte abgeschlossene Dokumentauszüge enthalten. Der Export ist nicht anonymisiert.
+- **Sprachen:** Die Desktop-Oberfläche ist derzeit überwiegend deutsch. Die Web/PWA Companion bietet eine Oberfläche in Deutsch, Englisch, Spanisch, Chinesisch, Japanisch und Russisch.
 
 ---
 
@@ -27,15 +27,15 @@ NoteSpaceLLM ist die professionelle Desktop-Anwendung für vertrauliche Dokument
 NoteSpaceLLM — Local RAG Research Workspace & Document Analyzer
 
 ### Short Description
-Local document research, vector search (RAG), automated report generation, and LLM integration with privacy-first architecture.
+Local document research, vector search (RAG), and reporting with local models or explicitly configured external LLM providers.
 
 ### Full Description
-NoteSpaceLLM is a professional desktop application designed for confidential document analysis, literature research, and AI-assisted reporting. It combines a powerful local Retrieval-Augmented Generation (RAG) engine with a flexible multi-provider LLM backend (Ollama, Claude Code, OpenAI, Anthropic).
+NoteSpaceLLM is a local desktop application for document analysis, literature research, and AI-assisted reporting. It uses a locally stored ChromaDB vector index with a configurable LLM backend. Depending on the settings, Ollama and embedding requests can run locally or use an external endpoint.
 
 **Key Features:**
 - **Local Document Extraction:** Supports PDF, RTF, PPTX, TXT, MD, CSV, JSON, XML, EML, and MSG.
-- **Privacy-First RAG Engine:** Local vector indexing via ChromaDB with automated embedding safeguards.
-- **Flexible LLM Backend:** Work completely offline using local Ollama models or connect external cloud providers safely.
-- **Automated Reporting:** Generate structured research reports, summaries, and source analyses exported as PDF, HTML, Markdown, or YAML.
-- **Workspace Export (PWA Companion):** Redacted workspace export (`notespacellm-workspace-v1.json`) for safe mobile review without leaking raw documents.
-- **Multilingual Interface:** Fully localized in 6 languages (German, English, Spanish, Chinese, Japanese, Russian).
+- **Local vector storage:** ChromaDB stores the index locally. The embedding endpoint can be local or configured remotely.
+- **Flexible LLM backend:** Use local Ollama models or explicitly configure an external provider. Document text and prompts are sent to the selected remote provider.
+- **Automated reporting:** Generate structured research reports, summaries, and source analyses exported as PDF, HTML, Markdown, DOCX, or TXT.
+- **Workspace export (PWA Companion):** After a content confirmation, an export can contain the report, chat history, and selected completed document excerpts. It is not anonymized.
+- **Languages:** The desktop interface is currently primarily German. The Web/PWA Companion provides an interface in German, English, Spanish, Chinese, Japanese, and Russian.

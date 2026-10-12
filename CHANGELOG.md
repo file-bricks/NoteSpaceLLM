@@ -3,7 +3,7 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
-## [Unreleased — 2026-10-06]
+## [Unreleased — 2026-10-12]
 
 ### Fixed
 - GUI workers (`QThread`) are now kept alive until `finished` (`src/gui/worker_utils.py`); a running extraction is never replaced, queued files are no longer dropped, and `closeEvent` stops and waits for all workers before saving.
@@ -12,9 +12,17 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - RAG search uses relevance scores (higher = better) instead of raw distances for confidence and thresholds.
 - Chat always receives the current project's document manager (no unfiltered queries over the shared collection) and a disabled RAG engine is propagated as `None`.
 - New projects inherit provider/model/URL from the saved app config; the LLM client is initialised at startup; projects are opened by ID, the current project is saved first, and project directories get a unique suffix.
+- Ollama API keys use allowlisted native operating-system credential services, with an explicit user-triggered migration for legacy plaintext keys and a non-persisted environment override.
+- The local ChromaDB client disables anonymized usage telemetry explicitly.
+- Authenticated Ollama setup failures no longer retry without headers; provider exceptions and worker messages omit raw URLs, userinfo, headers, and secret-bearing exception text.
+- Workspace export now shows a content disclosure and requires confirmation before writing; the disclosure states that reports, chat, and excerpts are not anonymized.
+- Privacy and companion docs now distinguish remote Ollama transfer from local processing and describe that imported PWA workspaces remain session-only while review notes and UI locale persist locally.
 - Supported file types come from one shared set (adds `.pptx`, `.html`, `.htm`; drops unsupported `.odt`, `.ods`); HTML is converted to plain text.
 - Extractor: Excel `0`/`False` cells kept, RTF `\uN` fallback skipping and multi-byte code pages fixed, BOM/cp1252 detection for plain text, PPTX slides sorted numerically, PDF/Excel/MSG handles closed reliably.
 - Ollama availability is re-checked lazily instead of being cached forever after a failed start-up check.
+- Package metadata now uses the AGPL-3.0-only SPDX expression and setuptools 77+; the explicit local dependency bootstrap lives in `setup_environment.py`, while `setup.py` is a side-effect-free setuptools entry point.
+- Source archives include the `src*` runtime, selected public assets/docs/tests, and license files, while excluding local workspace, profile, output, and vector-store data.
+- Desktop and Store documentation now distinguish the primarily German desktop UI from the six-language Web/PWA Companion and describe confirmed workspace exports and remote-provider transfer accurately.
 - YAML front matter quotes title/author, GUI PDF export has a timeout, error message and temp-file cleanup, chat messages render as plain text, translator hint matching uses whole words, and the Web Companion stores review notes per project ID (new optional `workspace.id` in the export).
 
 ## [Unreleased — 2026-09-22]

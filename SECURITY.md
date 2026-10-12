@@ -1,6 +1,6 @@
 # Security Policy / Sicherheitsrichtlinie
 
-Stand: 2026-09-18 | Policy: Bilingual (DE/EN) | P-006 Core Level
+Stand: 2026-10-12 | Deutsch / English
 
 ---
 
@@ -10,16 +10,17 @@ Stand: 2026-09-18 | Policy: Bilingual (DE/EN) | P-006 Core Level
 
 | Version | Unterstützt | Anmerkungen |
 | ------- | ----------- | ----------- |
-| 1.0.x   | :white_check_mark: | Aktiver Support, reguläre Sicherheits- und Wartungsupdates |
+| 1.0.x   | :white_check_mark: | Aktuelle Versionsreihe; Sicherheitsmeldungen können über die unten genannten Wege eingereicht werden |
 | < 1.0.0 | :x:         | Vorabversionen werden nicht mehr gepflegt |
 
-### Sicherheitsarchitektur & Datenschutzgarantien
+### Sicherheitsarchitektur & Datenflüsse
 
-NoteSpaceLLM ist als **Local-First & Privacy-First Forschungs- und Dokumentenanalysewerkzeug** konzipiert:
+NoteSpaceLLM ist ein Local-First-Werkzeug. Der Datenfluss hängt vom ausgewählten Modell- und Embedding-Endpunkt ab:
 
-1. **Lokale Verarbeitung & Zero-Egress**: Die Dokumentenextraktion (PDF, DOCX, XLSX, MSG), das Chunking, die Vektorspeicherung (ChromaDB) und lokale Sprachmodelle (via Ollama) laufen standardmäßig vollständig offline auf dem lokalen Gerät. Es erfolgt keinerlei unaufgeforderte Telemetrie oder externe Übertragung analysierter Dokumente.
-2. **Schutz vor bösartigen Dokumenten**: Abhängigkeiten für XML-, Zip- und PDF-Parsing sind mit strengen Mindestversionen gegen Denial-of-Service (z. B. XML Entity Expansion CVE-2024-34064) und Speicherfehler gehärtet.
-3. **Sicherer Umgang mit API-Schlüsseln**: Werden optionale Cloud-Modelle (OpenAI, Anthropic) genutzt, verbleiben die Schlüssel im Arbeitsspeicher bzw. im lokalen Keyring. API-Schlüssel werden niemals in Logdateien, getrackten Repositories oder Export-Paketen gespeichert.
+1. **Lokaler Betrieb und Remote-Datenfluss**: Dokumentextraktion, Chunking und der ChromaDB-Vektorindex laufen lokal. Wird ein entfernter LLM- oder Embedding-Endpunkt konfiguriert, werden die dafür verwendeten Dokumenttexte, Embeddings, Prompts und Kontext an diesen Endpunkt gesendet. Die Anwendung deaktiviert die anonymisierte ChromaDB-Telemetrie für ihren lokalen Client und implementiert keine eigene Telemetrie.
+2. **Parser-Abhängigkeiten**: Für XML-, ZIP- und PDF-Parsing sind Mindestversionen in den Projektmetadaten deklariert. Diese Versionsangaben sind keine Prüfung der gesamten Abhängigkeitskette und keine Garantie gegen schädliche Dateien.
+3. **Umgang mit API-Schlüsseln**: Gespeicherte Ollama-Schlüssel werden über unterstützte native Zugangsdienste des Betriebssystems abgerufen; die Verfügbarkeit und der Schutz hängen von OS und Konfiguration ab und sind keine Garantie für Transportsicherheit. `NOTESPACELLM_OLLAMA_API_KEY` überschreibt den gespeicherten Ollama-Schlüssel und wird nicht persistiert. Ältere Klartextschlüssel werden erst nach ausdrücklicher Migration verwendet. Gespeicherte API-Schlüsselfelder und Authorization-Header werden nicht protokolliert; gespeicherte Credential-Felder werden nicht in Workspace-Exports aufgenommen. Frei verfasste Berichte und Chats können dennoch Geheimnisse enthalten und müssen vor dem Weitergeben geprüft werden.
+4. **Remote-Transport**: Ollama sendet Dokumenttexte für Embeddings sowie Prompts und Kontext für Antworten an die konfigurierte URL. Ein API-Schlüssel wird als Bearer-Header mitgesendet. HTTP bietet keine Transportverschlüsselung; bei HTTPS hängt der Schutz vom Endpunkt und dessen Zertifikat ab.
 
 ### Meldung von Sicherheitslücken
 
@@ -33,15 +34,15 @@ Wenn Sie eine Sicherheitslücke in NoteSpaceLLM entdecken, melden Sie diese bitt
 
 **Bitte eröffnen Sie keine öffentlichen Issues für ungepatchte Sicherheitslücken.**
 
-### Reaktionszeit & SLA
+### Angestrebte Reaktionszeiten
 
-- **Erstbestätigung**: Innerhalb von **48 Stunden** nach Eingang der Meldung.
-- **Triage & Schweregrad-Einstufung**: Innerhalb von **5 Werktagen**.
-- **Sicherheits-Patch**: Kritische Schwachstellen werden prioritär behoben und mit einem Patch-Release bereitgestellt.
+- **Erstbestätigung**: Ziel sind **48 Stunden** nach Eingang der Meldung.
+- **Triage & Schweregrad-Einstufung**: Ziel sind **5 Werktage**.
+- Diese Zeiten sind Ziele, keine garantierte SLA oder Zusage für einen Patch-Zeitplan.
 
-### Gesetzlicher Haftungsausschluss (§ 521 BGB)
+### Wartung
 
-NoteSpaceLLM wird als unentgeltliche Open-Source-Software bereitgestellt. Gemäß § 521 BGB haftet der Urheber bei unentgeltlicher Überlassung der Software nur für Vorsatz und grobe Fahrlässigkeit.
+Für laufende Wartung oder Verfügbarkeit gibt es keine Zusage.
 
 ---
 
@@ -51,16 +52,17 @@ NoteSpaceLLM wird als unentgeltliche Open-Source-Software bereitgestellt. Gemä�
 
 | Version | Supported          | Notes |
 | ------- | ------------------ | ----- |
-| 1.0.x   | :white_check_mark: | Active support, regular security and maintenance updates |
+| 1.0.x   | :white_check_mark: | Current release series; security reports may be submitted through the channels below |
 | < 1.0.0 | :x:                | Pre-release versions are no longer maintained |
 
-### Security Architecture & Privacy Invariants
+### Security Architecture & Data Flows
 
-NoteSpaceLLM is engineered as a **Local-First & Privacy-First document analysis and research tool**:
+NoteSpaceLLM is a local-first tool. Data flow depends on the selected model and embedding endpoints:
 
-1. **Local Processing & Zero-Egress**: Document parsing (PDF, DOCX, XLSX, MSG), text chunking, local vector storage (ChromaDB), and local model execution (via Ollama) occur entirely offline on your local device. There is zero unsolicited telemetry, tracking, or network egress of document contents.
-2. **Malicious Document Defense**: Parsers and dependencies are hardened to secure floors to guard against XML Entity Expansion (CVE-2024-34064), archive bombs, and memory corruption vulnerabilities.
-3. **Secure API Key Management**: When optional cloud models (OpenAI, Anthropic) are enabled, user API keys reside in process memory or secure OS keyrings. Keys are never logged, exported, or tracked in git repositories.
+1. **Local operation and remote data flow**: Document extraction, chunking, and the ChromaDB vector index run locally. If a remote LLM or embedding endpoint is configured, the document text, embeddings, prompts, and context used by that operation are sent to that endpoint. The application disables ChromaDB's anonymized telemetry for its local client and does not implement its own telemetry.
+2. **Parser dependencies**: Minimum versions for XML, ZIP, and PDF parsing packages are declared in project metadata. These version declarations are not an audit of the full dependency chain or a guarantee against malicious files.
+3. **API Key Handling**: Saved Ollama keys are accessed through supported native operating-system credential services; availability and protection depend on the OS and its configuration and do not guarantee transport security. `NOTESPACELLM_OLLAMA_API_KEY` overrides a saved Ollama key and is not persisted. Legacy plaintext keys are not used until explicitly migrated. Saved API key fields and Authorization headers are not logged; saved credential fields are not included in workspace exports. User-authored reports and chats may still contain secrets and should be reviewed before sharing.
+4. **Remote Transport**: Ollama sends document text for embeddings and prompts/context for responses to the configured URL. An API key is sent in a Bearer header. HTTP does not encrypt transport; with HTTPS, protection depends on the endpoint and its certificate.
 
 ### Reporting a Vulnerability
 
@@ -73,12 +75,12 @@ If you discover a security vulnerability in NoteSpaceLLM, please report it confi
 
 **Please do not open public issues for undisclosed security vulnerabilities.**
 
-### Response Time & SLA
+### Target Response Times
 
-- **Initial Confirmation**: Within **48 hours** of receiving the report.
-- **Triage & Severity Assessment**: Within **5 business days**.
-- **Security Patch**: Critical vulnerabilities receive top priority and will be released in an expedited patch update.
+- **Initial confirmation**: The target is within **48 hours** of receiving the report.
+- **Triage & severity assessment**: The target is within **5 business days**.
+- These are targets, not a guaranteed SLA or a promise of a patch timeline.
 
-### Statutory Disclaimer (§ 521 BGB)
+### Maintenance
 
-NoteSpaceLLM is provided as free and open-source software without financial compensation. Under German statutory law (§ 521 BGB), liability in case of gratuitous software provision is strictly limited to intentional misconduct and gross negligence.
+There is no promise of ongoing maintenance or availability.

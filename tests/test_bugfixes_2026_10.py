@@ -552,7 +552,6 @@ def test_project_create_uses_saved_app_config(monkeypatch):
         llm_provider="anthropic",
         llm_model="claude-test",
         ollama_base_url="http://remote:11434",
-        ollama_api_key="geheim",
     )
     monkeypatch.setattr(app_config, "get_app_config", lambda: fake_cfg)
 
@@ -561,6 +560,7 @@ def test_project_create_uses_saved_app_config(monkeypatch):
     assert project.settings.llm_provider == "anthropic"
     assert project.settings.llm_model == "claude-test"
     assert project.settings.ollama_base_url == "http://remote:11434"
+    assert not hasattr(project.settings, "ollama_api_key")
 
 
 def test_open_project_by_id_with_duplicate_names_and_unique_dirs(tmp_path):

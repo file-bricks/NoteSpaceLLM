@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { runInNewContext } from "node:vm";
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,6 +18,70 @@ import {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const appSource = readFileSync(join(root, "app.js"), "utf8");
+
+function createAppHarness(storage = new Map(), { userAgent = "", onLine = true } = {}) {
+  const makeElement = () => ({
+    attributes: {},
+    children: [],
+    dataset: {},
+    listeners: new Map(),
+    style: {},
+    value: "",
+    textContent: "",
+    className: "",
+    innerHTML: "",
+    addEventListener(type, callback) {
+      this.listeners.set(type, callback);
+    },
+    append(child) {
+      this.children.push(child);
+    },
+    querySelectorAll(selector) {
+      return selector === "dd" ? this.summaryCells || [] : [];
+    },
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+    },
+    click() {}
+  });
+  const selectors = [
+    "#cache-hint", "#clear-notes", "#clear-workspace-cache", "#document-badge",
+    "#document-list", "#export-notes", "#workspace-file", "#install-hint",
+    "#language-select", "#load-demo", "#review-notes", "#offline-hint",
+    "#platform-pill", "#report-badge", "#report-preview", "#report-title",
+    "#status-message", "#workspace-summary"
+  ];
+  const elements = new Map(selectors.map((selector) => [selector, makeElement()]));
+  elements.get("#workspace-summary").summaryCells = Array.from({ length: 5 }, makeElement);
+  const document = {
+    body: { append() {} },
+    documentElement: { lang: "" },
+    createElement: makeElement,
+    querySelector: (selector) => elements.get(selector) || makeElement(),
+    querySelectorAll: () => []
+  };
+  const localStorage = {
+    getItem: (key) => (storage.has(key) ? storage.get(key) : null),
+    setItem: (key, value) => storage.set(key, String(value)),
+    removeItem: (key) => storage.delete(key)
+  };
+  const window = { location: { search: "" }, addEventListener() {} };
+  const navigator = { userAgent, onLine };
+  const executableAppSource = appSource.replace(
+    /^import \{[\s\S]*?\} from "\.\/library\.js";/m,
+    "const { buildReviewMarkdown, getPlatformGuide, getDemoWorkspace, getUiText, parseWorkspaceText, resolveUiLocale } = globalThis.__library;"
+  );
+  assert.notEqual(executableAppSource, appSource, "app.js library import must be adapted for the DOM harness");
+  runInNewContext(executableAppSource, {
+    __library: { buildReviewMarkdown, getPlatformGuide, getDemoWorkspace, getUiText, parseWorkspaceText, resolveUiLocale },
+    document,
+    localStorage,
+    navigator,
+    window,
+    URLSearchParams
+  });
+  return { elements, storage };
+}
 
 test("normalizeWorkspacePayload accepts minimal valid payload", () => {
   const payload = normalizeWorkspacePayload({
@@ -137,7 +202,7 @@ test("getPlatformGuide returns Android-specific install guidance", () => {
 
   assert.equal(guide.label, "Android");
   assert.match(guide.install_hint, /Startbildschirm hinzufügen|Installieren/);
-  assert.match(guide.offline_hint, /Offline-Start|lokal/i);
+  assert.match(guide.offline_hint, /Workspace-JSON wird nicht gespeichert.*nach jedem Neuladen erneut importiert/i);
 });
 
 test("getPlatformGuide returns iOS-specific install guidance", () => {
@@ -145,7 +210,7 @@ test("getPlatformGuide returns iOS-specific install guidance", () => {
 
   assert.equal(guide.label, "iPhone / iPad");
   assert.match(guide.install_hint, /Home-Bildschirm/);
-  assert.match(guide.offline_hint, /ohne Netz|erneut geöffnet/i);
+  assert.match(guide.offline_hint, /Workspace-JSON wird nicht gespeichert.*nach jedem Neuladen erneut importiert/i);
 });
 
 test("getPlatformGuide can localize platform hints to English", () => {
@@ -153,7 +218,7 @@ test("getPlatformGuide can localize platform hints to English", () => {
 
   assert.equal(guide.label, "Android");
   assert.match(guide.install_hint, /home screen|install icon/i);
-  assert.match(guide.offline_hint, /offline start|stored locally/i);
+  assert.match(guide.offline_hint, /workspace JSON is not saved.*imported again after each reload/i);
 });
 
 test("getPlatformGuide can localize mobile hints to Japanese", () => {
@@ -161,7 +226,51 @@ test("getPlatformGuide can localize mobile hints to Japanese", () => {
 
   assert.equal(guide.label, "iPhone / iPad");
   assert.match(guide.install_hint, /ホーム画面/);
-  assert.match(guide.offline_hint, /ネットワークなし/);
+  assert.match(guide.offline_hint, /ワークスペース JSON は保存されない.*再読み込みのたびに再インポートが必要/);
+});
+
+test("offline guidance explains workspace re-import in all six locales", () => {
+  const requiredMeaning = {
+    de: /Workspace-JSON wird nicht gespeichert.*nach jedem Neuladen erneut importiert/i,
+    en: /workspace JSON is not saved.*imported again after each reload/i,
+    es: /JSON del espacio de trabajo no se guarda.*debe importarse de nuevo después de cada recarga/i,
+    "zh-Hans": /工作区 JSON 不会保存.*每次重新加载后都必须重新导入/,
+    ja: /ワークスペース JSON は保存されない.*再読み込みのたびに再インポートが必要/,
+    ru: /JSON рабочей области не сохраняется.*после каждой перезагрузки его нужно импортировать заново/i
+  };
+
+  for (const [locale, pattern] of Object.entries(requiredMeaning)) {
+    const guide = getPlatformGuide("Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/125.0", locale);
+    assert.match(guide.offline_hint, pattern, `${locale} offline copy must explain that workspace JSON is not persisted`);
+  }
+});
+
+test("the companion ignores legacy workspace cache and requires re-import after reload", async () => {
+  const workspaceCacheKey = "notespacellm-companion:last-workspace";
+  const demoWorkspace = getDemoWorkspace("de");
+  const storage = new Map([[workspaceCacheKey, JSON.stringify(demoWorkspace)]]);
+  const firstLoad = createAppHarness(storage, {
+    userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/125.0",
+    onLine: false
+  });
+
+  assert.equal(firstLoad.elements.get("#status-message").textContent, getUiText("de").statusNoWorkspace);
+  assert.equal(firstLoad.storage.has(workspaceCacheKey), false);
+  assert.match(firstLoad.elements.get("#offline-hint").textContent, /Workspace-JSON wird nicht gespeichert/);
+
+  const workspaceFile = {
+    name: "review.json",
+    text: async () => JSON.stringify(demoWorkspace)
+  };
+  firstLoad.elements.get("#workspace-file").listeners.get("change")({ target: { files: [workspaceFile] } });
+  await new Promise((resolve) => setImmediate(resolve));
+
+  assert.equal(firstLoad.elements.get("#report-title").textContent, demoWorkspace.report.title);
+  assert.equal(firstLoad.storage.has(workspaceCacheKey), false, "the imported workspace must stay in memory only");
+
+  const afterReload = createAppHarness(storage);
+  assert.equal(afterReload.elements.get("#status-message").textContent, getUiText("de").statusNoWorkspace);
+  assert.equal(afterReload.elements.get("#report-title").textContent, "");
 });
 
 test("parseWorkspaceText surfaces English validation messages when requested", () => {

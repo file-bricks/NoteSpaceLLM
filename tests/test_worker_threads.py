@@ -88,6 +88,57 @@ class TestModelLoadWorker:
         assert "erreichbar" in msg.lower() or "fehler" in msg.lower(), \
             f"Status-Meldung soll Fehler kommunizieren: '{msg}'"
 
+    def test_provider_exception_does_not_reach_signal_or_log(self, monkeypatch, caplog):
+        from src.gui.main_window import ModelLoadWorker
+        from src.llm.ollama_client import OllamaClient
+
+        secret = "model-worker-secret"
+        userinfo = "user:pass@provider.example"
+
+        def fail_availability(_client):
+            raise ValueError(f"https://{userinfo}/api/tags Bearer {secret}")
+
+        monkeypatch.setattr(OllamaClient, "_check_availability", fail_availability)
+        worker = ModelLoadWorker(f"https://{userinfo}/api", secret)
+        received = []
+        worker.models_loaded.connect(lambda models, message: received.append((models, message)))
+
+        with caplog.at_level("ERROR"):
+            worker.run()
+
+        assert len(received) == 1
+        assert received[0][0] == []
+        assert "ValueError" in received[0][1]
+        assert secret not in received[0][1]
+        assert userinfo not in received[0][1]
+        assert secret not in caplog.text
+        assert userinfo not in caplog.text
+
+
+def test_llm_worker_sanitizes_provider_exception_before_ui_signal(monkeypatch, caplog):
+    from src.gui.chat_panel import LLMWorker
+
+    secret = "chat-worker-secret"
+    userinfo = "user:pass@provider.example"
+
+    class FailingClient:
+        def stream_chat(self, *_args):
+            raise RuntimeError(f"https://{userinfo}/chat Bearer {secret}")
+
+    worker = LLMWorker(FailingClient(), "question", "")
+    received = []
+    worker.error_occurred.connect(received.append)
+
+    with caplog.at_level("ERROR"):
+        worker.run()
+
+    assert len(received) == 1
+    assert "RuntimeError" in received[0]
+    assert secret not in received[0]
+    assert userinfo not in received[0]
+    assert secret not in caplog.text
+    assert userinfo not in caplog.text
+
     def test_worker_is_not_gui_thread(self, qt_app):
         from src.gui.main_window import ModelLoadWorker
 
@@ -189,7 +240,8 @@ class TestAnalysisWorker:
         assert len(results) == 1
         assert results[0][0] == "q1"
         assert results[0][1] == ""
-        assert "LLM nicht erreichbar" in results[0][2]
+        assert "ConnectionError" in results[0][2]
+        assert "LLM nicht erreichbar" not in results[0][2]
 
     def test_analysis_success_emits_response(self, qt_app):
         from src.gui.main_window import AnalysisWorker

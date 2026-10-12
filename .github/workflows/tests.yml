@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt pytest
+          python -m pip install -r requirements.txt ".[test]"
 
       - name: Compile Python sources
         run: python -m compileall -q main.py manage_translations.py translator.py src

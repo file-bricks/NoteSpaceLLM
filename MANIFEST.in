@@ -1,0 +1,34 @@
+include README.md README_de.md
+include LICENSE NOTICE THIRD_PARTY_LICENSES.md THIRD_PARTY_LICENSES.txt
+include CHANGELOG.md ARCHITECTURE.txt CODE_OF_CONDUCT.md CONTRIBUTING.md
+include EXPORTFORMAT.md PRIVACY_POLICY.md SECURITY.md STORE_LISTING.md SUPPORT.md
+include WINDOWS_STORE_PREP.md llms.txt
+include pyproject.toml requirements.txt setup.py setup_environment.py MANIFEST.in
+include main.py notespacellm_launcher.py manage_translations.py translator.py
+include run.bat start.bat build_exe.bat NoteSpaceLLM.ico store_package.json
+include locales/translations.json
+include scripts/check_store_readiness.py
+recursive-include .github/workflows *.yml *.yaml
+graft src
+graft assets
+graft tests
+graft web_companion
+global-exclude __pycache__ *.py[cod] *.pyo *.db *.sqlite *.sqlite3 *.log
+global-exclude .DS_Store Thumbs.db desktop.ini
+exclude .env .env.* credentials.json client_secret*.json token.json
+prune .git
+prune .venv
+prune venv
+prune build
+prune dist
+prune data
+prune output
+prune profiles
+prune workflows
+prune storage
+prune chroma_db
+prune releases
+prune .pytest_cache
+prune .pytest_temp
+prune .ruff_cache
+prune web_companion/node_modules

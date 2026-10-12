@@ -10,7 +10,7 @@ Review-Notizen.
 - lokaler Import ohne Server-Upload
 - mobile Lesbarkeit für Android, iOS und Browser
 - Bericht, Dokumentmetadaten und ausgewählte Auszüge anzeigen
-- zuletzt geladenen Workspace lokal für Offline-Starts wiederherstellen
+- importierte Workspace-Inhalte nur in der aktuellen Sitzung anzeigen; nach einem Neustart erneut importieren
 - eigene Review-Notizen lokal speichern und als Markdown exportieren
 - DE/EN/ES/ZH-Hans/JA/RU-Oberfläche mit Browser-/Workspace-Locale und
   manuellem Sprachumschalter
@@ -43,5 +43,6 @@ Der konkrete Android-/iOS-PWA-Ablauf steht in `PWA_TESTPLAN.md`.
 
 - kein Upload auf entfernte Server
 - keine Bearbeitung des Workspaces im Browser
-- keine Rohdokumente, Vektordatenbanken oder API-Schlüssel im Companion
+- keine vollständigen Rohdokumente, Vektordatenbanken oder gespeicherten API-Schlüsselfelder im Workspace-Export. Frei verfasste Berichte und Chats können dennoch Geheimnisse enthalten; prüfe sie vor dem Weitergeben.
+- Workspace-Payloads werden nicht dauerhaft im Browser gespeichert; Review-Notizen und UI-Sprache sind separate lokale Daten
 - kein nativer Android-/iOS-Clone

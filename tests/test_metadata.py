@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Contract tests for NoteSpaceLLM metadata, licensing, SBOM, CI hardening, and invariants."""
+"""Checks NoteSpaceLLM metadata, declared dependency coverage, and CI configuration."""
 
 from pathlib import Path
 import re
@@ -24,24 +24,16 @@ def test_canonical_notice_present_and_well_formed():
     assert "open-bricks" in content
     assert "AGPL-3.0" in content
 
-    # Check key invariants INV-LOCAL-01 through INV-LOCAL-10
-    for i in range(1, 11):
-        inv = f"INV-LOCAL-{i:02d}"
-        assert inv in content, f"NOTICE must document invariant {inv}"
 
 
-def test_level_1_sbom_present_and_well_formed():
-    sbom_file = ROOT / "THIRD_PARTY_LICENSES.md"
-    assert sbom_file.is_file(), "Level 1 SBOM file THIRD_PARTY_LICENSES.md must exist"
-    content = sbom_file.read_text(encoding="utf-8")
+def test_declared_dependency_license_references_present():
+    notes_file = ROOT / "THIRD_PARTY_LICENSES.md"
+    assert notes_file.is_file(), "THIRD_PARTY_LICENSES.md must exist"
+    content = notes_file.read_text(encoding="utf-8")
 
-    assert "Level 1 Software Bill of Materials" in content
-    assert "LGPL-3.0" in content
     assert "PySide6" in content
     assert "PyMuPDF" in content
-    assert "dynamische Bindung" in content or "dynamic" in content.lower()
-    assert "INV-LOCAL-01" in content
-    assert "INV-LOCAL-10" in content
+    assert "AGPL-3.0-only" in content
 
     # Verify requirements coverage
     req_file = ROOT / "requirements.txt"
@@ -50,7 +42,7 @@ def test_level_1_sbom_present_and_well_formed():
         if not line or line.startswith("#"):
             continue
         pkg = re.split(r"[><=~]", line)[0].strip().lower()
-        assert pkg in content.lower(), f"Package {pkg} must be documented in Level 1 SBOM"
+        assert pkg in content.lower(), f"Package {pkg} must appear in the dependency notes"
 
 
 def test_pep621_pyproject_metadata_and_version_freeze():
@@ -61,15 +53,16 @@ def test_pep621_pyproject_metadata_and_version_freeze():
         data = tomllib.load(f)
 
     project = data.get("project", {})
-    # Strict Version Freeze Rule T-20260920-167562623: Pfad A/B passes never bump versions
-    assert project.get("version") == "1.0.0", "Version must remain frozen at 1.0.0"
+    assert project.get("license") == "AGPL-3.0-only"
+    # The current full-care change preserves the declared application version.
+    assert project.get("version") == "1.0.0", "Application version must remain 1.0.0"
 
     license_files = project.get("license-files", [])
     for expected_file in ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md", "THIRD_PARTY_LICENSES.txt"]:
         assert expected_file in license_files, f"{expected_file} must be declared in license-files"
 
     classifiers = project.get("classifiers", [])
-    assert len(classifiers) >= 8, "pyproject.toml must declare comprehensive PEP 621 classifiers"
+    assert len(classifiers) >= 8, "pyproject.toml must retain its declared platform and topic classifiers"
 
     urls = project.get("urls", {})
     assert "Homepage" in urls
@@ -111,7 +104,7 @@ def test_gitignore_cloud_sync_and_lock_guards():
     assert ".ruff_cache/" in content
 
 
-def test_ci_workflows_hardened():
+def test_ci_workflows_have_timeouts_and_read_scope():
     ci_dir = ROOT / ".github" / "workflows"
     tests_file = ci_dir / "tests.yml"
     stale_file = ci_dir / "stale.yml"
@@ -130,22 +123,14 @@ def test_ci_workflows_hardened():
     assert "web-companion-tests" in tests_content
 
 
-def test_security_sla_and_bgb_disclaimer():
+def test_security_reporting_links_are_present():
     security_file = ROOT / "SECURITY.md"
     assert security_file.is_file()
     sec_content = security_file.read_text(encoding="utf-8")
 
-    assert "48" in sec_content, "SECURITY.md must define 48h acknowledgment SLA"
-    assert "5" in sec_content, "SECURITY.md must define 5-day triage SLA"
-    assert "521 BGB" in sec_content, "SECURITY.md must include § 521 BGB statutory disclaimer"
-
-    readme_file = ROOT / "README.md"
-    readme_content = readme_file.read_text(encoding="utf-8")
-    assert "521 BGB" in readme_content, "README.md must include § 521 BGB statutory disclaimer"
-
-    readme_de_file = ROOT / "README_de.md"
-    readme_de_content = readme_de_file.read_text(encoding="utf-8")
-    assert "521 BGB" in readme_de_content, "README_de.md must include § 521 BGB statutory disclaimer"
+    assert "https://github.com/file-bricks/NoteSpaceLLM/security/advisories" in sec_content
+    assert "security@file-bricks.org" in sec_content
+    assert "support@lukasgeiger.com" in sec_content
 
 
 def test_marketing_log_present_and_well_formed():
