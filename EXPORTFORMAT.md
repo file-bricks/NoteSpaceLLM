@@ -5,14 +5,19 @@ Stand: 2026-06-05
 ## Zweck
 
 `notespacellm-workspace-v1.json` ist der Austauschvertrag zwischen der
-Desktop-App und Web-/PWA-/Mobile-Companions. Das Format ermöglicht mobile
-Recherche- und Review-Workflows, ohne lokale Rohdatenordner, Vektordatenbanken
-oder API-Schlüssel zu kopieren.
+Desktop-App und Web-/PWA-/Mobile-Companions. Der Export kann den vollständigen
+Bericht und Chatverlauf sowie ausgewählte abgeschlossene Dokumentauszüge
+enthalten. Er wird nicht anonymisiert. Lokale Rohdokumente, Vektordatenbanken
+und gespeicherte API-Schlüsselfelder werden nicht kopiert. Frei verfasste
+Bericht- und Chattexte können dennoch Geheimnisse enthalten und sollten vor dem
+Weitergeben geprüft werden.
 
 Der erste Consumer liegt unter `web_companion/`: ein read-only PWA-Reader, der
 Workspace-JSON lokal im Browser importiert, Bericht und Dokumentmetadaten
-anzeigt, den zuletzt geladenen Workspace offline wiederherstellt und eigene
-Review-Notizen als Markdown exportiert.
+anzeigt und eigene Review-Notizen als Markdown exportiert. Der importierte
+Workspace bleibt nur in der aktuellen Sitzung; zum erneuten Öffnen muss die
+Datei erneut importiert werden. Review-Notizen und UI-Sprache werden lokal
+gespeichert.
 
 ## Implementierungsstatus
 
@@ -26,15 +31,22 @@ Review-Notizen als Markdown exportiert.
 
 ## Datenschutzregeln
 
-- API-Schlüssel werden nie exportiert.
+- Gespeicherte API-Schlüsselfelder werden nicht exportiert. Frei verfasste
+  Bericht- und Chattexte werden nicht auf Geheimnisse geprüft und sollten vor
+  dem Weitergeben überprüft werden.
 - `chroma_db/`, lokale Datenbanken und Cache-Verzeichnisse werden nie exportiert.
-- Rohdokumente werden standardmäßig nicht eingebettet.
-- Dokumentauszüge werden nur exportiert, wenn sie bereits für Bericht, Chat,
-  Prompt oder Review ausgewählt wurden.
-- Externe Provider werden nur als Typ und Konfigurationshinweis dokumentiert,
-  nicht mit geheimen Werten.
+- Vollständige Rohdokumente werden nicht eingebettet; ausgewählte abgeschlossene
+  Sub-Query-Ergebnisse erscheinen als auf 2.000 Zeichen begrenzte Auszüge.
+- Auszüge erscheinen nur für ausgewählte Dokumente und nur, wenn
+  `include_subquery_excerpts` aktiviert ist.
+- Der aktuelle vollständige Bericht und Chatnachrichten von Nutzern und Assistenten
+  können enthalten sein; der Export ist nicht anonymisiert.
+- Externe Provider werden nur als Typ und lokale/entfernte/unklare Einordnung
+  dokumentiert. Die konfigurierte URL und geheime Werte werden nicht exportiert.
 - Lokale absolute Pfade werden auf redigierte Hinweise oder relative
   `path_hint`-Werte reduziert.
+- Vor dem Schreiben zeigt die Desktop-App die enthaltenen Bereiche an und fragt
+  ausdrücklich nach Bestätigung.
 
 ## Minimales Schema
 

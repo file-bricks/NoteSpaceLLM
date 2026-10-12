@@ -7,12 +7,13 @@ Tests für UX-Verbesserungen (2026-06-01):
 
 import sys
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 try:
-    from PySide6.QtWidgets import QApplication, QAction, QLabel, QPushButton
+    from PySide6.QtWidgets import QApplication, QLabel, QPushButton
+    from PySide6.QtGui import QAction
     from PySide6.QtCore import Qt
-    PYSIDE_AVAILABLE = True
+    PYSIDE_AVAILABLE = QAction is not None
 except ImportError:
     PYSIDE_AVAILABLE = False
 
@@ -104,14 +105,7 @@ class TestPipelinePhaseLabel:
     @requires_pyside
     def test_update_pipeline_phase_no_project(self):
         """_update_pipeline_phase läuft ohne Projekt ohne Exception."""
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("mw2", "src/gui/main_window.py")
-        mod = importlib.util.module_from_spec(spec)
-        with patch.dict('sys.modules', {
-            'langchain_chroma': MagicMock(),
-            'chromadb': MagicMock(),
-        }):
-            spec.loader.exec_module(mod)
+        from src.gui import main_window as mod
 
         obj = MagicMock()
         obj._pipeline_label = MagicMock()
@@ -123,14 +117,7 @@ class TestPipelinePhaseLabel:
     @requires_pyside
     def test_update_pipeline_phase_with_unextracted_docs(self):
         """Pipeline-Label zeigt 'extrahieren' wenn Docs ohne Text vorhanden."""
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("mw3", "src/gui/main_window.py")
-        mod = importlib.util.module_from_spec(spec)
-        with patch.dict('sys.modules', {
-            'langchain_chroma': MagicMock(),
-            'chromadb': MagicMock(),
-        }):
-            spec.loader.exec_module(mod)
+        from src.gui import main_window as mod
 
         mock_doc = MagicMock()
         mock_doc.is_directory = False
@@ -152,14 +139,7 @@ class TestPipelinePhaseLabel:
     @requires_pyside
     def test_update_pipeline_phase_with_extracted_docs(self):
         """Pipeline-Label zeigt 'Bericht erstellen' wenn alle Docs extrahiert."""
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("mw4", "src/gui/main_window.py")
-        mod = importlib.util.module_from_spec(spec)
-        with patch.dict('sys.modules', {
-            'langchain_chroma': MagicMock(),
-            'chromadb': MagicMock(),
-        }):
-            spec.loader.exec_module(mod)
+        from src.gui import main_window as mod
 
         mock_doc = MagicMock()
         mock_doc.is_directory = False

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Security and License Contract Test Suite for NoteSpaceLLM.
+"""Scoped security-policy and dependency-documentation checks for NoteSpaceLLM.
 
-Validates dependency vulnerability floors, complete third-party license
-inventory, .gitignore sync conflict and lock patterns, absence of hardcoded
-developer paths / secrets, offline zero-egress guarantees of core parsers,
-and bilingual security policy standards.
+Checks selected declared dependency constraints and license notes, .gitignore
+patterns, absence of hardcoded developer paths / secrets, direct network-client
+imports in selected core modules, and bilingual security-reporting targets.
 """
 from __future__ import annotations
 
@@ -20,26 +19,29 @@ except ModuleNotFoundError:
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_dependency_vulnerability_floors() -> None:
-    """Ensure declared dependency versions meet security floors."""
+def test_declared_dependency_version_constraints() -> None:
+    """Check selected dependency constraints declared by the project."""
     pyproject_text = (PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     pyproject_data = tomllib.loads(pyproject_text)
 
     deps = pyproject_data.get("project", {}).get("dependencies", [])
     assert any("PySide6>=6.5.0" in d for d in deps), (
-        "pyproject.toml dependencies must declare PySide6>=6.5.0"
+        "pyproject.toml must retain the declared PySide6 lower bound"
     )
     assert any("PyMuPDF>=1.24.10" in d for d in deps), (
         "pyproject.toml dependencies must declare PyMuPDF>=1.24.10"
     )
     assert any("openpyxl>=3.1.3" in d for d in deps), (
-        "pyproject.toml dependencies must declare openpyxl>=3.1.3 to mitigate CVE-2024-34064"
+        "pyproject.toml must retain the declared openpyxl lower bound"
     )
     assert any("chromadb>=0.5.4" in d for d in deps), (
         "pyproject.toml dependencies must declare chromadb>=0.5.4"
     )
     assert any("python-docx>=1.1.0" in d for d in deps), (
         "pyproject.toml dependencies must declare python-docx>=1.1.0"
+    )
+    assert any("keyring>=25.7.0" in d for d in deps), (
+        "pyproject.toml dependencies must declare keyring>=25.7.0"
     )
 
     opt_deps = pyproject_data.get("project", {}).get("optional-dependencies", {})
@@ -48,7 +50,7 @@ def test_dependency_vulnerability_floors() -> None:
 
     all_test_deps = test_deps + dev_deps
     assert any("pytest>=9.1.1" in d for d in all_test_deps), (
-        "pytest floor must be >=9.1.1 to protect against CVE-2025-7117 / GHSA-6w46-j5rx-g56g"
+        "the test dependency group must retain the declared pytest lower bound"
     )
 
     req_text = (PROJECT_ROOT / "requirements.txt").read_text(encoding="utf-8")
@@ -56,10 +58,11 @@ def test_dependency_vulnerability_floors() -> None:
     assert "PyMuPDF>=1.24.10" in req_text, "requirements.txt must declare PyMuPDF>=1.24.10"
     assert "openpyxl>=3.1.3" in req_text, "requirements.txt must declare openpyxl>=3.1.3"
     assert "chromadb>=0.5.4" in req_text, "requirements.txt must declare chromadb>=0.5.4"
+    assert "keyring>=25.7.0" in req_text, "requirements.txt must declare keyring>=25.7.0"
 
 
-def test_third_party_licenses_inventory_complete() -> None:
-    """Ensure THIRD_PARTY_LICENSES.txt comprehensively covers dependencies."""
+def test_selected_declared_dependency_license_notes() -> None:
+    """Ensure selected package and license references are present."""
     tpl_path = PROJECT_ROOT / "THIRD_PARTY_LICENSES.txt"
     assert tpl_path.is_file(), "THIRD_PARTY_LICENSES.txt must exist"
     text = tpl_path.read_text(encoding="utf-8")
@@ -77,6 +80,7 @@ def test_third_party_licenses_inventory_complete() -> None:
         "langchain-ollama",
         "langchain-chroma",
         "chromadb",
+        "keyring",
         "pytest",
         "ruff",
         "PyInstaller",
@@ -87,15 +91,7 @@ def test_third_party_licenses_inventory_complete() -> None:
     assert "License:" in text, "Missing License entries in inventory"
     assert "URL:" in text, "Missing URL entries in inventory"
 
-    # Verify sections exist
-    assert "1. Runtime Dependencies" in text
-    assert "2. Optional Integrations & Backends" in text
-    assert "3. Development, Build & Test Dependencies" in text
-
-    # Verify copyleft & compatibility analysis
     assert "AGPL-3.0" in text
-    assert "LGPL-3.0-only" in text
-    assert "License Compatibility & Copyleft Analysis" in text
 
 
 def test_gitignore_security_and_conflict_hardening() -> None:
@@ -152,8 +148,8 @@ def test_no_hardcoded_user_paths_or_dev_secrets() -> None:
             )
 
 
-def test_offline_core_document_parsers_zero_egress() -> None:
-    """Verify core document extraction and project modules perform zero network calls."""
+def test_selected_core_modules_do_not_import_network_clients_directly() -> None:
+    """Check direct imports in selected modules without claiming zero egress."""
     forbidden_modules = {
         "urllib.request",
         "requests",
@@ -188,18 +184,14 @@ def test_offline_core_document_parsers_zero_egress() -> None:
                     )
 
 
-def test_security_policy_bilingual_and_sla() -> None:
-    """Verify SECURITY.md contains bilingual policy, contacts, and 48h SLA."""
+def test_security_policy_bilingual_reporting_channels() -> None:
+    """Verify the bilingual policy includes its reporting routes."""
     sec_path = PROJECT_ROOT / "SECURITY.md"
     assert sec_path.is_file(), "SECURITY.md must exist"
     text = sec_path.read_text(encoding="utf-8")
 
     assert "## Deutsch" in text
     assert "## English" in text
-    assert "48 Stunden" in text
-    assert "48 hours" in text
-    assert "5 Werktagen" in text
-    assert "5 business days" in text
     assert "security@file-bricks.org" in text
     assert "support@lukasgeiger.com" in text
     assert "https://github.com/file-bricks/NoteSpaceLLM/security/advisories" in text

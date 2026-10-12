@@ -199,8 +199,11 @@ class LLMWorker(QThread if PYSIDE_AVAILABLE else object):
 
             self.response_complete.emit(full_response)
 
-        except Exception as e:
-            self.error_occurred.emit(str(e))
+        except Exception as exc:
+            logger.error("LLM worker failed (%s).", type(exc).__name__)
+            self.error_occurred.emit(
+                f"LLM-Anfrage fehlgeschlagen ({type(exc).__name__})."
+            )
 
     def stop(self):
         """Request stop."""
@@ -239,9 +242,11 @@ class RAGWorker(QThread if PYSIDE_AVAILABLE else object):
                 "query": result.query
             })
 
-        except Exception as e:
-            logger.error(f"RAG Worker Fehler: {e}")
-            self.error_occurred.emit(str(e))
+        except Exception as exc:
+            logger.error("RAG worker failed (%s).", type(exc).__name__)
+            self.error_occurred.emit(
+                f"RAG request failed ({type(exc).__name__})."
+            )
 
 
 class ChatPanel(QWidget if PYSIDE_AVAILABLE else object):

@@ -5,25 +5,20 @@
 [![License: AGPL v3](https://img.shields.io/badge/Lizenz-AGPL%20v3-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![Plattform: Windows](https://img.shields.io/badge/Plattform-Windows-lightgrey.svg)]()
-[![Offline-first](https://img.shields.io/badge/offline--first-ja-green.svg)]()
-[![Pytest](https://img.shields.io/badge/Pytest-147%20bestanden-brightgreen.svg)]()
-[![Web Companion Tests](https://img.shields.io/badge/Web%20Companion-60%20bestanden-brightgreen.svg)]()
-[![Notice: Invarianten](https://img.shields.io/badge/Notice-INV--LOCAL--01..10-blue.svg)](NOTICE)
-[![SBOM: Level 1](https://img.shields.io/badge/SBOM-Level%201-blue.svg)](THIRD_PARTY_LICENSES.md)
 [![Ökosystem: file-bricks](https://img.shields.io/badge/%C3%96kosystem-file--bricks-blue.svg)](https://github.com/file-bricks)
 [![Dachorganisation: open-bricks](https://img.shields.io/badge/Dachorganisation-open--bricks-blue.svg)](https://github.com/open-bricks)
 [![LLM Kontext: llms.txt](https://img.shields.io/badge/LLM%20Kontext-llms.txt-blue.svg)](llms.txt)
 
 [Deutsch](README_de.md) | [English](README.md)
 
-> **Lokale NotebookLM-Alternative für private Dokumentenanalyse, RAG-gestützte Recherche und berichtsbasierte Workflows.**
+> **Lokale Dokumenten- und Rechercheanwendung mit konfigurierbaren lokalen oder externen Sprachmodellen.**
 
 > [!NOTE]
 > **Für KI-Agenten & automatisierte Systeme:**
 > NoteSpaceLLM bietet eine maschinenlesbare Architektur- und Funktionsübersicht in [`llms.txt`](llms.txt).
-> Sämtliche Unit-Tests (`pytest`) und Web-Companion-Tests (`npm test` in `web_companion/`) laufen vollständig offline ohne externe Netzwerkabhängigkeiten.
+> Die Python- und Web-Companion-Tests sind für isolierte lokale Daten eingerichtet und rufen keine externen Modellanbieter auf.
 
-Analyse lokaler Dokumente (PDF, DOCX, TXT, Markdown, XLSX, EML, MSG) ohne Upload auf fremde Server. Unterstützt lokale und externe Ollama-Server, OpenAI, Anthropic sowie Claude-Code-Workflows. Ergebnisse lassen sich in Markdown, PDF, DOCX, HTML und TXT exportieren. Mit dem Web/PWA-Companion können exportierte Workspaces auch unterwegs auf Smartphone oder Tablet (Android/iOS) eingesehen werden.
+Analysiert lokale Dokumente (PDF, DOCX, TXT, Markdown, XLSX, EML, MSG) lokal. Bei ausdrücklich konfigurierten externen LLM-Anbietern werden ausgewählte Texte und Prompts an diese Anbieter übertragen. Unterstützt lokale und externe Ollama-Server, OpenAI, Anthropic sowie Claude-Code-Workflows. Ergebnisse lassen sich in Markdown, PDF, DOCX, HTML und TXT exportieren. Mit dem Web/PWA-Companion können exportierte Workspaces auch unterwegs auf Smartphone oder Tablet (Android/iOS) eingesehen werden.
 
 ## Schnellstart
 
@@ -36,11 +31,15 @@ python main.py
 
 Unter Windows kann die Anwendung auch über `start.bat` gestartet werden. Ein Windows-Executable lässt sich mit `build_exe.bat` bauen.
 
+Für einen geführten lokalen Bootstrap, der Abhängigkeiten installiert und
+Startordner für Workflows/Profile anlegt, kann `python setup_environment.py`
+ausdrücklich ausgeführt werden. Paketmetadaten und Builds starten diesen Installer nicht.
+
 Tests und Kompilierungs-Checks ausführen:
 
 ```bash
 pytest
-python -m compileall -q main.py manage_translations.py translator.py src
+python -m compileall -q main.py manage_translations.py setup_environment.py translator.py src
 cd web_companion
 npm test
 ```
@@ -95,9 +94,9 @@ graph TD
 - **Claude Code Integration**: Strukturierte Antwort-Prompts oder Übergabe an eine interaktive Claude-Code-Session
 - **Multi-Format Export**: Ausgabe nach MD, PDF, DOCX, HTML, TXT
 - **Prompt Export**: Kontext als Markdown-Prompt für externe KI-Tools speichern
-- **Remote Ollama pro Projekt**: Konfigurierbare Server-URL und API-Schlüssel je Projekt
-- **Mehrsprachigkeit (6 Sprachen)**: Benutzeroberfläche auf Deutsch, Englisch, Spanisch, Chinesisch, Japanisch und Russisch
-- **Web/PWA Companion**: Lokale PWA zur Durchsicht exportierter Workspaces auf Mobilgeräten
+- **Ollama-Verbindungsprofile**: Appweite Provider-Einstellungen können in mehreren Projekten verwendet werden
+- **Desktop-Oberfläche**: Derzeit überwiegend deutsch; die Berichtssprache ändert den Bericht, nicht die Desktop-Oberfläche.
+- **Web/PWA Companion**: Oberfläche zur Durchsicht exportierter Workspaces mit Sprachwahl in Deutsch, Englisch, Spanisch, Chinesisch, Japanisch und Russisch
 
 ## Installation & Abhängigkeiten
 
@@ -134,16 +133,30 @@ NoteSpaceLLM kann mit entfernten Ollama-Instanzen verbunden werden (z. B. via [e
 2. **Ollama URL:** `http://dein-server:11435`
 3. **API Key:** Falls der Server durch einen Auth-Proxy geschützt ist
 
+Server-URL und Modell werden in den appweiten LLM-Einstellungen oder im
+ausgewählten Verbindungsprofil verwaltet, nicht pro Projekt. Gespeicherte
+API-Schlüssel verwendet die App über den nativen Zugangsdienst des
+Betriebssystems. `NOTESPACELLM_OLLAMA_API_KEY` überschreibt den gespeicherten
+Schlüssel, wird aber nie gespeichert. Alte Klartextschlüssel werden erst nach
+einer ausdrücklich gestarteten Migration verwendet.
+
+Ein entfernter Ollama-Server erhält Dokumenttext für Embeddings sowie Prompts
+und Kontext für die Generierung. Der API-Schlüssel wird als Bearer-Header an die
+konfigurierte URL gesendet. HTTP verschlüsselt diese Inhalte und Zugangsdaten
+nicht; bei HTTPS hängt der Schutz vom Endpunkt und dessen Zertifikat ab.
+
 ## Lizenz & Community
 
-- **Lizenz**: AGPL-3.0
+- **Lizenz**: AGPL-3.0-only
 - **Verzeichnis**: Teil des `file-bricks` Ökosystems
-- **Sicherheit & Datenschutz**: Local-First Architecture — Dokumente verbleiben auf dem lokalen System.
+- **Lokale Datenhaltung**: Projektdateien und der Vektorindex werden standardmäßig lokal gespeichert; konfigurierte externe Anbieter erhalten die für eine Anfrage verwendeten Texte und Prompts.
+
+## Verwandtes Projekt
+
+[KnowledgeDigest](https://github.com/file-bricks/KnowledgeDigest) ist eine eigenständige lokale Wissensdatenbank mit SQLite/FTS5-Suche und optionalen LLM-Zusammenfassungen; sie ist nicht in NoteSpaceLLM integriert.
 
 ---
 
-## Haftung & Gesetzlicher Haftungsausschluss (§ 521 BGB)
+## Hinweise
 
-Dieses Projekt ist eine **unentgeltliche Open-Source-Schenkung** im Sinne der §§ 516 ff. BGB. Die Haftung des Urhebers ist gemäß **§ 521 BGB** auf **Vorsatz und grobe Fahrlässigkeit** beschränkt. Ergänzend gelten die Haftungsausschlüsse der GNU Affero General Public License v3.0, insbesondere §§ 15–16.
-
-Nutzung auf eigenes Risiko. Keine Wartungszusage, keine Verfügbarkeitsgarantie, keine Gewähr für Fehlerfreiheit oder Eignung für einen bestimmten Zweck.
+Die Bedingungen der Projektlizenz stehen in [LICENSE](LICENSE). Es gibt keine Zusage für laufende Wartung oder Verfügbarkeit.

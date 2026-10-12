@@ -5,25 +5,20 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-lightgrey.svg)]()
-[![Offline-first](https://img.shields.io/badge/offline--first-yes-green.svg)]()
-[![Pytest](https://img.shields.io/badge/Pytest-147%20passed-brightgreen.svg)]()
-[![Web Companion Tests](https://img.shields.io/badge/Web%20Companion-60%20passed-brightgreen.svg)]()
-[![Notice: Invariants](https://img.shields.io/badge/Notice-INV--LOCAL--01..10-blue.svg)](NOTICE)
-[![SBOM: Level 1](https://img.shields.io/badge/SBOM-Level%201-blue.svg)](THIRD_PARTY_LICENSES.md)
 [![Ecosystem: file-bricks](https://img.shields.io/badge/Ecosystem-file--bricks-blue.svg)](https://github.com/file-bricks)
 [![Umbrella: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-blue.svg)](https://github.com/open-bricks)
 [![LLM Context: llms.txt](https://img.shields.io/badge/LLM%20Context-llms.txt-blue.svg)](llms.txt)
 
 [English](README.md) | [Deutsch](README_de.md)
 
-> **Local NotebookLM alternative for private document analysis, RAG-assisted research, and multi-format report generation.**
+> **Local-first document notebook for research and report generation with configurable local or remote language models.**
 
 > [!NOTE]
 > **For AI Agents & Automated Workflows:**
-> NoteSpaceLLM provides machine-readable architecture and feature specifications in [`llms.txt`](llms.txt).
-> Python unit tests (`pytest`) and Web Companion tests (`npm test` in `web_companion/`) run 100% offline without external network dependencies.
+> NoteSpaceLLM provides a machine-readable architecture and feature overview in [`llms.txt`](llms.txt).
+> The Python and Web Companion test suites are configured to use isolated local data and avoid external provider calls.
 
-NoteSpaceLLM is an offline-first PySide6 desktop app for working with PDFs,
+NoteSpaceLLM is a local-first PySide6 desktop app for working with PDFs,
 Word files, Markdown, mail exports, notes, and research folders. It keeps
 project data local by default, supports local or remote Ollama, OpenAI,
 Anthropic and Claude Code workflows, and exports analysis results to Markdown,
@@ -32,7 +27,7 @@ reviewing exported workspaces on Android, iOS and browser devices without
 uploading documents to a server.
 
 **Best-fit searches:** NotebookLM alternative, local RAG document analysis,
-private document chat, PySide6 research tool, offline AI report generator,
+local document chat, PySide6 research tool, local-model report generator,
 local-first document workflow.
 
 ## Quick Start
@@ -46,11 +41,15 @@ python main.py
 
 On Windows you can also launch via `start.bat`. A local Windows launcher can be built with `build_exe.bat`.
 
+For a guided local bootstrap that installs requirements and creates starter
+workflow/profile folders, run `python setup_environment.py` explicitly. Package
+metadata and builds use the separate setuptools entry point and do not run it.
+
 Run tests and compile smoke checks with:
 
 ```bash
 pytest
-python -m compileall -q main.py manage_translations.py translator.py src
+python -m compileall -q main.py manage_translations.py setup_environment.py translator.py src
 cd web_companion
 npm test
 ```
@@ -105,8 +104,8 @@ graph TD
 - **Claude Code integration**: Structured API responses or hand-off to an interactive Claude Code session
 - **Multi-format export**: Output to MD, PDF, DOCX, HTML, TXT
 - **Prompt export**: Save the report context as a Markdown prompt for external LLM workflows
-- **Remote Ollama per project**: Configurable server URL and API key per project
-- **6-language i18n**: Interface translations for de, en, es, zh, ja, ru
+- **Ollama connection profiles**: App-wide provider settings can be reused across projects
+- **Language behavior**: The desktop interface is currently primarily German. The Web/PWA Companion has a six-language UI (de, en, es, zh, ja, ru); the report-language setting changes generated content, not the desktop UI.
 - **Umlaut-safe UI**: German UI strings use native umlauts; the translation scanner avoids English false positives
 - **Profiles**: Reusable output-format combinations
 
@@ -146,6 +145,18 @@ NoteSpaceLLM can connect to a remote Ollama server, e.g. via [ellmos-stack](http
 3. **API Key:** If the server is behind an auth proxy (recommended)
 
 > **Tip:** Ollama has no built-in authentication. For remote access, use a reverse proxy (e.g. Nginx) with API key or Basic Auth.
+
+The Ollama endpoint and model are configured in the app-wide settings or the
+selected connection profile, not per project. API keys are stored through the
+operating system's credential store when saved in the app. The optional
+`NOTESPACELLM_OLLAMA_API_KEY` environment variable overrides the saved key and
+is never written by the app. Legacy plaintext keys are not sent until you
+explicitly migrate them in settings.
+
+When the configured Ollama server is remote, it receives document text used for
+embeddings and prompts/context sent for generation. The API key is sent to the
+configured URL as a Bearer header. Plain HTTP does not encrypt either content or
+credentials; HTTPS behavior depends on the endpoint and its certificate.
 
 ### OpenAI
 
@@ -218,10 +229,10 @@ Use **"Export prompt"** to save the current working context as a Markdown file f
 
 Under `web_companion/` is a read-only Companion strand for Android, iOS and
 browser. It imports exported `notespacellm-workspace-v1.json` files locally in
-the browser, shows the report, document metadata and selected excerpts, restores
-the last loaded workspace locally for offline starts, supports a DE/EN UI with
-browser/workspace locale plus manual language switch, and can export review
-notes as Markdown.
+the browser, shows the report, document metadata and selected excerpts, and can
+export review notes as Markdown. The workspace remains in the current browser
+session and must be re-imported after reopening; only review notes and UI locale
+are persisted locally.
 
 Local browser test:
 
@@ -241,11 +252,12 @@ The Android/iOS PWA test plan is documented in `web_companion/PWA_TESTPLAN.md`.
 
 ## Platform Strategy
 
-The desktop app remains the authoritative full version for local documents, RAG
-index, LLM providers and confidential work. For Android, iOS and browser a
-Web/PWA Companion is planned as a separate strand, exchanging data via
-`notespacellm-workspace-v1.json`. The public exchange contract is documented
-in `EXPORTFORMAT.md`.
+The desktop app is the full application for local documents, the RAG index, and
+provider connections. The Android, iOS, and browser Web/PWA Companion is
+available for reviewing a user-created `notespacellm-workspace-v1.json` export.
+For sensitive material, configure local model and embedding endpoints and
+review exports before sharing. The exchange contract is documented in
+`EXPORTFORMAT.md`.
 
 ### macOS and Linux Source Smokes
 
@@ -259,8 +271,8 @@ Additional source smokes run in GitHub Actions:
 NoteSpaceLLM/
 ├── main.py                 # Entry point
 ├── requirements.txt        # Dependencies
-├── translator.py           # i18n system (6 languages)
-├── locales/                # Translation files
+├── translator.py           # Translation-catalog scan/helper; no desktop language switch
+├── locales/                # Catalog inputs for the translation helper
 ├── src/
 │   ├── core/              # Core functionality
 │   │   ├── document_manager.py
@@ -313,27 +325,35 @@ and exports locally in `data/`, `profiles/`, `workflows/`, `output/` and
 
 When external LLM providers (OpenAI, Anthropic, Claude Code, remote Ollama)
 are enabled, prompts and selected document excerpts may be transmitted to those
-services. For confidential documents use local models and review folder contents
-before sharing.
+services. A remote Ollama endpoint also receives document text used for
+embeddings. For sensitive documents use local model and embedding endpoints
+and review exported reports, chat history and selected excerpts before
+sharing; workspace exports are not anonymized.
 
 ## Tips
 
 1. **Large document sets**: Select only relevant documents first for faster results
 2. **Sub-queries**: Use targeted sub-queries for higher-quality analysis
-3. **Ollama**: Recommended for privacy and offline use
+3. **Ollama**: A local Ollama endpoint supports offline processing.
 4. **Workflow ordering**: Steps can be reordered in the workflow panel
 
 ## License
 
-AGPL v3 — see [LICENSE](LICENSE)
+AGPL-3.0-only — see [LICENSE](LICENSE)
 
-This project uses PySide6 (LGPL) and PyMuPDF (AGPL).
+This project declares PySide6 and PyMuPDF. See the selected upstream license
+references in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md); the project's
+own license is AGPL-3.0-only.
+
+## Related Project
+
+[KnowledgeDigest](https://github.com/file-bricks/KnowledgeDigest) is a separate local knowledge database with SQLite/FTS5 search and optional LLM summaries; it is not integrated with NoteSpaceLLM.
 
 ---
 
 ## Deutsch
 
-Ein lokaler, datenschutzfreundlicher Ersatz für Google NotebookLM zur Dokumentenanalyse und Berichterstellung.
+Eine lokale Dokumenten- und Rechercheanwendung mit konfigurierbaren lokalen oder externen Sprachmodellen.
 
 ### Features
 
@@ -346,8 +366,8 @@ Ein lokaler, datenschutzfreundlicher Ersatz für Google NotebookLM zur Dokumente
 - **Claude Code Integration**: Wahlweise strukturierte API-Antworten oder Übergabe an eine interaktive Claude-Code-Session
 - **Multi-Format-Export**: Ausgabe in MD, PDF, DOCX, HTML, TXT
 - **Prompt-Export**: Berichtskontext als Markdown-Prompt für externe LLM-Workflows exportieren
-- **Remote-Ollama pro Projekt**: Eigene Base-URL und API-Key für lokale oder entfernte Ollama-Server
-- **6-Sprachen-i18n**: Übersetzungen für de, en, es, zh, ja, ru
+- **Ollama-Verbindungsprofile**: Appweite Provider-Einstellungen können in mehreren Projekten verwendet werden
+- **Sprachoberflächen**: Die Desktop-Oberfläche ist derzeit überwiegend deutsch. Der Web/PWA-Companion bietet UI-Texte in Deutsch, Englisch, Spanisch, Chinesisch, Japanisch und Russisch; die Berichtssprache ändert nicht die Desktop-Oberfläche.
 - **Umlaut-sichere Oberfläche**: Deutsche UI-Texte verwenden echte Umlaute; der Übersetzungs-Scan vermeidet englische False Positives
 - **Profile**: Wiederverwendbare Ausgabeformat-Kombinationen
 
@@ -371,7 +391,17 @@ Unter Windows alternativ per `start.bat`. Build: `build_exe.bat`
 
 #### Ollama (Remote-Server)
 
-Konfigurierbare Server-URL und API-Key pro Projekt. Kompatibel mit [ellmos-stack](https://github.com/ellmos-ai/ellmos-stack).
+Konfigurierbare Server-URL und Modell werden in den appweiten LLM-Einstellungen
+oder im ausgewählten Verbindungsprofil verwaltet, nicht pro Projekt. Kompatibel
+mit [ellmos-stack](https://github.com/ellmos-ai/ellmos-stack).
+
+Gespeicherte API-Schlüssel verwendet die App über den nativen Zugangsdienst des
+Betriebssystems. `NOTESPACELLM_OLLAMA_API_KEY` überschreibt den gespeicherten
+Schlüssel, wird aber nie gespeichert. Alte Klartextschlüssel werden erst nach
+einer ausdrücklich gestarteten Migration verwendet. Ein entfernter Ollama-Server
+erhält Dokumenttext für Embeddings sowie Prompts und Kontext für die Generierung;
+der API-Schlüssel wird als Bearer-Header an die konfigurierte URL gesendet. HTTP
+verschlüsselt diese Daten nicht.
 
 #### OpenAI / Anthropic (Claude)
 
@@ -395,12 +425,14 @@ export ANTHROPIC_API_KEY="..."
 
 Desktop-App als autoritative Vollversion. Web/PWA-Companion für Android, iOS und Browser über `notespacellm-workspace-v1.json`. Details im [Exportformat](EXPORTFORMAT.md).
 
+## Verwandtes Projekt
+
+[KnowledgeDigest](https://github.com/file-bricks/KnowledgeDigest) ist eine eigenständige lokale Wissensdatenbank mit SQLite/FTS5-Suche und optionalen LLM-Zusammenfassungen; sie ist nicht in NoteSpaceLLM integriert.
+
 ---
 
-## Haftung / Liability
+## Hinweise / Notes
 
-Dieses Projekt ist eine **unentgeltliche Open-Source-Schenkung** im Sinne der §§ 516 ff. BGB. Die Haftung des Urhebers ist gemäß **§ 521 BGB** auf **Vorsatz und grobe Fahrlässigkeit** beschränkt. Ergänzend gelten die Haftungsausschlüsse der GNU Affero General Public License v3.0, insbesondere §§ 15–16.
+Die Bedingungen der Projektlizenz stehen in [LICENSE](LICENSE). Es gibt keine Zusage für laufende Wartung oder Verfügbarkeit.
 
-Nutzung auf eigenes Risiko. Keine Wartungszusage, keine Verfügbarkeitsgarantie, keine Gewähr für Fehlerfreiheit oder Eignung für einen bestimmten Zweck.
-
-This project is an unpaid open-source donation. Liability is limited to intent and gross negligence (§ 521 German Civil Code). Use at your own risk. No warranty, no maintenance guarantee, no fitness-for-purpose assumed.
+See [LICENSE](LICENSE) for the project's license terms. The maintainers do not promise ongoing maintenance or availability.

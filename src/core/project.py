@@ -46,7 +46,6 @@ class ProjectSettings:
     llm_provider: str = "ollama"  # ollama, openai, anthropic, local
     llm_model: str = "llama3"
     ollama_base_url: str = "http://localhost:11434"
-    ollama_api_key: str = ""
     max_context_tokens: int = 8000
     language: str = "de"
 
@@ -75,7 +74,6 @@ class ProjectSettings:
             llm_provider=app_cfg.llm_provider,
             llm_model=app_cfg.llm_model,
             ollama_base_url=app_cfg.ollama_base_url,
-            ollama_api_key=app_cfg.ollama_api_key,
             max_context_tokens=data.get("max_context_tokens", 8000),
             language=data.get("language", "de")
         )

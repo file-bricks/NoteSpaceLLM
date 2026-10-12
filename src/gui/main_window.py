@@ -10,6 +10,7 @@ Includes RAG integration with LangChain + ChromaDB.
 
 import sys
 import logging
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -22,7 +23,7 @@ try:
         QFileDialog, QInputDialog, QApplication, QProgressDialog,
         QDockWidget, QTabWidget, QDialog, QComboBox, QLabel,
         QDialogButtonBox, QFormLayout, QGroupBox, QLineEdit,
-        QPushButton
+        QPushButton, QCheckBox
     )
     from PySide6.QtCore import Qt, QSize, QTimer, Slot
     from PySide6.QtGui import QAction, QIcon, QKeySequence
@@ -53,8 +54,13 @@ if PYSIDE_AVAILABLE:
                 try:
                     response = self._llm_client.chat(prompt, "")
                     self.query_complete.emit(query_id, response, "")
-                except Exception as e:
-                    self.query_complete.emit(query_id, "", str(e))
+                except Exception as exc:  # noqa: BLE001 - sanitize provider errors before UI/logging
+                    logger.error("Analysis worker failed (%s).", type(exc).__name__)
+                    self.query_complete.emit(
+                        query_id,
+                        "",
+                        f"LLM-Anfrage fehlgeschlagen ({type(exc).__name__}).",
+                    )
             self.all_complete.emit()
 
     class ExtractionWorker(QThread):
@@ -133,11 +139,11 @@ if PYSIDE_AVAILABLE:
                 client._check_availability()
                 if client._is_available:
                     models = client.get_models()
-                    self.models_loaded.emit(models, f"{len(models)} Modelle auf {self._url}")
+                    self.models_loaded.emit(models, f"Ollama erreichbar ({len(models)} Modelle)")
                 else:
-                    self.models_loaded.emit([], f"Ollama nicht erreichbar ({self._url})")
-            except Exception as e:
-                self.models_loaded.emit([], f"Fehler: {e}")
+                    self.models_loaded.emit([], "Ollama am konfigurierten Endpunkt nicht erreichbar")
+            except Exception as exc:  # noqa: BLE001 - show only a sanitized error category
+                self.models_loaded.emit([], f"Ollama-Abfrage fehlgeschlagen ({type(exc).__name__})")
 
 
 if PYSIDE_AVAILABLE:
@@ -485,7 +491,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         workspace_export_action.setShortcut("Ctrl+Shift+E")
         workspace_export_action.setToolTip(
             "Exportiert Projekt, Dokumente, Bericht und Chat als\n"
-            "notespacellm-workspace-v1.json (datenschutzkonform)"
+            "notespacellm-workspace-v1.json. Der Export ist nicht anonymisiert."
         )
         workspace_export_action.triggered.connect(self._export_workspace)
         file_menu.addAction(workspace_export_action)
@@ -875,7 +881,15 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
 
         self.statusbar.showMessage("Modelle werden abgefragt...")
         url = self._get_ollama_url()
-        api_key = self._current_project.settings.ollama_api_key if self._current_project else ""
+        try:
+            from ..core.app_config import get_app_config
+            api_key = get_app_config().get_ollama_api_key()
+        except Exception as exc:  # noqa: BLE001 - show only a sanitized error category
+            logger.error("Credential lookup failed (%s).", type(exc).__name__)
+            self.statusbar.showMessage(
+                f"Ollama-Schlüssel nicht verfügbar ({type(exc).__name__})."
+            )
+            return
 
         worker = ModelLoadWorker(url, api_key)
         worker.models_loaded.connect(
@@ -892,6 +906,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
 
         from ..core.app_config import get_app_config
         app_cfg = get_app_config()
+        selected_profile = [None]
 
         # ===== Profile Section =====
         profile_group = QGroupBox("Verbindungsprofile")
@@ -925,9 +940,24 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         provider_layout.addRow("Ollama URL:", ollama_url_edit)
 
         ollama_key_edit = QLineEdit()
-        ollama_key_edit.setPlaceholderText("Leer = keine Auth (lokal)")
+        ollama_key_edit.setPlaceholderText("Leer lassen = vorhandenen Schlüssel behalten")
         ollama_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
         provider_layout.addRow("API-Key:", ollama_key_edit)
+
+        clear_key_check = QCheckBox("Gespeicherten API-Key entfernen")
+        provider_layout.addRow("", clear_key_check)
+        clear_key_check.toggled.connect(ollama_key_edit.setDisabled)
+        ollama_key_edit.textChanged.connect(
+            lambda text: clear_key_check.setChecked(False) if text else None
+        )
+
+        credential_status_label = QLabel("")
+        credential_status_label.setWordWrap(True)
+        credential_status_label.setStyleSheet("color: #666; font-size: 10px;")
+        provider_layout.addRow("Schlüsselstatus:", credential_status_label)
+
+        migrate_legacy_btn = QPushButton("Alte Klartext-Schlüssel migrieren…")
+        provider_layout.addRow("", migrate_legacy_btn)
 
         embedding_combo = QComboBox()
         embedding_combo.setEditable(True)
@@ -962,6 +992,47 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         provider_combo.currentTextChanged.connect(_update_provider_visibility)
 
         layout.addWidget(provider_group)
+
+        def _refresh_credential_status(profile_name=None):
+            state, detail = app_cfg.credential_status(profile_name)
+            credential_status_label.setText(f"{state}: {detail}")
+            migrate_legacy_btn.setEnabled(app_cfg.has_legacy_credentials)
+
+        def _migrate_legacy_credentials():
+            if not app_cfg.has_legacy_credentials:
+                QMessageBox.information(
+                    dialog, "Schlüssel migrieren", "Es wurden keine alten Klartext-Schlüssel gefunden."
+                )
+                return
+            answer = QMessageBox.question(
+                dialog,
+                "Alte Schlüssel migrieren",
+                f"{app_cfg.legacy_credential_count} alte(r) Schlüssel werden in den nativen "
+                "Schlüsselspeicher des Betriebssystems übertragen und anschließend aus der "
+                "Konfigurationsdatei entfernt. Fortfahren?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            if answer != QMessageBox.StandardButton.Yes:
+                return
+            try:
+                migrated = app_cfg.migrate_legacy_credentials()
+            except Exception as exc:  # noqa: BLE001 - AppConfig and CredentialStore normalize details
+                QMessageBox.warning(
+                    dialog,
+                    "Migration fehlgeschlagen",
+                    f"Die bisherige Konfiguration wurde beibehalten. {exc}",
+                )
+                _refresh_credential_status(selected_profile[0])
+                return
+            _refresh_credential_status(selected_profile[0])
+            QMessageBox.information(
+                dialog,
+                "Migration abgeschlossen",
+                f"{migrated} Schlüssel wurden überprüft und migriert.",
+            )
+
+        migrate_legacy_btn.clicked.connect(_migrate_legacy_credentials)
 
         # ===== Model Section =====
         model_group = QGroupBox("Modell")
@@ -1003,10 +1074,11 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         layout.addWidget(button_box)
 
         # ===== Helper: Populate form from values =====
-        def _populate_form(provider, model, url, key, emb_model, cc_mode):
+        def _populate_form(provider, model, url, emb_model, cc_mode):
             provider_combo.setCurrentText(provider)
             ollama_url_edit.setText(url)
-            ollama_key_edit.setText(key)
+            ollama_key_edit.clear()
+            clear_key_check.setChecked(False)
             embedding_combo.setCurrentText(emb_model)
             claude_mode_combo.setCurrentText(cc_mode)
             _update_provider_visibility(provider)
@@ -1026,18 +1098,28 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
 
         def _on_profile_selected(name: str):
             if name == "(Aktuelle Einstellungen)" or not name:
+                selected_profile[0] = None
+                _populate_form(
+                    app_cfg.llm_provider,
+                    app_cfg.llm_model,
+                    app_cfg.ollama_base_url,
+                    app_cfg.embedding_model,
+                    app_cfg.claude_code_mode,
+                )
+                _refresh_credential_status()
                 return
             profiles = app_cfg.profiles
             if name in profiles:
+                selected_profile[0] = name
                 p = profiles[name]
                 _populate_form(
                     p.get("llm_provider", "ollama"),
                     p.get("llm_model", "llama3"),
                     p.get("ollama_base_url", "http://localhost:11434"),
-                    p.get("ollama_api_key", ""),
                     p.get("embedding_model", "nomic-embed-text"),
                     app_cfg.claude_code_mode,
                 )
+                _refresh_credential_status(name)
                 # Trigger model reload
                 load_models_for_provider(p.get("llm_provider", "ollama"))
                 # Try select model after load
@@ -1051,14 +1133,26 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             name, ok = QInputDialog.getText(dialog, "Profil speichern", "Profilname:")
             if ok and name:
                 # Save current form values as profile
+                app_cfg.set_active_profile(selected_profile[0] or "")
                 app_cfg.llm_provider = provider_combo.currentText()
                 app_cfg.llm_model = model_combo.currentText().strip()
                 app_cfg.ollama_base_url = ollama_url_edit.text().strip() or "http://localhost:11434"
-                app_cfg.ollama_api_key = ollama_key_edit.text().strip()
+                if clear_key_check.isChecked():
+                    app_cfg.ollama_api_key = ""
+                elif ollama_key_edit.text().strip():
+                    app_cfg.ollama_api_key = ollama_key_edit.text().strip()
                 app_cfg.embedding_model = embedding_combo.currentText().strip() or "nomic-embed-text"
-                app_cfg.save_profile(name)
+                try:
+                    app_cfg.save_profile(name)
+                except Exception as exc:  # noqa: BLE001 - AppConfig and CredentialStore normalize details
+                    QMessageBox.warning(dialog, "Profil nicht gespeichert", str(exc))
+                    return
+                ollama_key_edit.clear()
+                clear_key_check.setChecked(False)
                 _refresh_profiles()
                 profile_combo.setCurrentText(name)
+                selected_profile[0] = name
+                _refresh_credential_status(name)
                 status_label.setText(f"Profil '{name}' gespeichert")
 
         def _delete_profile():
@@ -1067,6 +1161,8 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
                 return
             if app_cfg.delete_profile(name):
                 _refresh_profiles()
+                selected_profile[0] = None
+                _refresh_credential_status()
                 status_label.setText(f"Profil '{name}' gelöscht")
 
         def _rename_profile():
@@ -1082,6 +1178,8 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
                 if app_cfg.rename_profile(old_name, new_name.strip()):
                     _refresh_profiles()
                     profile_combo.setCurrentText(new_name.strip())
+                    selected_profile[0] = new_name.strip()
+                    _refresh_credential_status(selected_profile[0])
                     status_label.setText(f"'{old_name}' → '{new_name.strip()}'")
                 else:
                     status_label.setText(f"Umbenennen fehlgeschlagen (Name belegt?)")
@@ -1117,7 +1215,18 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
                 if _settings_model_worker[0] and _settings_model_worker[0].isRunning():
                     return
                 url = ollama_url_edit.text().strip() or "http://localhost:11434"
-                key = ollama_key_edit.text().strip()
+                entered_key = ollama_key_edit.text().strip()
+                if clear_key_check.isChecked() and not os.environ.get("NOTESPACELLM_OLLAMA_API_KEY"):
+                    key = ""
+                else:
+                    try:
+                        key = app_cfg.get_ollama_api_key(
+                            profile_name=selected_profile[0],
+                            explicit_key=entered_key or None,
+                        )
+                    except Exception as exc:  # noqa: BLE001 - AppConfig and CredentialStore normalize details
+                        status_label.setText(f"Ollama-Schlüssel nicht verfügbar: {exc}")
+                        return
                 worker = ModelLoadWorker(url, key)
 
                 def _on_ollama_models(models, msg):
@@ -1162,10 +1271,11 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         # ===== Initial populate =====
         _populate_form(
             app_cfg.llm_provider, app_cfg.llm_model,
-            app_cfg.ollama_base_url, app_cfg.ollama_api_key,
+            app_cfg.ollama_base_url,
             app_cfg.embedding_model, app_cfg.claude_code_mode,
         )
         _refresh_profiles()
+        _refresh_credential_status(selected_profile[0])
         load_models_for_provider(app_cfg.llm_provider)
 
         # ===== Dialog Accept =====
@@ -1182,19 +1292,30 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             new_embedding = embedding_combo.currentText().strip() or "nomic-embed-text"
             new_claude_mode = claude_mode_combo.currentText()
 
+            app_cfg.set_active_profile(selected_profile[0] or "")
+            app_cfg.llm_provider = new_provider
+            app_cfg.llm_model = new_model
+            app_cfg.ollama_base_url = new_url
+            if clear_key_check.isChecked():
+                app_cfg.ollama_api_key = ""
+            elif new_key:
+                app_cfg.ollama_api_key = new_key
+            app_cfg.embedding_model = new_embedding
+            app_cfg.claude_code_mode = new_claude_mode
+            try:
+                app_cfg.save()
+            except Exception as exc:  # noqa: BLE001 - AppConfig and CredentialStore normalize details
+                QMessageBox.warning(
+                    self,
+                    "LLM-Einstellungen nicht gespeichert",
+                    f"Die Konfigurationsdatei wurde nicht geändert. {exc}",
+                )
+                return
+
             if self._current_project:
                 self._current_project.settings.llm_provider = new_provider
                 self._current_project.settings.llm_model = new_model
                 self._current_project.settings.ollama_base_url = new_url
-                self._current_project.settings.ollama_api_key = new_key
-
-            app_cfg.llm_provider = new_provider
-            app_cfg.llm_model = new_model
-            app_cfg.ollama_base_url = new_url
-            app_cfg.ollama_api_key = new_key
-            app_cfg.embedding_model = new_embedding
-            app_cfg.claude_code_mode = new_claude_mode
-            app_cfg.save()
 
             # Re-init RAG engine with new embedding model. _init_rag_engine gibt die
             # neue Engine (oder None, z.B. bei Nicht-Ollama-Provider) an
@@ -1486,19 +1607,24 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         provider = self._current_project.settings.llm_provider
         model = self._current_project.settings.llm_model
         base_url = self._current_project.settings.ollama_base_url
-        api_key = self._current_project.settings.ollama_api_key
 
         try:
             from ..core.app_config import get_app_config
-            claude_mode = get_app_config().claude_code_mode
+            app_cfg = get_app_config()
+            api_key = app_cfg.get_ollama_api_key() if provider == "ollama" else ""
+            claude_mode = app_cfg.claude_code_mode
             self._llm_client = create_llm_client(
                 provider, model, base_url=base_url,
                 api_key=api_key, claude_code_mode=claude_mode
             )
             self.chat_panel.set_llm_client(self._llm_client)
             self.statusbar.showMessage(f"LLM initialisiert: {provider}/{model}")
-        except Exception as e:
-            self.statusbar.showMessage(f"LLM-Fehler: {e}")
+        except Exception as exc:  # noqa: BLE001 - do not log provider exception details
+            logger.error("LLM client initialization failed (%s).", type(exc).__name__)
+            self._llm_client = None
+            self.statusbar.showMessage(
+                f"LLM konnte nicht initialisiert werden ({type(exc).__name__})."
+            )
 
     def _update_pipeline_phase(self):
         """Update the pipeline phase indicator in the status bar."""
@@ -1867,7 +1993,11 @@ Verwende Markdown-Formatierung."""
             QMessageBox.warning(self, "Workspace exportieren", "Kein Projekt geöffnet.")
             return
 
-        from ..core.workspace_exporter import build_workspace_export_payload, export_workspace_to_file
+        from ..core.workspace_exporter import (
+            build_workspace_export_payload,
+            export_workspace_if_confirmed,
+            workspace_export_confirmation_text,
+        )
         from datetime import datetime
 
         project_name = self._current_project.name
@@ -1895,7 +2025,20 @@ Verwende Markdown-Formatierung."""
                 chat_history=chat_history,
                 include_subquery_excerpts=True,
             )
-            export_workspace_to_file(payload, Path(filepath))
+            confirmation = QMessageBox.question(
+                self,
+                "Workspace-Export bestätigen",
+                workspace_export_confirmation_text(payload),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            if not export_workspace_if_confirmed(
+                payload,
+                Path(filepath),
+                confirmation == QMessageBox.StandardButton.Yes,
+            ):
+                self.statusbar.showMessage("Workspace-Export abgebrochen.")
+                return
 
             doc_count = len([d for d in self._current_project.documents.documents
                              if not d.is_directory])
@@ -1905,12 +2048,19 @@ Verwende Markdown-Formatierung."""
             QMessageBox.information(
                 self, "Workspace exportiert",
                 f"Erfolgreich exportiert:\n{Path(filepath).name}\n\n"
-                f"Enthält: {doc_count} Dokument(e), Bericht, Chat\n"
-                f"API-Schlüssel und Rohdaten wurden nicht exportiert."
+                f"Enthält: Metadaten zu {doc_count} Dokument(en), Bericht, Chat und ausgewählte Auszüge.\n"
+                f"Der Export ist nicht anonymisiert. Gespeicherte API-Schlüsselfelder und vollständige "
+                f"Rohdokumente wurden nicht exportiert. Prüfe Bericht und Chat vor dem Weitergeben "
+                f"auf Geheimnisse."
             )
-        except Exception as e:
-            QMessageBox.critical(self, "Fehler", f"Export fehlgeschlagen:\n{e}")
-            self.statusbar.showMessage(f"Workspace-Export fehlgeschlagen: {e}")
+        except Exception as exc:  # noqa: BLE001 - do not log provider exception details
+            logger.warning("Workspace export failed (%s).", type(exc).__name__)
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Workspace-Export fehlgeschlagen ({type(exc).__name__}).",
+            )
+            self.statusbar.showMessage("Workspace-Export fehlgeschlagen.")
 
     def closeEvent(self, event):
         """Handle window close: Worker stoppen/abwarten, dann Projekt speichern."""
@@ -1983,21 +2133,23 @@ Verwende Markdown-Formatierung."""
                 embedding_model=embedding_model,
                 llm_model=llm_model,
                 ollama_base_url=ollama_url,
-                api_key=app_cfg.ollama_api_key
+                api_key=app_cfg.get_ollama_api_key()
             )
             self._rag_engine_ready = True
             self._connect_rag_engine()
-            logger.info(f"RAG Engine initialisiert (URL: {ollama_url}, Embedding: {embedding_model})")
+            logger.info("RAG Engine initialisiert (Embedding: %s).", embedding_model)
             if hasattr(self, "statusbar"):
-                self.statusbar.showMessage(f"RAG-Engine bereit ({embedding_model} @ {ollama_url})", 5000)
+                self.statusbar.showMessage(f"RAG-Engine bereit ({embedding_model})", 5000)
 
-        except Exception as e:
-            logger.error(f"RAG Engine Initialisierung fehlgeschlagen: {e}")
+        except Exception as exc:
+            logger.error("RAG Engine initialization failed (%s).", type(exc).__name__)
             self._rag_engine = None
             self._rag_engine_ready = False
             self._connect_rag_engine()
             if hasattr(self, "statusbar"):
-                self.statusbar.showMessage(f"RAG-Engine nicht verfügbar: {e}", 8000)
+                self.statusbar.showMessage(
+                    f"RAG-Engine nicht verfügbar ({type(exc).__name__}).", 8000
+                )
 
     def _index_all_documents(self):
         """Index all documents with extracted text (async)."""

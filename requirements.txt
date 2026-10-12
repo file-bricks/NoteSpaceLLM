@@ -5,9 +5,9 @@
 PySide6>=6.5.0
 
 # Document Processing
-PyMuPDF>=1.24.10     # PDF reading (hardened memory safety floor)
+PyMuPDF>=1.24.10     # Declared minimum for PDF reading; not a security guarantee
 python-docx>=1.1.0   # Word documents
-openpyxl>=3.1.3      # Excel files (CVE-2024-34064 XML entity expansion protection)
+openpyxl>=3.1.3      # Declared minimum for Excel files; not a security guarantee
 extract-msg>=0.48.0  # Outlook .msg files
 
 # =========================
@@ -19,7 +19,8 @@ langchain-community>=0.3.0
 langchain-ollama>=0.2.0      # Ollama LLM Integration
 langchain-chroma>=0.1.0      # ChromaDB Vector Store
 
-chromadb>=0.5.4              # Vector Database (hardened security floor)
+chromadb>=0.5.4              # Vector Database
+keyring>=25.7.0              # Native OS credential-store API (backend allowlist in app)
 
 # =========================
 # Optional: OCR for image-based PDFs
@@ -44,7 +45,7 @@ chromadb>=0.5.4              # Vector Database (hardened security floor)
 # anthropic>=0.18.0   # For Anthropic API
 
 # =========================
-# Development & Testing (Security Floored)
+# Development & Testing
 # =========================
-# pytest>=9.1.1       # CVE-2025-7117 / GHSA-6w46-j5rx-g56g
+# pytest>=9.1.1       # Declared test dependency minimum
 # ruff>=0.9.0

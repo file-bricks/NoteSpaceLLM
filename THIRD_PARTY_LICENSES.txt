@@ -1,39 +1,34 @@
-NoteSpaceLLM — Third-Party Licenses Inventory
-=============================================
-Stand: 2026-09-18
-Project License: GNU Affero General Public License v3.0 (AGPL-3.0)
+NoteSpaceLLM — Selected Third-Party License Notes
+=================================================
+Package-note snapshot: 2026-09-18
+Scope note updated: 2026-10-12
+Project License: GNU Affero General Public License v3.0 only (AGPL-3.0-only)
 Repository: https://github.com/file-bricks/NoteSpaceLLM
 
 --------------------------------------------------------------------------------
-License Compatibility & Copyleft Analysis
+Scope of these notes
 --------------------------------------------------------------------------------
-NoteSpaceLLM is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
-This license structure ensures compatibility across all runtime components:
-
-1. PyMuPDF is licensed under GNU AGPL-3.0-or-later. NoteSpaceLLM's AGPL-3.0 license
-   is directly and fully compliant with PyMuPDF's copyleft requirements.
-2. PySide6 (Qt for Python) is licensed under the GNU Lesser General Public License v3
-   (LGPL-3.0-only). NoteSpaceLLM utilizes dynamic imports / shared libraries without
-   modifying Qt source code, satisfying LGPL-3.0 section 4 requirements.
-3. LangChain, ChromaDB, python-docx, openpyxl, extract-msg, pypdf, and pypdfium2
-   are distributed under permissive licenses (MIT, Apache-2.0, BSD-3-Clause),
-   which are fully compatible with incorporation into an AGPL-3.0 licensed application.
-4. Optional cloud integrations (OpenAI, Anthropic) and packaging tools (PyInstaller
-   with PyInstaller Special Exception) preserve these licensing boundaries.
+The project's license is GNU Affero General Public License v3.0 only (AGPL-3.0-only);
+see LICENSE. This file records selected package license identifiers, source URLs,
+usage notes, and license text/attribution material. It is a manually maintained
+documentation snapshot, not a generated SBOM or a complete inventory of resolved,
+transitive, native, bundled, or deployed components. It does not assess license
+compatibility, compliance, or distribution obligations. Consult current upstream
+package metadata and license texts for the software actually used or distributed.
 
 --------------------------------------------------------------------------------
-1. Runtime Dependencies
+1. Selected Declared Runtime Dependencies
 --------------------------------------------------------------------------------
 
 1.1 PySide6
-    License: LGPL-3.0-only / GPL-2.0-only / GPL-3.0-only
-    SPDX: LGPL-3.0-only
+    License: Multiple upstream licensing options; see resolved distribution license files.
+    SPDX: No single identifier for all available options.
     URL: https://wiki.qt.io/Qt_for_Python
     Usage: Desktop GUI presentation layer, signals and widgets.
 
 1.2 shiboken6
-    License: LGPL-3.0-only
-    SPDX: LGPL-3.0-only
+    License: Multiple upstream licensing options; see resolved distribution license files.
+    SPDX: No single identifier for all available options.
     URL: https://wiki.qt.io/Qt_for_Python
     Usage: CPython bindings generator and runtime support for PySide6.
 
@@ -103,8 +98,14 @@ This license structure ensures compatibility across all runtime components:
     URL: https://github.com/chroma-core/chroma
     Usage: Local vector database and embedding index.
 
+1.14 keyring
+    License: MIT License
+    SPDX: MIT
+    URL: https://github.com/jaraco/keyring
+    Usage: API for the explicitly allowlisted native OS credential stores.
+
 --------------------------------------------------------------------------------
-2. Optional Integrations & Backends
+2. Selected Optional Integrations & Backends
 --------------------------------------------------------------------------------
 
 2.1 pypdfium2 (Alternative PDF Backend)
@@ -156,7 +157,7 @@ This license structure ensures compatibility across all runtime components:
     Usage: HTML to styled PDF rendering engine.
 
 --------------------------------------------------------------------------------
-3. Development, Build & Test Dependencies
+3. Selected Development, Build & Test Dependencies
 --------------------------------------------------------------------------------
 
 3.1 pytest

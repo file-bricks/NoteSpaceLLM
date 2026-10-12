@@ -4,22 +4,26 @@
 Workspace Exporter — notespacellm-workspace-v1 Format
 ======================================================
 
-Erzeugt ein datenschutzkonformes Workspace-JSON aus dem aktuellen Projekt.
+Erstellt ein Workspace-JSON aus dem aktuellen Projekt.
 Das Format ist der Austauschvertrag zwischen Desktop-App und Web/PWA/Mobile.
 
 Datenschutzregeln (aus EXPORTFORMAT.md):
-- API-Schlüssel werden nie exportiert
+- Gespeicherte API-Schlüsselfelder werden nicht exportiert; frei verfasste
+  Bericht- und Chattexte können trotzdem Geheimnisse enthalten.
 - Vektordatenbanken und Cache-Verzeichnisse werden nie exportiert
 - Rohdokumente werden standardmäßig nicht eingebettet
 - Auszüge nur wenn bereits für Report/Chat/Review ausgewählt
 """
 
 import json
+import ipaddress
+import re
 import tempfile
 import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, List, TYPE_CHECKING
+from urllib.parse import urlsplit
 
 if TYPE_CHECKING:
     from .project import Project
@@ -56,7 +60,7 @@ def build_workspace_export_payload(
             continue
 
         excerpts = []
-        if include_subquery_excerpts:
+        if include_subquery_excerpts and doc.is_selected:
             excerpts = _build_excerpts(project, doc.id)
 
         documents.append({
@@ -135,6 +139,46 @@ def export_workspace_to_file(payload: dict, filepath: Path) -> None:
         raise
 
 
+def workspace_export_confirmation_text(payload: dict) -> str:
+    """Describe the exact user content included before the UI writes an export."""
+    documents = payload.get("documents", [])
+    selected_documents = [doc for doc in documents if doc.get("selected")]
+    excerpt_count = sum(len(doc.get("excerpts", [])) for doc in selected_documents)
+    chat_messages = payload.get("chat", {}).get("messages", [])
+    report_content = payload.get("report", {}).get("content", "")
+
+    report_line = "Bericht: vollständiger Inhalt" if report_content else "Bericht: leer"
+    return "\n".join((
+        "Die Workspace-Datei enthält:",
+        f"• Projektmetadaten und Dateinamen für {len(documents)} Dokument(e)",
+        f"• {report_line}",
+        f"• vollständigen Chatverlauf mit {len(chat_messages)} Nachrichten",
+        (
+            f"• {excerpt_count} abgeschlossene Auszüge aus "
+            f"{len(selected_documents)} ausgewählten Dokument(en)"
+        ),
+        "",
+        (
+            "Der Export wird nicht anonymisiert. Bericht, Chat und Auszüge können "
+            "persönliche oder vertrauliche Angaben enthalten. Vollständige "
+            "Rohdokumente, gespeicherte API-Schlüsselfelder und lokale "
+            "Vektordatenbanken werden nicht aufgenommen. Frei verfasste Inhalte "
+            "werden nicht auf Geheimnisse geprüft; prüfe Bericht und Chat vor "
+            "dem Weitergeben."
+        ),
+        "",
+        "Möchtest du diese Inhalte in die gewählte Datei schreiben?",
+    ))
+
+
+def export_workspace_if_confirmed(payload: dict, filepath: Path, confirmed: bool) -> bool:
+    """Write only after an explicit affirmative decision; return whether written."""
+    if not confirmed:
+        return False
+    export_workspace_to_file(payload, filepath)
+    return True
+
+
 def _build_excerpts(project: "Project", doc_id: str) -> List[dict]:
     """Erzeugt Auszüge aus abgeschlossenen Sub-Queries eines Dokuments."""
     excerpts = []
@@ -163,11 +207,62 @@ def _build_provider_info(project: "Project") -> dict:
     try:
         provider = project.settings.llm_provider or "unknown"
         model = project.settings.llm_model or ""
+        if provider == "ollama":
+            mode = _classify_ollama_endpoint(
+                getattr(project.settings, "ollama_base_url", "")
+            )
+        elif provider in {"openai", "anthropic", "claude-code"}:
+            mode = "remote"
+        else:
+            mode = "unknown"
         return {
-            "mode": "local" if provider == "ollama" else "remote",
+            "mode": mode,
             "name": provider,
             "model_hint": model,
             "secret_exported": False,
         }
     except Exception:
         return {"mode": "unknown", "name": "unknown", "secret_exported": False}
+
+
+def _classify_ollama_endpoint(value: object) -> str:
+    """Classify configured endpoints without DNS or network access.
+
+    Only a valid HTTP(S) URL with an exact localhost hostname or an IP loopback
+    address is called local. Invalid or credential-bearing URLs stay unknown.
+    """
+    if not isinstance(value, str) or not value or any(ch.isspace() for ch in value):
+        return "unknown"
+    try:
+        parsed = urlsplit(value)
+        if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc:
+            return "unknown"
+        if parsed.username is not None or parsed.password is not None:
+            return "unknown"
+        hostname = parsed.hostname
+        port = parsed.port  # Raises ValueError for malformed/out-of-range values.
+    except ValueError:
+        return "unknown"
+
+    if not hostname or port == 0:
+        return "unknown"
+
+    try:
+        address = ipaddress.ip_address(hostname)
+    except ValueError:
+        try:
+            ascii_host = hostname.encode("idna").decode("ascii").lower()
+        except UnicodeError:
+            return "unknown"
+        if ascii_host.endswith(".."):
+            return "unknown"
+        normalized_host = ascii_host.removesuffix(".")
+        labels = normalized_host.split(".")
+        label_pattern = re.compile(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?")
+        if any(
+            not label or len(label) > 63 or not label_pattern.fullmatch(label)
+            for label in labels
+        ):
+            return "unknown"
+        return "local" if normalized_host == "localhost" else "remote"
+    return "local" if address.is_loopback else "remote"

@@ -4,13 +4,121 @@
 Tests for TextExtractor and DocumentManager RAG metadata integration.
 """
 
+import logging
+import sys
 import tempfile
-import pytest
 from pathlib import Path
+from types import ModuleType
 from unittest.mock import MagicMock
 
-from src.core.text_extractor import TextExtractor, ExtractionResult
-from src.core.document_manager import DocumentManager, DocumentItem, DocumentStatus
+import pytest
+
+from src.core.document_manager import DocumentItem, DocumentManager, DocumentStatus
+from src.core.text_extractor import ExtractionResult, TextExtractor
+
+
+def _stub_external_langchain_clients(monkeypatch, request):
+    """Stub provider/vector bindings; these tests never call them."""
+    original_rag_modules = {
+        name: module
+        for name, module in sys.modules.items()
+        if name == "src.rag" or name.startswith("src.rag.")
+    }
+    for name in original_rag_modules:
+        del sys.modules[name]
+
+    def restore_rag_modules():
+        for name in tuple(sys.modules):
+            if name == "src.rag" or name.startswith("src.rag."):
+                del sys.modules[name]
+        sys.modules.update(original_rag_modules)
+
+    request.addfinalizer(restore_rag_modules)
+
+    chroma_module = ModuleType("langchain_chroma")
+    ollama_module = ModuleType("langchain_ollama")
+    chromadb_module = ModuleType("chromadb")
+    chromadb_module.__path__ = []
+    chromadb_config_module = ModuleType("chromadb.config")
+
+    class TestChromaSettings:
+        def __init__(self, *, anonymized_telemetry=True):
+            self.anonymized_telemetry = anonymized_telemetry
+
+    chromadb_config_module.Settings = TestChromaSettings
+    chromadb_module.config = chromadb_config_module
+
+    class UnusedChroma:
+        pass
+
+    class UnusedOllamaClient:
+        pass
+
+    chroma_module.Chroma = UnusedChroma
+    ollama_module.ChatOllama = UnusedOllamaClient
+    ollama_module.OllamaEmbeddings = UnusedOllamaClient
+    monkeypatch.setitem(sys.modules, "langchain_chroma", chroma_module)
+    monkeypatch.setitem(sys.modules, "langchain_ollama", ollama_module)
+    monkeypatch.setitem(sys.modules, "chromadb", chromadb_module)
+    monkeypatch.setitem(sys.modules, "chromadb.config", chromadb_config_module)
+
+
+def test_local_chroma_client_disables_anonymized_telemetry(monkeypatch, request, tmp_path):
+    _stub_external_langchain_clients(monkeypatch, request)
+    from src.rag import engine as engine_module
+
+    captured = {}
+
+    class FakeEmbeddingsManager:
+        def __init__(self, **_kwargs):
+            self.embeddings = object()
+
+    class FakeChatClient:
+        def __init__(self, **_kwargs):
+            pass
+
+    class FakeChroma:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(engine_module, "EmbeddingsManager", FakeEmbeddingsManager)
+    monkeypatch.setattr(engine_module, "ChatOllama", FakeChatClient)
+    monkeypatch.setattr(engine_module, "Chroma", FakeChroma)
+
+    rag = engine_module.RAGEngine(persist_directory=str(tmp_path / "vector-store"))
+    _ = rag.vectorstore
+
+    assert captured["client_settings"].anonymized_telemetry is False
+
+
+def test_installed_langchain_ollama_clients_apply_auth_headers_without_requests():
+    """Exercise the real LangChain Ollama constructors without opening a connection."""
+    from langchain_ollama import ChatOllama, OllamaEmbeddings
+
+    marker = "notespace-test-only-sentinel"
+    headers = {"Authorization": f"Bearer {marker}"}
+    base_url = "http://127.0.0.1:1"
+    clients = (
+        ChatOllama(
+            model="notespace-test-model",
+            base_url=base_url,
+            temperature=0.3,
+            client_kwargs={"headers": headers},
+        ),
+        OllamaEmbeddings(
+            model="notespace-test-embedding",
+            base_url=base_url,
+            client_kwargs={"headers": headers},
+        ),
+    )
+
+    for client in clients:
+        http_client = client._client._client
+        try:
+            assert str(http_client.base_url) == base_url
+            assert http_client.headers.get("authorization") == f"Bearer {marker}"
+        finally:
+            http_client.close()
 
 
 def test_rtf_extraction_umlauts_and_metadata_stripping(tmp_path):
@@ -140,3 +248,128 @@ def test_document_manager_index_tags_serialization(tmp_path):
     assert isinstance(metadata.get("tags"), str)
     assert "finanzen" in metadata["tags"]
     assert "analyse" in metadata["tags"]
+
+
+def test_authenticated_embedding_setup_error_never_logs_key_or_url(monkeypatch, request, caplog):
+    _stub_external_langchain_clients(monkeypatch, request)
+    from src.rag import embeddings as embeddings_module
+
+    secret = "test-bearer-secret"
+    userinfo = "user:pass@remote.example"
+    calls = []
+
+    class FailingEmbeddings:
+        def __init__(self, **kwargs):
+            calls.append(kwargs)
+            raise ValueError(f"bad endpoint https://{userinfo}; Bearer {secret}")
+
+    monkeypatch.setattr(embeddings_module, "OllamaEmbeddings", FailingEmbeddings)
+    manager = embeddings_module.EmbeddingsManager(
+        base_url=f"https://{userinfo}",
+        headers={"Authorization": f"Bearer {secret}"},
+    )
+
+    with caplog.at_level(logging.WARNING), pytest.raises(RuntimeError) as raised:
+        manager._create_embeddings()
+
+    assert len(calls) == 1
+    assert calls[0]["client_kwargs"]["headers"]["Authorization"] == f"Bearer {secret}"
+    assert secret not in str(raised.value)
+    assert userinfo not in str(raised.value)
+    assert secret not in caplog.text
+    assert userinfo not in caplog.text
+
+
+def test_authenticated_rag_client_error_does_not_retry_without_headers(
+    monkeypatch, request, tmp_path, caplog
+):
+    _stub_external_langchain_clients(monkeypatch, request)
+    from src.rag import engine as engine_module
+
+    secret = "test-bearer-secret"
+    userinfo = "user:pass@remote.example"
+    calls = []
+
+    class FakeEmbeddingsManager:
+        def __init__(self, **kwargs):
+            self.model_name = kwargs["model_name"]
+            self.embeddings = object()
+
+    class FailingChatClient:
+        def __init__(self, **kwargs):
+            calls.append(kwargs)
+            raise ValueError(f"bad endpoint https://{userinfo}; Bearer {secret}")
+
+    monkeypatch.setattr(engine_module, "EmbeddingsManager", FakeEmbeddingsManager)
+    monkeypatch.setattr(engine_module, "ChatOllama", FailingChatClient)
+
+    with caplog.at_level(logging.WARNING), pytest.raises(RuntimeError) as raised:
+        engine_module.RAGEngine(
+            persist_directory=str(tmp_path / "vector-store"),
+            ollama_base_url=f"https://{userinfo}",
+            api_key=secret,
+        )
+
+    assert len(calls) == 1
+    assert calls[0]["client_kwargs"]["headers"]["Authorization"] == f"Bearer {secret}"
+    assert secret not in str(raised.value)
+    assert userinfo not in str(raised.value)
+    assert secret not in caplog.text
+    assert userinfo not in caplog.text
+
+
+def test_ollama_request_error_redacts_bearer_and_url_userinfo(monkeypatch):
+    import urllib.error
+
+    from src.llm import ollama_client as ollama_module
+
+    secret = "test-bearer-secret"
+    userinfo = "user:pass@remote.example"
+    requests = []
+
+    def fail_request(request, timeout):
+        requests.append(request)
+        assert timeout == 300
+        raise urllib.error.URLError(f"https://{userinfo}/api/chat Bearer {secret}")
+
+    monkeypatch.setattr(ollama_module.urllib.request, "urlopen", fail_request)
+    client = ollama_module.OllamaClient(
+        model="test-model",
+        base_url=f"https://{userinfo}",
+        api_key=secret,
+    )
+    client._is_available = True
+
+    with pytest.raises(RuntimeError) as raised:
+        client.chat("test prompt")
+
+    assert len(requests) == 1
+    assert requests[0].get_header("Authorization") == f"Bearer {secret}"
+    assert secret not in str(raised.value)
+    assert userinfo not in str(raised.value)
+
+
+def test_rag_worker_emits_sanitized_provider_error(caplog):
+    from src.gui import chat_panel
+
+    if not chat_panel.PYSIDE_AVAILABLE:
+        pytest.skip("PySide6 is not installed")
+
+    secret = "test-bearer-secret"
+    userinfo = "user:pass@remote.example"
+
+    class FailingEngine:
+        def query(self, **_kwargs):
+            raise RuntimeError(f"https://{userinfo} Bearer {secret}")
+
+    worker = chat_panel.RAGWorker(FailingEngine(), "question")
+    errors = []
+    worker.error_occurred.connect(errors.append)
+    with caplog.at_level(logging.ERROR):
+        worker.run()
+
+    assert len(errors) == 1
+    assert secret not in errors[0]
+    assert userinfo not in errors[0]
+    assert secret not in caplog.text
+    assert userinfo not in caplog.text

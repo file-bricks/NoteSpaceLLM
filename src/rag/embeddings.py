@@ -75,14 +75,23 @@ class EmbeddingsManager:
 
         try:
             return OllamaEmbeddings(**kwargs)
-        except Exception as e:
-            # Fallback ohne client_kwargs falls Version zu alt/neu
-            logger.warning(f"OllamaEmbeddings mit client_kwargs fehlgeschlagen: {e}")
-            kwargs.pop("client_kwargs", None)
-            return OllamaEmbeddings(
-                model=self.model_name,
-                base_url=self.base_url,
+        except Exception as exc:
+            if self._headers:
+                logger.warning(
+                    "Authenticated Ollama embeddings setup failed (%s); "
+                    "not retrying without its authentication headers.",
+                    type(exc).__name__,
+                )
+                raise RuntimeError(
+                    "The authenticated Ollama embeddings client could not be configured."
+                ) from None
+            # Compatibility fallback is safe only when there is no credential
+            # header to accidentally omit on a remote request.
+            logger.warning(
+                "OllamaEmbeddings setup failed (%s); retrying without optional headers.",
+                type(exc).__name__,
             )
+            return OllamaEmbeddings(model=self.model_name, base_url=self.base_url)
 
     def embed_query(self, text: str) -> List[float]:
         """
@@ -148,6 +157,6 @@ class EmbeddingsManager:
             # Versuche ein einfaches Embedding zu erstellen
             test_embedding = self.embed_query("test")
             return len(test_embedding) > 0
-        except Exception as e:
-            logger.error(f"Ollama Verbindungstest fehlgeschlagen: {e}")
+        except Exception as exc:
+            logger.error("Ollama connection test failed (%s).", type(exc).__name__)
             return False
