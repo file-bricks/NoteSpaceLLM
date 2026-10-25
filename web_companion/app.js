@@ -43,6 +43,7 @@ const elements = {
 
 let currentWorkspace = null;
 let currentSourceLabel = "";
+let currentSourceKind = "";
 let cachedWorkspaceTitle = "";
 const storedLocale = globalThis.localStorage?.getItem(UI_LOCALE_KEY) || "";
 let hasUserLocaleOverride = Boolean(storedLocale);
@@ -57,11 +58,19 @@ function setStatus(message, isError = false) {
 
 function applyStaticTranslations() {
   document.documentElement.lang = activeLocale;
+  document.documentElement.dir = activeLocale === "ar" ? "rtl" : "ltr";
 
   document.querySelectorAll("[data-i18n]").forEach((node) => {
     const key = node.dataset.i18n;
     if (key && typeof currentText[key] === "string") {
       node.textContent = currentText[key];
+    }
+  });
+
+  document.querySelectorAll("[data-i18n-aria-label]").forEach((node) => {
+    const key = node.dataset.i18nAriaLabel;
+    if (key && typeof currentText[key] === "string") {
+      node.setAttribute("aria-label", currentText[key]);
     }
   });
 
@@ -224,7 +233,12 @@ function rerenderCurrentWorkspace() {
   renderSummary(currentWorkspace);
   renderReport(currentWorkspace);
   renderDocuments(currentWorkspace);
-  setStatus(currentText.workspaceLoaded(currentSourceLabel, currentWorkspace.workspace.title));
+  const sourceLabel = currentSourceKind === "demo"
+    ? currentText.sourceLabelDemo
+    : currentSourceKind === "cached"
+      ? currentText.sourceLabelCached
+      : currentSourceLabel;
+  setStatus(currentText.workspaceLoaded(sourceLabel, currentWorkspace.workspace.title));
 }
 
 function setLocale(locale, { persist = false } = {}) {
@@ -242,7 +256,7 @@ function setLocale(locale, { persist = false } = {}) {
 }
 
 function renderWorkspace(payload, sourceLabel, options = {}) {
-  const { persist = true } = options;
+  const { persist = true, sourceKind = "" } = options;
   if (!hasUserLocaleOverride) {
     activeLocale = resolveUiLocale(payload.workspace.locale, globalThis.navigator?.language, "de");
     currentText = getUiText(activeLocale);
@@ -251,6 +265,7 @@ function renderWorkspace(payload, sourceLabel, options = {}) {
 
   currentWorkspace = payload;
   currentSourceLabel = sourceLabel;
+  currentSourceKind = sourceKind;
   renderSummary(payload);
   renderReport(payload);
   renderDocuments(payload);
@@ -287,7 +302,7 @@ elements.fileInput.addEventListener("change", (event) => {
 });
 
 elements.loadDemo.addEventListener("click", () => {
-  renderWorkspace(getDemoWorkspace(activeLocale), currentText.sourceLabelDemo);
+  renderWorkspace(getDemoWorkspace(activeLocale), currentText.sourceLabelDemo, { sourceKind: "demo" });
 });
 
 elements.exportNotes.addEventListener("click", () => {
@@ -327,11 +342,11 @@ const params = new URLSearchParams(window.location.search);
 setLocale(activeLocale);
 
 if (params.get("demo") === "1") {
-  renderWorkspace(getDemoWorkspace(activeLocale), currentText.sourceLabelDemo);
+  renderWorkspace(getDemoWorkspace(activeLocale), currentText.sourceLabelDemo, { sourceKind: "demo" });
 } else {
   const cachedWorkspace = loadWorkspaceCache();
   if (cachedWorkspace) {
-    renderWorkspace(cachedWorkspace, currentText.sourceLabelCached, { persist: false });
+    renderWorkspace(cachedWorkspace, currentText.sourceLabelCached, { persist: false, sourceKind: "cached" });
   }
 }
 

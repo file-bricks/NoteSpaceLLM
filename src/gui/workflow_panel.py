@@ -26,6 +26,16 @@ try:
     from PySide6.QtCore import Qt, Signal, QSize
     from PySide6.QtGui import QPainter, QColor, QPen, QFont
     PYSIDE_AVAILABLE = True
+    from .i18n import (
+        LocalizedLabel,
+        TranslatableLabel,
+        mark_combo_items_translatable,
+        mark_not_translatable,
+        translate_ui_text,
+        translate_widget_tree,
+        tr,
+    )
+    QLabel = TranslatableLabel
 except ImportError:
     PYSIDE_AVAILABLE = False
     class QWidget: pass
@@ -170,11 +180,12 @@ class WorkflowStepWidget(QFrame if PYSIDE_AVAILABLE else object):
     if PYSIDE_AVAILABLE:
         clicked = Signal(str)  # step_id
 
-    def __init__(self, step: WorkflowStep, parent=None):
+    def __init__(self, step: WorkflowStep, parent=None, translator=None):
         if not PYSIDE_AVAILABLE:
             return
         super().__init__(parent)
         self.step = step
+        self._translator = translator
         self._setup_ui()
 
     def _setup_ui(self):
@@ -188,6 +199,7 @@ class WorkflowStepWidget(QFrame if PYSIDE_AVAILABLE else object):
         header = QHBoxLayout()
 
         self.number_label = QLabel(f"{self.step.order}")
+        mark_not_translatable(self.number_label)
         self.number_label.setStyleSheet("""
             background-color: #3498db;
             color: white;
@@ -199,6 +211,7 @@ class WorkflowStepWidget(QFrame if PYSIDE_AVAILABLE else object):
         self.number_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.name_label = QLabel(self.step.name)
+        mark_not_translatable(self.name_label)
         self.name_label.setStyleSheet("font-weight: bold; font-size: 12px;")
 
         header.addWidget(self.number_label)
@@ -209,12 +222,13 @@ class WorkflowStepWidget(QFrame if PYSIDE_AVAILABLE else object):
 
         # Description
         self.desc_label = QLabel(self.step.description)
+        mark_not_translatable(self.desc_label)
         self.desc_label.setWordWrap(True)
         self.desc_label.setStyleSheet("color: #666; font-size: 10px;")
         layout.addWidget(self.desc_label)
 
         # Status indicator
-        self.status_label = QLabel(self._status_text())
+        self.status_label = LocalizedLabel(self._status_text(), self._translator)
         self.status_label.setStyleSheet(self._status_style())
         layout.addWidget(self.status_label)
 
@@ -228,7 +242,7 @@ class WorkflowStepWidget(QFrame if PYSIDE_AVAILABLE else object):
             "completed": "Fertig",
             "error": "Fehler"
         }
-        return status_map.get(self.step.status, self.step.status)
+        return tr(self._translator, status_map.get(self.step.status, self.step.status))
 
     def _status_style(self) -> str:
         colors = {
@@ -276,17 +290,20 @@ class WorkflowPanel(QWidget if PYSIDE_AVAILABLE else object):
         step_clicked = Signal(str)  # step_id
         start_requested = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, translator=None):
         if not PYSIDE_AVAILABLE:
             raise ImportError("PySide6 is required. Install with: pip install PySide6")
 
         super().__init__(parent)
+        self._translator = translator
         self._workflows = dict(DEFAULT_WORKFLOWS)
         self._current_workflow: Optional[Workflow] = None
         self._step_widgets: List[WorkflowStepWidget] = []
 
         self._setup_ui()
         self._load_workflow("standard")
+        if self._translator:
+            self.retranslate_ui()
 
     def _setup_ui(self):
         """Set up the user interface."""
@@ -298,13 +315,16 @@ class WorkflowPanel(QWidget if PYSIDE_AVAILABLE else object):
         selection_layout = QFormLayout(selection_group)
 
         self.report_type_combo = QComboBox()
-        self.report_type_combo.addItems([
-            "Analyse",
-            "Zusammenfassung",
-            "Forschungsbericht",
-            "Vergleich"
-        ])
-        self.report_type_combo.currentTextChanged.connect(self._on_report_type_changed)
+        report_types = [
+            ("Analyse", "analysis"),
+            ("Zusammenfassung", "summary"),
+            ("Forschungsbericht", "research"),
+            ("Vergleich", "comparison"),
+        ]
+        for label, value in report_types:
+            self.report_type_combo.addItem(label, value)
+        mark_combo_items_translatable(self.report_type_combo, [label for label, _ in report_types])
+        self.report_type_combo.currentIndexChanged.connect(self._on_report_type_changed)
 
         self.workflow_combo = QComboBox()
         for wf in self._workflows.values():
@@ -389,7 +409,7 @@ class WorkflowPanel(QWidget if PYSIDE_AVAILABLE else object):
 
         # Add step widgets
         for step in sorted(self._current_workflow.steps, key=lambda s: s.order):
-            widget = WorkflowStepWidget(step, self.steps_container)
+            widget = WorkflowStepWidget(step, self.steps_container, self._translator)
             widget.clicked.connect(self._on_step_clicked)
             self._step_widgets.append(widget)
             self.steps_layout.addWidget(widget)
@@ -397,16 +417,16 @@ class WorkflowPanel(QWidget if PYSIDE_AVAILABLE else object):
         # Add stretch at the end
         self.steps_layout.addStretch()
 
-    def _on_report_type_changed(self, text: str):
+    def _on_report_type_changed(self, _index: int):
         """Handle report type change."""
         type_map = {
-            "Analyse": "standard",
-            "Zusammenfassung": "quick",
-            "Forschungsbericht": "research",
-            "Vergleich": "comparison"
+            "analysis": "standard",
+            "summary": "quick",
+            "research": "research",
+            "comparison": "comparison",
         }
 
-        workflow_id = type_map.get(text, "standard")
+        workflow_id = type_map.get(self.report_type_combo.currentData(), "standard")
         idx = self.workflow_combo.findData(workflow_id)
         if idx >= 0:
             self.workflow_combo.setCurrentIndex(idx)
@@ -427,7 +447,7 @@ class WorkflowPanel(QWidget if PYSIDE_AVAILABLE else object):
         if not self._current_workflow:
             return
 
-        dialog = WorkflowEditorDialog(self._current_workflow, self)
+        dialog = WorkflowEditorDialog(self._current_workflow, self, self._translator)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             # Update workflow
             self._load_workflow(self._current_workflow.id)
@@ -461,6 +481,12 @@ class WorkflowPanel(QWidget if PYSIDE_AVAILABLE else object):
         self._workflows[workflow.id] = workflow
         self.workflow_combo.addItem(workflow.name, workflow.id)
 
+    def retranslate_ui(self):
+        if self._translator:
+            translate_widget_tree(self, self._translator)
+            for widget in self._step_widgets:
+                widget.update_status(widget.step.status)
+
     def save_workflows(self, filepath: Path):
         """Save workflows to file."""
         data = {wf_id: wf.to_dict() for wf_id, wf in self._workflows.items()}
@@ -488,15 +514,20 @@ class WorkflowPanel(QWidget if PYSIDE_AVAILABLE else object):
 class WorkflowEditorDialog(QDialog if PYSIDE_AVAILABLE else object):
     """Dialog for editing workflow steps."""
 
-    def __init__(self, workflow: Workflow, parent=None):
+    def __init__(self, workflow: Workflow, parent=None, translator=None):
         if not PYSIDE_AVAILABLE:
             return
         super().__init__(parent)
         self.workflow = workflow
+        self._translator = translator
         self._setup_ui()
+        if translator:
+            translate_widget_tree(self, translator)
 
     def _setup_ui(self):
-        self.setWindowTitle(f"Workflow bearbeiten: {self.workflow.name}")
+        self.setWindowTitle(
+            translate_ui_text(f"Workflow bearbeiten: {self.workflow.name}", self._translator)
+        )
         self.setMinimumSize(500, 400)
 
         layout = QVBoxLayout(self)

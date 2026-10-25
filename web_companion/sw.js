@@ -1,10 +1,11 @@
-const CACHE_NAME = "notespacellm-companion-v4";
+const CACHE_NAME = "notespacellm-companion-v5";
 const ASSETS = [
   "./",
   "./index.html",
   "./app.css",
   "./app.js",
   "./library.js",
+  "./ui-locales.js",
   "./manifest.webmanifest",
   "./icons/Icon-192.png",
   "./icons/Icon-512.png",

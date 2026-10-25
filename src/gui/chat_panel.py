@@ -33,6 +33,15 @@ try:
     from PySide6.QtGui import QTextCursor, QFont
     from .worker_utils import retain_until_finished, stop_workers
     PYSIDE_AVAILABLE = True
+    from .i18n import (
+        LocalizedLabel,
+        TranslatableLabel,
+        mark_not_translatable,
+        translate_ui_text,
+        translate_widget_tree,
+        tr,
+    )
+    QLabel = TranslatableLabel
 except ImportError:
     PYSIDE_AVAILABLE = False
     class QWidget: pass
@@ -61,11 +70,13 @@ class ChatMessage:
 class MessageWidget(QFrame if PYSIDE_AVAILABLE else object):
     """Widget for displaying a single chat message."""
 
-    def __init__(self, message: ChatMessage, parent=None):
+    def __init__(self, message: ChatMessage, parent=None, translator=None):
         if not PYSIDE_AVAILABLE:
             return
         super().__init__(parent)
         self.message = message
+        self._translator = translator
+        self._dynamic_labels = []
         self._setup_ui()
 
     def _setup_ui(self):
@@ -126,6 +137,7 @@ class MessageWidget(QFrame if PYSIDE_AVAILABLE else object):
 
         # Content (PlainText: LLM-/Dokumenttext darf kein Rich-Text/HTML rendern)
         self.content_label = QLabel()
+        mark_not_translatable(self.content_label)
         self.content_label.setTextFormat(Qt.TextFormat.PlainText)
         self.content_label.setText(self.message.content)
         self.content_label.setWordWrap(True)
@@ -137,9 +149,11 @@ class MessageWidget(QFrame if PYSIDE_AVAILABLE else object):
 
         # Document references
         if self.message.document_refs:
-            refs_label = QLabel()
+            refs_label = LocalizedLabel("", self._translator)
             refs_label.setTextFormat(Qt.TextFormat.PlainText)
             refs_label.setText(f"Dokumente: {', '.join(self.message.document_refs)}")
+            mark_not_translatable(refs_label)
+            self._dynamic_labels.append(refs_label)
             refs_label.setStyleSheet("color: #666; font-size: 10px; font-style: italic;")
             layout.addWidget(refs_label)
 
@@ -155,12 +169,18 @@ class MessageWidget(QFrame if PYSIDE_AVAILABLE else object):
             if self.message.confidence > 0:
                 sources_text += f" (Konfidenz: {self.message.confidence:.0%})"
 
-            sources_label = QLabel()
+            sources_label = LocalizedLabel("", self._translator)
             sources_label.setTextFormat(Qt.TextFormat.PlainText)
             sources_label.setText(sources_text)
+            mark_not_translatable(sources_label)
+            self._dynamic_labels.append(sources_label)
             sources_label.setStyleSheet("color: #27ae60; font-size: 10px; font-style: italic;")
             sources_label.setWordWrap(True)
             layout.addWidget(sources_label)
+
+    def retranslate_ui(self):
+        for label in self._dynamic_labels:
+            label.retranslate()
 
     def update_content(self, content: str):
         """Update the message content (for streaming)."""
@@ -260,11 +280,12 @@ class ChatPanel(QWidget if PYSIDE_AVAILABLE else object):
     if PYSIDE_AVAILABLE:
         message_sent = Signal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, translator=None):
         if not PYSIDE_AVAILABLE:
             raise ImportError("PySide6 is required. Install with: pip install PySide6")
 
         super().__init__(parent)
+        self._translator = translator
         self._messages: List[ChatMessage] = []
         self._message_widgets: List[MessageWidget] = []
         self._llm_client = None
@@ -281,6 +302,8 @@ class ChatPanel(QWidget if PYSIDE_AVAILABLE else object):
         self._rag_k: int = 5  # Anzahl Kontext-Chunks
 
         self._setup_ui()
+        if self._translator:
+            self.retranslate_ui()
 
     def _setup_ui(self):
         """Set up the user interface."""
@@ -387,7 +410,7 @@ class ChatPanel(QWidget if PYSIDE_AVAILABLE else object):
         layout.addWidget(input_frame)
 
         # Status
-        self.status_label = QLabel("Bereit")
+        self.status_label = LocalizedLabel("Bereit", self._translator)
         self.status_label.setStyleSheet("color: #888; font-size: 10px;")
         layout.addWidget(self.status_label)
 
@@ -425,19 +448,19 @@ class ChatPanel(QWidget if PYSIDE_AVAILABLE else object):
     def _toggle_rag(self):
         """Toggle RAG mode."""
         self._use_rag = self.rag_toggle.isChecked()
-        self.rag_toggle.setText("RAG: AN" if self._use_rag else "RAG: AUS")
+        self.rag_toggle.setText(tr(self._translator, "RAG: AN" if self._use_rag else "RAG: AUS"))
         self._update_status()
 
     def _update_rag_status(self):
         """Update RAG status display."""
         if self._rag_engine:
             stats = self._rag_engine.get_statistics()
-            self.rag_toggle.setToolTip(
+            self.rag_toggle.setToolTip(translate_ui_text(
                 f"ChromaDB: {stats.get('total_chunks', 0)} Chunks indexiert\n"
-                f"Embedding: {stats.get('embedding_model', 'N/A')}"
-            )
+                f"Embedding: {stats.get('embedding_model', 'N/A')}", self._translator
+            ))
         else:
-            self.rag_toggle.setToolTip("RAG-Engine nicht verfügbar")
+            self.rag_toggle.setToolTip(tr(self._translator, "RAG-Engine nicht verfügbar"))
 
     def _update_status(self):
         """Update status label."""
@@ -445,16 +468,32 @@ class ChatPanel(QWidget if PYSIDE_AVAILABLE else object):
 
         if self._use_rag and self._rag_engine:
             stats = self._rag_engine.get_statistics()
-            parts.append(f"RAG: {stats.get('total_chunks', 0)} Chunks")
+            parts.append(translate_ui_text(
+                f"RAG: {stats.get('total_chunks', 0)} Chunks", self._translator
+            ))
         elif self._document_context:
-            parts.append(f"Kontext: ~{len(self._document_context)} Zeichen")
+            parts.append(translate_ui_text(
+                f"Kontext: ~{len(self._document_context)} Zeichen", self._translator
+            ))
 
         if self._document_manager:
             selected = len(self._document_manager.selected_documents)
             indexed = len([d for d in self._document_manager.selected_documents if d.is_indexed])
-            parts.append(f"Docs: {indexed}/{selected} indexiert")
+            parts.append(translate_ui_text(
+                f"Docs: {indexed}/{selected} indexiert", self._translator
+            ))
 
         self.status_label.setText(" | ".join(parts) if parts else "Bereit")
+
+    def retranslate_ui(self):
+        if not self._translator:
+            return
+        translate_widget_tree(self, self._translator)
+        self.status_label.retranslate()
+        for widget in self._message_widgets:
+            widget.retranslate_ui()
+        self._update_status()
+        self._update_rag_status()
 
     def _send_message(self):
         """Send the user's message."""
@@ -535,10 +574,11 @@ SPRACHE: Deutsch.
         self.status_label.setText("Fehler")
 
         # Update streaming widget with error
+        error_text = translate_ui_text(f"Fehler: {error}", self._translator)
         if self._streaming_widget:
-            self._streaming_widget.update_content(f"Fehler: {error}")
+            self._streaming_widget.update_content(error_text)
         else:
-            self._add_system_message(f"Fehler: {error}")
+            self._add_system_message(error_text)
 
         self._streaming_widget = None
 
@@ -590,7 +630,7 @@ SPRACHE: Deutsch.
         # Create assistant message with sources
         assistant_msg = ChatMessage(
             role="assistant",
-            content=result.get("answer", "Keine Antwort erhalten."),
+            content=result.get("answer") or tr(self._translator, "Keine Antwort erhalten."),
             timestamp=datetime.now(),
             sources=result.get("sources", []),
             confidence=result.get("confidence", 0.0)
@@ -618,7 +658,7 @@ SPRACHE: Deutsch.
         """Add a message to the chat."""
         self._messages.append(message)
 
-        widget = MessageWidget(message, self.messages_container)
+        widget = MessageWidget(message, self.messages_container, self._translator)
         self._message_widgets.append(widget)
 
         # Insert before stretch
@@ -632,7 +672,7 @@ SPRACHE: Deutsch.
 
     def _add_system_message(self, text: str):
         """Add a system message."""
-        msg = ChatMessage("system", text, datetime.now())
+        msg = ChatMessage("system", translate_ui_text(text, self._translator), datetime.now())
         self._add_message(msg)
 
     def _scroll_to_bottom(self):

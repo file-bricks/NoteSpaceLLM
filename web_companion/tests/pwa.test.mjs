@@ -116,6 +116,10 @@ describe('sw.js', () => {
     assert.ok(sw.includes('apple-touch-icon-180.png'), 'apple-touch-icon-180.png fehlt in sw.js ASSETS');
   });
 
+  it('cached the additional locale catalog for offline startup', () => {
+    assert.ok(sw.includes('./ui-locales.js'), 'ui-locales.js fehlt in sw.js ASSETS');
+  });
+
   // Bug #2: caches.match ohne ignoreSearch schlägt bei ?demo=1-URLs offline fehl
   it('caches.match nutzt ignoreSearch:true', () => {
     assert.ok(
@@ -140,14 +144,22 @@ describe('index.html — Integration', () => {
     assert.ok(html.includes('app.js'), 'app.js-Script fehlt in index.html');
   });
 
-  it('bietet alle sechs UI-Sprachen im Sprachumschalter an', () => {
-    for (const locale of ['de', 'en', 'es', 'zh-Hans', 'ja', 'ru']) {
+  it('bietet alle elf UI-Sprachen im Sprachumschalter an', () => {
+    for (const locale of ['de', 'en', 'es', 'zh-Hans', 'ja', 'ru', 'fr', 'hi', 'ar', 'bn', 'pt']) {
       assert.match(
         html,
         new RegExp(`<option value="${locale}">`),
         `Sprachoption fehlt: ${locale}`
       );
     }
+  });
+
+  it('bindet den zugänglichen Sprachwahl-Namen an die aktive UI-Sprache', () => {
+    assert.match(html, /data-i18n-aria-label="languageLabel"/);
+    assert.match(
+      readText('app.js'),
+      /document\.documentElement\.dir = activeLocale === "ar" \? "rtl" : "ltr"/
+    );
   });
 });
 

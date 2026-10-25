@@ -68,9 +68,8 @@ body {
   margin: 0 auto;
   max-width: 1180px;
   padding-top: calc(32px + env(safe-area-inset-top, 0px));
-  padding-right: 18px;
+  padding-inline: 18px;
   padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
-  padding-left: 18px;
   position: relative;
   z-index: 1;
 }
@@ -104,6 +103,11 @@ body {
   letter-spacing: 0.18em;
   margin: 0 0 8px;
   text-transform: uppercase;
+}
+
+html[dir="rtl"] .eyebrow {
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 h1,
@@ -222,11 +226,11 @@ h3 {
   display: grid;
   gap: 10px;
   margin: 0 0 16px;
-  padding-left: 20px;
+  padding-inline-start: 20px;
 }
 
 .hint-list li {
-  padding-left: 4px;
+  padding-inline-start: 4px;
 }
 
 input[type="file"] {
@@ -363,8 +367,11 @@ button:active,
 
 .excerpt {
   background: rgba(219, 234, 254, 0.45);
-  border-left: 4px solid rgba(12, 74, 110, 0.34);
-  border-radius: 0 12px 12px 0;
+  border-inline-start: 4px solid rgba(12, 74, 110, 0.34);
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  border-start-end-radius: 12px;
+  border-end-end-radius: 12px;
   padding: 12px 14px;
 }
 

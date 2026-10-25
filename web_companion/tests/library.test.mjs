@@ -53,12 +53,14 @@ function createAppHarness(storage = new Map(), { userAgent = "", onLine = true }
   ];
   const elements = new Map(selectors.map((selector) => [selector, makeElement()]));
   elements.get("#workspace-summary").summaryCells = Array.from({ length: 5 }, makeElement);
+  elements.get("#language-select").dataset.i18nAriaLabel = "languageLabel";
   const document = {
     body: { append() {} },
-    documentElement: { lang: "" },
+    documentElement: { dir: "", lang: "" },
     createElement: makeElement,
     querySelector: (selector) => elements.get(selector) || makeElement(),
-    querySelectorAll: () => []
+    querySelectorAll: (selector) =>
+      selector === "[data-i18n-aria-label]" ? [elements.get("#language-select")] : []
   };
   const localStorage = {
     getItem: (key) => (storage.has(key) ? storage.get(key) : null),
@@ -80,7 +82,7 @@ function createAppHarness(storage = new Map(), { userAgent = "", onLine = true }
     window,
     URLSearchParams
   });
-  return { elements, storage };
+  return { document, elements, storage };
 }
 
 test("normalizeWorkspacePayload accepts minimal valid payload", () => {
@@ -165,11 +167,15 @@ test("resolveUiLocale supports browser-style locale tags", () => {
   assert.equal(resolveUiLocale("zh-Hans"), "zh-Hans");
   assert.equal(resolveUiLocale("ja-JP"), "ja");
   assert.equal(resolveUiLocale("ru-RU"), "ru");
-  assert.equal(resolveUiLocale("fr-FR"), "de");
+  assert.equal(resolveUiLocale("fr-FR"), "fr");
+  assert.equal(resolveUiLocale("hi-IN"), "hi");
+  assert.equal(resolveUiLocale("ar-EG"), "ar");
+  assert.equal(resolveUiLocale("bn-BD"), "bn");
+  assert.equal(resolveUiLocale("pt-BR"), "pt");
 });
 
 test("getSupportedUiLocales exposes all web companion UI locales", () => {
-  assert.deepEqual(getSupportedUiLocales(), ["de", "en", "es", "zh-Hans", "ja", "ru"]);
+  assert.deepEqual(getSupportedUiLocales(), ["de", "en", "es", "zh-Hans", "ja", "ru", "fr", "hi", "ar", "bn", "pt"]);
 });
 
 test("all UI locale tables expose the same keys", () => {
@@ -195,6 +201,78 @@ test("getUiText returns premium-language web companion copy", () => {
   assert.equal(getUiText("zh-CN").summaryHeading, "概览");
   assert.equal(getUiText("ja").exportNotes, "レビュー用ノートをエクスポート");
   assert.equal(getUiText("ru").clearNotes, "Очистить заметки");
+});
+
+test("the additional locale catalogs translate templates without altering their values", () => {
+  assert.equal(getUiText("fr").workspaceLoaded("Démo", "Essai"), "Démo chargé : Essai");
+  assert.equal(getUiText("hi").untitledDocument(0), "दस्तावेज़ 1");
+  assert.equal(getUiText("ar").selectedDocuments(2, 5), "تم تحديد 2 من 5");
+  assert.match(getUiText("bn").notesExported("workspace-notes.md"), /workspace-notes\.md/);
+  assert.equal(getUiText("pt").reviewHeadingWithTitle("Análise"), "# Notas de revisão: Análise");
+});
+
+test("each newly supported locale includes translated demo prose and preserves identifiers", () => {
+  const expected = {
+    ar: "تقرير تركيبي",
+    bn: "সংশ্লেষ প্রতিবেদন",
+    fr: "Rapport de synthèse",
+    hi: "संश्लेषण रिपोर्ट",
+    pt: "Relatório de síntese"
+  };
+
+  for (const [locale, reportTitle] of Object.entries(expected)) {
+    const demo = getDemoWorkspace(locale);
+    assert.equal(demo.schema_version, "notespacellm-workspace-v1");
+    assert.equal(demo.app.name, "NoteSpaceLLM");
+    assert.equal(demo.workspace.locale, locale);
+    assert.equal(demo.workspace.workflow_type, "research");
+    assert.equal(demo.report.title, reportTitle);
+    assert.equal(demo.report.format, "markdown");
+    assert.equal(demo.documents[0].name, "report-draft.md");
+    assert.equal(demo.documents[0].path_hint, "reports/report-draft.md");
+    assert.equal(demo.documents[0].id, "doc-1");
+    assert.equal(demo.documents[0].format, "markdown");
+    assert.equal(demo.chat.messages[0].role, "assistant");
+    assert.equal(demo.provider.name, "ollama");
+    assert.equal(demo.provider.mode, "local");
+    assert.notEqual(demo.report.content, getDemoWorkspace("en").report.content);
+  }
+});
+
+test("the PWA UI locale persists across reloads and switches RTL only for Arabic", () => {
+  const storage = new Map();
+  const firstLoad = createAppHarness(storage);
+  const languageSelect = firstLoad.elements.get("#language-select");
+
+  languageSelect.listeners.get("change")({ target: { value: "ar" } });
+  assert.equal(storage.get("notespacellm-companion:locale"), "ar");
+  assert.equal(firstLoad.document.documentElement.lang, "ar");
+  assert.equal(firstLoad.document.documentElement.dir, "rtl");
+  assert.equal(languageSelect.attributes["aria-label"], getUiText("ar").languageLabel);
+  assert.equal(firstLoad.elements.get("#status-message").textContent, getUiText("ar").statusNoWorkspace);
+
+  const afterReload = createAppHarness(storage);
+  assert.equal(afterReload.document.documentElement.lang, "ar");
+  assert.equal(afterReload.document.documentElement.dir, "rtl");
+  assert.equal(afterReload.elements.get("#language-select").value, "ar");
+
+  afterReload.elements.get("#language-select").listeners.get("change")({ target: { value: "pt" } });
+  assert.equal(storage.get("notespacellm-companion:locale"), "pt");
+  assert.equal(afterReload.document.documentElement.dir, "ltr");
+});
+
+test("locale switching retranslates app-owned demo labels but preserves workspace content", () => {
+  const app = createAppHarness(new Map());
+  app.elements.get("#load-demo").listeners.get("click")();
+  const originalReportTitle = app.elements.get("#report-title").textContent;
+
+  app.elements.get("#language-select").listeners.get("change")({ target: { value: "pt" } });
+
+  assert.equal(app.elements.get("#report-title").textContent, originalReportTitle);
+  assert.match(
+    app.elements.get("#status-message").textContent,
+    /^Espaço de trabalho de demonstração carregado:/
+  );
 });
 
 test("getPlatformGuide returns Android-specific install guidance", () => {
@@ -229,14 +307,19 @@ test("getPlatformGuide can localize mobile hints to Japanese", () => {
   assert.match(guide.offline_hint, /ワークスペース JSON は保存されない.*再読み込みのたびに再インポートが必要/);
 });
 
-test("offline guidance explains workspace re-import in all six locales", () => {
+test("offline guidance explains workspace re-import in all eleven locales", () => {
   const requiredMeaning = {
     de: /Workspace-JSON wird nicht gespeichert.*nach jedem Neuladen erneut importiert/i,
     en: /workspace JSON is not saved.*imported again after each reload/i,
     es: /JSON del espacio de trabajo no se guarda.*debe importarse de nuevo después de cada recarga/i,
     "zh-Hans": /工作区 JSON 不会保存.*每次重新加载后都必须重新导入/,
     ja: /ワークスペース JSON は保存されない.*再読み込みのたびに再インポートが必要/,
-    ru: /JSON рабочей области не сохраняется.*после каждой перезагрузки его нужно импортировать заново/i
+    ru: /JSON рабочей области не сохраняется.*после каждой перезагрузки его нужно импортировать заново/i,
+    fr: /JSON de l'espace de travail n'est pas enregistré.*réimporté après chaque rechargement/i,
+    hi: /वर्कस्पेस JSON सहेजा नहीं जाता.*हर रीलोड के बाद फिर से आयात करना होगा/,
+    ar: /JSON الخاص بمساحة العمل.*استيراده مرة أخرى بعد كل إعادة تحميل/,
+    bn: /ওয়ার্কস্পেস JSON সংরক্ষণ করা হয় না.*প্রতিটি রিলোডের পর আবার আমদানি করতে হবে/,
+    pt: /JSON do espaço de trabalho não é guardado.*reimportado após cada recarregamento/i
   };
 
   for (const [locale, pattern] of Object.entries(requiredMeaning)) {

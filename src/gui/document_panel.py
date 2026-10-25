@@ -32,6 +32,18 @@ except ImportError:
     class Signal:
         def __init__(self, *args): pass
 
+if PYSIDE_AVAILABLE:
+    from .i18n import (
+        LocalizedFileDialog as QFileDialog,
+        LocalizedInputDialog as QInputDialog,
+        LocalizedLabel,
+        LocalizedMessageBox as QMessageBox,
+        TranslatableLabel,
+        translate_widget_tree,
+        tr,
+    )
+    QLabel = TranslatableLabel
+
 
 class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
     """
@@ -49,17 +61,20 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
         subquery_requested = Signal(str, str, str)  # doc_id, query_type, query_text
         files_added = Signal()  # Emitted after files were added (for async extraction)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, translator=None):
         if not PYSIDE_AVAILABLE:
             raise ImportError("PySide6 is required. Install with: pip install PySide6")
 
         super().__init__(parent)
+        self._translator = translator
         self._document_manager = None
         self._subquery_manager = None
         self._item_map = {}  # doc_id -> QTreeWidgetItem
 
         self._setup_ui()
         self._setup_drag_drop()
+        if self._translator:
+            self.retranslate_ui()
 
     def _setup_ui(self):
         """Set up the user interface."""
@@ -119,7 +134,7 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
         layout.addWidget(self.tree)
 
         # Status bar
-        self.status_label = QLabel("Keine Dokumente")
+        self.status_label = LocalizedLabel("Keine Dokumente", self._translator)
         layout.addWidget(self.status_label)
 
         # Progress bar (hidden by default)
@@ -202,7 +217,7 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
             DocumentStatus.COMPLETED: "Fertig",
             DocumentStatus.ERROR: "Fehler"
         }
-        return status_map.get(status, str(status.value))
+        return tr(self._translator, status_map.get(status, str(status.value)))
 
     def _format_size(self, size_bytes: int) -> str:
         """Format file size for display."""
@@ -224,6 +239,15 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
         self.status_label.setText(
             f"{stats['selected_documents']} von {stats['total_documents']} ausgewählt"
         )
+
+    def retranslate_ui(self):
+        """Refresh UI chrome and app-owned document status labels."""
+        if self._translator:
+            translate_widget_tree(self, self._translator)
+            if self._document_manager:
+                self._refresh_tree()
+            else:
+                self._update_status()
 
     def _on_document_change(self, action: str, document):
         """Handle document manager changes."""
@@ -273,23 +297,23 @@ class DocumentPanel(QWidget if PYSIDE_AVAILABLE else object):
         menu = QMenu(self)
 
         # Sub-query actions
-        menu.addAction("Zusammenfassung erstellen", lambda: self._add_subquery(doc_id, "summary"))
-        menu.addAction("Informationen extrahieren...", lambda: self._add_subquery_custom(doc_id, "extract"))
-        menu.addAction("Analysieren...", lambda: self._add_subquery_custom(doc_id, "analyze"))
-        menu.addAction("Frage stellen...", lambda: self._add_subquery_custom(doc_id, "question"))
+        menu.addAction(tr(self._translator, "Zusammenfassung erstellen"), lambda: self._add_subquery(doc_id, "summary"))
+        menu.addAction(tr(self._translator, "Informationen extrahieren..."), lambda: self._add_subquery_custom(doc_id, "extract"))
+        menu.addAction(tr(self._translator, "Analysieren..."), lambda: self._add_subquery_custom(doc_id, "analyze"))
+        menu.addAction(tr(self._translator, "Frage stellen..."), lambda: self._add_subquery_custom(doc_id, "question"))
 
         menu.addSeparator()
 
         # Quick templates
-        submenu = menu.addMenu("Schnellanalyse")
-        submenu.addAction("Kernaussagen", lambda: self._add_subquery(doc_id, "key_points"))
-        submenu.addAction("Zeitachse", lambda: self._add_subquery(doc_id, "timeline"))
-        submenu.addAction("Personen/Orte", lambda: self._add_subquery(doc_id, "entities"))
+        submenu = menu.addMenu(tr(self._translator, "Schnellanalyse"))
+        submenu.addAction(tr(self._translator, "Kernaussagen"), lambda: self._add_subquery(doc_id, "key_points"))
+        submenu.addAction(tr(self._translator, "Zeitachse"), lambda: self._add_subquery(doc_id, "timeline"))
+        submenu.addAction(tr(self._translator, "Personen/Orte"), lambda: self._add_subquery(doc_id, "entities"))
 
         menu.addSeparator()
 
         # Document actions
-        menu.addAction("Entfernen", lambda: self._remove_document(doc_id))
+        menu.addAction(tr(self._translator, "Entfernen"), lambda: self._remove_document(doc_id))
 
         menu.exec(self.tree.mapToGlobal(position))
 

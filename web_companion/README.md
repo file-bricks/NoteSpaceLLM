@@ -12,8 +12,9 @@ Review-Notizen.
 - Bericht, Dokumentmetadaten und ausgewählte Auszüge anzeigen
 - importierte Workspace-Inhalte nur in der aktuellen Sitzung anzeigen; nach einem Neustart erneut importieren
 - eigene Review-Notizen lokal speichern und als Markdown exportieren
-- DE/EN/ES/ZH-Hans/JA/RU-Oberfläche mit Browser-/Workspace-Locale und
-  manuellem Sprachumschalter
+- DE/EN/ES/ZH-Hans/JA/RU/FR/HI/AR/BN/PT-Oberfläche mit Browser-/Workspace-
+  Locale, manuellem Sprachumschalter und dauerhafter Speicherung der Auswahl
+- Arabische Oberfläche mit RTL-Layout
 
 ## Lokaler Start
 
