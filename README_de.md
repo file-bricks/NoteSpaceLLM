@@ -106,7 +106,7 @@ graph TD
 - **Export in mehreren Formaten:** Ausgabe als MD, PDF, DOCX, HTML und TXT
 - **Prompt-Export:** Den Berichtskontext als Markdown-Prompt für externe LLM-Arbeitsabläufe speichern
 - **Ollama-Verbindungsprofile:** Appweite Provider-Einstellungen lassen sich projektübergreifend wiederverwenden
-- **Sprachunterstützung:** Die Desktopoberfläche bietet keine benutzerseitige Sprachauswahl und ist derzeit überwiegend deutsch. Der Web/PWA-Companion bietet eine dauerhafte Auswahl für Deutsch, Englisch, Spanisch, vereinfachtes Chinesisch, Japanisch, Russisch, Französisch, Hindi, Arabisch, Bengalisch und Portugiesisch; Arabisch verwendet eine Rechts-nach-links-Oberfläche. Das Projektsprachfeld wird in Workspace-Exporte übernommen; es ist nicht an eine Desktop-Sprachauswahl oder eine Auswahl der Berichtssprache angebunden.
+- **Sprachunterstützung:** Desktop- und Web-/PWA-Oberfläche bieten dauerhaft gespeicherte Sprachauswahlen für Englisch, Deutsch, Spanisch, vereinfachtes Chinesisch, Japanisch, Russisch, Französisch, Hindi, Arabisch, Bengalisch und Portugiesisch. Für Arabisch wird ein Rechts-nach-links-Layout verwendet. Das Sprachfeld des Projekts ist Workspace-Export-Metadatum; es ändert weder die Oberflächensprache noch legt es die Sprache generierter Berichte fest.
 - **Umlautsichere Oberfläche:** Deutsche UI-Texte verwenden echte Umlaute; der Übersetzungsscanner vermeidet englische Fehlalarme.
 - **Profile:** Wiederverwendbare Kombinationen von Ausgabeformaten
 
@@ -279,7 +279,7 @@ Zusätzliche Quellcode-Smokes laufen in GitHub Actions:
 NoteSpaceLLM/
 ├── main.py                 # Entry point
 ├── requirements.txt        # Dependencies
-├── translator.py           # Translation-catalog scan/helper; no desktop language switch
+├── translator.py           # Translation system and catalog scanner used by the desktop UI
 ├── locales/                # Catalog inputs for the translation helper
 ├── src/
 │   ├── core/              # Core functionality

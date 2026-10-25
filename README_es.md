@@ -1,4 +1,4 @@
-<!-- worldset: {"translated_from_sha256": "466a6a18b88506de47fa858aabc993da82eb017a6be4e93cbd9aea6ac61ec40f", "translator": "claude-haiku-5-5 with gpt-6-luna/max review and repairs", "translated_at": "2026-10-25T08:23:38.931027+00:00", "reviewer": "Root independent source/literal/encoding checks"} -->
+<!-- worldset: {"translated_from_sha256": "5156cab29500f95cbddd18a51dac493ccd36033b452d6cee3bd12f1ad5893194", "translator": "claude-haiku-5-5 with gpt-6-luna/max review and repairs", "translated_at": "2026-10-25T08:23:38.931027+00:00", "reviewer": "Root independent source/literal/encoding checks"} -->
 <img src="assets/banner.png" width="100%" alt="NoteSpaceLLM Banner">
 
 # NoteSpaceLLM
@@ -104,7 +104,7 @@ graph TD
 - **Exportación multiformato**: Salida a MD, PDF, DOCX, HTML, TXT
 - **Exportación de prompts**: Guarde el contexto del informe como prompt en Markdown para flujos de trabajo con LLM externos
 - **Perfiles de conexión de Ollama**: La configuración de proveedor válida para toda la aplicación puede reutilizarse entre proyectos
-- **Compatibilidad de idiomas**: La GUI de escritorio no tiene un selector de idioma para el usuario; su interfaz está actualmente principalmente en alemán. El Companion Web/PWA dispone de un selector persistente de idioma de interfaz para alemán, inglés, español, chino simplificado, japonés, ruso, francés, hindi, árabe, bengalí y portugués. El campo de idioma del proyecto se incluye en las exportaciones del espacio de trabajo; no está conectado a un selector de idioma de la interfaz de escritorio ni de los informes.
+- **Compatibilidad de idiomas**: Las interfaces de escritorio y del Web/PWA Companion ofrecen selectores de idioma persistentes para inglés, alemán, español, chino simplificado, japonés, ruso, francés, hindi, árabe, bengalí y portugués. El árabe usa una disposición de derecha a izquierda. El campo de idioma del proyecto es metadato de la exportación del espacio de trabajo; no cambia el idioma de la interfaz ni determina el idioma de los informes generados.
 - **Interfaz compatible con los umlauts alemanes**: Los textos de la interfaz en alemán usan los caracteres originales; el escáner de traducciones evita falsos positivos en inglés
 - **Perfiles**: Combinaciones reutilizables de formatos de salida
 
@@ -257,7 +257,7 @@ Pruebas rápidas adicionales se ejecutan en GitHub Actions:
 NoteSpaceLLM/
 ├── main.py                 # Entry point
 ├── requirements.txt        # Dependencies
-├── translator.py           # Translation-catalog scan/helper; no desktop language switch
+├── translator.py           # Translation system and catalog scanner used by the desktop UI
 ├── locales/                # Catalog inputs for the translation helper
 ├── src/
 │   ├── core/              # Core functionality

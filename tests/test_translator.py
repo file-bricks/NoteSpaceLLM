@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from translator import TranslationSystem
+from translator import SUPPORTED_LANGUAGES, TranslationSystem
 
 
 class TranslationSystemTests(unittest.TestCase):
@@ -29,9 +29,9 @@ class TranslationSystemTests(unittest.TestCase):
             result = tr.scan_and_update(project_dir)
 
             self.assertEqual(result["added"], ["Datei öffnen"])
-            # missing is a per-language dict since i18n expansion (6 languages)
+            # Missing entries are reported for every supported target locale.
             self.assertIsInstance(result["missing"], dict)
-            for lang in ("en", "es", "zh", "ja", "ru"):
+            for lang in (code for code in SUPPORTED_LANGUAGES if code != "de"):
                 self.assertIn("Datei öffnen", result["missing"].get(lang, []))
             self.assertEqual(result["total"], 1)
 
@@ -40,8 +40,39 @@ class TranslationSystemTests(unittest.TestCase):
             self.assertIn("Datei öffnen", data)
             entry = data["Datei öffnen"]
             self.assertEqual(entry["de"], "Datei öffnen")
-            for lang in ("en", "es", "zh", "ja", "ru"):
+            for lang in (code for code in SUPPORTED_LANGUAGES if code != "de"):
                 self.assertIn(lang, entry)
+
+    def test_gui_catalog_lookup_is_stable_keyed_and_read_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app_dir = Path(tmp)
+            locale_dir = app_dir / "locales"
+            locale_dir.mkdir()
+            source = "{count} Dokumente geladen"
+            catalog = {
+                "schema": "notespacellm.gui-i18n-runtime.v1",
+                "entries": [{
+                    "key": "gui.status.documents_loaded",
+                    "canonical_source_value": source,
+                    "translations": {
+                        "de": source,
+                        "en": "Loaded {count} documents",
+                        "fr": "{count} documents chargés",
+                    },
+                }],
+            }
+            (locale_dir / "gui_translations.json").write_text(
+                json.dumps(catalog, ensure_ascii=False), encoding="utf-8"
+            )
+            before = (locale_dir / "gui_translations.json").read_bytes()
+
+            tr = TranslationSystem("fr", app_dir)
+            self.assertEqual(tr.t("gui.status.documents_loaded"), "{count} documents chargés")
+            self.assertEqual(tr.t(source), "{count} documents chargés")
+            self.assertFalse(tr.has_translation_source("Nicht im Katalog"))
+
+            self.assertEqual((locale_dir / "gui_translations.json").read_bytes(), before)
+            self.assertFalse((locale_dir / "translations.json").exists())
 
 
 if __name__ == "__main__":

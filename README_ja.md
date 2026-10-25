@@ -1,4 +1,4 @@
-<!-- worldset: {"translated_from_sha256": "466a6a18b88506de47fa858aabc993da82eb017a6be4e93cbd9aea6ac61ec40f", "translator": "claude-haiku-5-5 with gpt-6-luna/max review and repairs", "translated_at": "2026-10-25T08:23:40.867192+00:00", "reviewer": "Root independent source/literal/encoding checks"} -->
+<!-- worldset: {"translated_from_sha256": "5156cab29500f95cbddd18a51dac493ccd36033b452d6cee3bd12f1ad5893194", "translator": "claude-haiku-5-5 with gpt-6-luna/max review and repairs", "translated_at": "2026-10-25T08:23:40.867192+00:00", "reviewer": "Root independent source/literal/encoding checks"} -->
 <img src="assets/banner.png" width="100%" alt="NoteSpaceLLM Banner">
 
 # NoteSpaceLLM
@@ -95,7 +95,7 @@ graph TD
 - **マルチフォーマットエクスポート**: MD、PDF、DOCX、HTML、TXTへの出力
 - **プロンプトのエクスポート**: レポートのコンテキストを、外部のLLMワークフロー用にMarkdownプロンプトとして保存
 - **Ollama接続プロフィール**: アプリ全体のプロバイダー設定を、複数のプロジェクトで再利用可能
-- **言語サポート**: デスクトップGUIにはユーザーが選択できる言語はなく、インターフェースは現在主にドイツ語です。Web/PWAコンパニオンには、ドイツ語、英語、スペイン語、簡体字中国語、日本語、ロシア語、フランス語、ヒンディー語、アラビア語、ベンガル語、ポルトガル語を選択できる永続的なUI言語セレクターがあります。プロジェクトの言語フィールドはワークスペースのエクスポートに含まれますが、デスクトップUIやレポート言語の選択には接続されていません。
+- **言語サポート**: デスクトップと Web/PWA Companion の各インターフェースには、英語、ドイツ語、スペイン語、簡体字中国語、日本語、ロシア語、フランス語、ヒンディー語、アラビア語、ベンガル語、ポルトガル語を選べる永続保存型の言語セレクターがあります。アラビア語では右から左に読むレイアウトを使用します。プロジェクトの言語フィールドはワークスペース書き出しのメタデータです。インターフェースの言語を切り替えたり、生成レポートの言語を決めたりするものではありません。
 - **ウムラウト対応のUI**: ドイツ語のUI文字列では本来のウムラウトを使用し、翻訳スキャナーは英語の誤検出を回避します
 - **プロフィール**: 再利用可能な出力フォーマットの組み合わせ
 
@@ -243,7 +243,7 @@ GitHub Actionsで追加のソーススモークテストが実行されます:
 NoteSpaceLLM/
 ├── main.py                 # Entry point
 ├── requirements.txt        # Dependencies
-├── translator.py           # Translation-catalog scan/helper; no desktop language switch
+├── translator.py           # Translation system and catalog scanner used by the desktop UI
 ├── locales/                # Catalog inputs for the translation helper
 ├── src/
 │   ├── core/              # Core functionality

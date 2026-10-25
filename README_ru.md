@@ -1,4 +1,4 @@
-<!-- worldset: {"translated_from_sha256": "466a6a18b88506de47fa858aabc993da82eb017a6be4e93cbd9aea6ac61ec40f", "translator": "claude-haiku-5-5 with gpt-6-luna/max review and repairs", "translated_at": "2026-10-25T08:23:43.246386+00:00", "reviewer": "Root independent source/literal/encoding checks"} -->
+<!-- worldset: {"translated_from_sha256": "5156cab29500f95cbddd18a51dac493ccd36033b452d6cee3bd12f1ad5893194", "translator": "claude-haiku-5-5 with gpt-6-luna/max review and repairs", "translated_at": "2026-10-25T08:23:43.246386+00:00", "reviewer": "Root independent source/literal/encoding checks"} -->
 <img src="assets/banner.png" width="100%" alt="NoteSpaceLLM Banner">
 
 # NoteSpaceLLM
@@ -105,7 +105,7 @@ graph TD
 - **Экспорт в несколько форматов**: вывод в MD, PDF, DOCX, HTML, TXT
 - **Экспорт промптов**: сохранение контекста отчёта как Markdown-промпта для внешних рабочих процессов с LLM
 - **Профили подключения к Ollama**: настройки провайдера для всего приложения можно повторно использовать в разных проектах
-- **Поддержка языков**: в графическом интерфейсе настольного приложения нет выбора языка пользователем; его интерфейс в настоящее время в основном немецкий. Web/PWA-компаньон имеет постоянный выбор языка интерфейса: немецкий, английский, испанский, упрощённый китайский, японский, русский, французский, хинди, арабский, бенгальский и португальский. Поле языка проекта включается в экспорт рабочих пространств; оно не связано с выбором языка настольного интерфейса или отчётов.
+- **Поддержка языков**: В настольном интерфейсе и Web/PWA Companion есть сохраняемый выбор из одиннадцати языков: английского, немецкого, испанского, упрощённого китайского, японского, русского, французского, хинди, арабского, бенгальского и португальского. Для арабского используется раскладка справа налево. Поле языка проекта включается в экспорт рабочего пространства как метаданные; оно не меняет язык интерфейса и не определяет язык создаваемых отчётов.
 - **Интерфейс, безопасный для умлаутов**: немецкие строки интерфейса используют собственные умлауты; сканер переводов исключает ложные срабатывания английского языка
 - **Профили**: повторно используемые комбинации форматов вывода
 
@@ -259,7 +259,7 @@ node --test tests/library.test.mjs
 NoteSpaceLLM/
 ├── main.py                 # Entry point
 ├── requirements.txt        # Dependencies
-├── translator.py           # Translation-catalog scan/helper; no desktop language switch
+├── translator.py           # Translation system and catalog scanner used by the desktop UI
 ├── locales/                # Catalog inputs for the translation helper
 ├── src/
 │   ├── core/              # Core functionality

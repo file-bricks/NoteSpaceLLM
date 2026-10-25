@@ -1,7 +1,7 @@
 """
 TranslationSystem - Multi-Language Support für Anwendungen
 ============================================================
-Version: 2.0.0 (6-Sprachen-Ausbau)
+Version: 2.0.0 (11-Sprachen-Ausbau)
 Quelle: ARC_EntwicklungsschleifeAdvanced/TranslationSystem.py v2.4
 Referenz: _LANG/LANGUAGE_CODES.md
 
@@ -19,9 +19,22 @@ import re
 from pathlib import Path
 from typing import Dict, List, Set
 
-SUPPORTED_LANGUAGES = ['de', 'en', 'es', 'zh', 'ja', 'ru']
+SUPPORTED_LANGUAGES = ['en', 'de', 'es', 'zh', 'ja', 'ru', 'fr', 'hi', 'ar', 'bn', 'pt']
 DEFAULT_LANGUAGE = 'de'
 FALLBACK_CHAIN = ['en', 'de']
+LANGUAGE_NAMES = {
+    'en': 'English',
+    'de': 'Deutsch',
+    'es': 'Español',
+    'zh': '简体中文',
+    'ja': '日本語',
+    'ru': 'Русский',
+    'fr': 'Français',
+    'hi': 'हिन्दी',
+    'ar': 'العربية',
+    'bn': 'বাংলা',
+    'pt': 'Português',
+}
 
 
 class TranslationSystem:
@@ -42,6 +55,9 @@ class TranslationSystem:
         self.app_dir = Path(app_dir)
 
         self.translations_file = self.app_dir / "locales" / "translations.json"
+        self.ui_translations_file = self.app_dir / "locales" / "gui_translations.json"
+        self.ui_translations = {}
+        self.ui_keys = {}
 
         self.string_patterns = [
             re.compile(r'setText\s*\(\s*["\']([^"\']+)["\']\s*\)'),
@@ -74,47 +90,101 @@ class TranslationSystem:
         if self.translations_file.exists():
             try:
                 with open(self.translations_file, 'r', encoding='utf-8') as f:
-                    self.translations = json.load(f)
+                    loaded = json.load(f)
+                self.translations = loaded if isinstance(loaded, dict) else {}
             except Exception:
                 self.translations = {}
         else:
             self.translations = {}
+        self._load_ui_translations()
+
+    def _load_ui_translations(self):
+        """Load the stable-key GUI catalog and index it by its German source text."""
+        self.ui_translations = {}
+        self.ui_keys = {}
+        if not self.ui_translations_file.exists():
+            return
+        try:
+            with open(self.ui_translations_file, 'r', encoding='utf-8') as f:
+                payload = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            return
+
+        records = payload.get('entries', []) if isinstance(payload, dict) else []
+        if not isinstance(records, list):
+            return
+        for record in records:
+            if not isinstance(record, dict):
+                continue
+            stable_key = record.get('key')
+            source = record.get('canonical_source_value')
+            translations = record.get('translations', {})
+            if not isinstance(stable_key, str) or not isinstance(source, str):
+                continue
+            if not isinstance(translations, dict):
+                translations = {}
+            self.ui_keys[stable_key] = source
+            self.ui_translations[source] = translations
 
     def _save_translations(self):
         self.translations_file.parent.mkdir(parents=True, exist_ok=True)
         with open(self.translations_file, 'w', encoding='utf-8') as f:
             json.dump(self.translations, f, indent=2, ensure_ascii=False)
 
+    def _resolve_entry(self, entry, fallback: str) -> str:
+        if not isinstance(entry, dict):
+            return fallback
+        value = entry.get(self.current_lang)
+        if isinstance(value, str) and value:
+            return value
+        for language in FALLBACK_CHAIN:
+            value = entry.get(language)
+            if isinstance(value, str) and value:
+                return value
+        return fallback
+
+    @staticmethod
+    def _translation_for(entry, language: str) -> str:
+        if isinstance(entry, dict):
+            value = entry.get(language)
+            return value if isinstance(value, str) else ""
+        return ""
+
     def t(self, key: str) -> str:
         """
-        Übersetzt einen Key in die aktuelle Sprache.
-        Fallback-Kette: aktuelle Sprache -> en -> de -> Key selbst.
+        Übersetzt einen Quelltext oder stabilen GUI-Schlüssel.
+
+        Fallback-Kette: aktuelle Sprache -> en -> de -> Quelltext.
+        Eine fehlende Übersetzung wird nicht automatisch in den Quellkatalog
+        geschrieben; der Translator bleibt beim bloßen Anzeigen schreibfrei.
         """
-        if key in self.translations:
-            entry = self.translations[key]
-            value = entry.get(self.current_lang)
-            if value:
-                return value
-            for fb in FALLBACK_CHAIN:
-                value = entry.get(fb)
+        if key in self.ui_keys:
+            source = self.ui_keys[key]
+            return self._resolve_entry(self.ui_translations.get(source), source)
+        if key in self.ui_translations or key in self.translations:
+            gui_entry = self.ui_translations.get(key)
+            legacy_entry = self.translations.get(key)
+            for entry in (gui_entry, legacy_entry):
+                value = self._translation_for(entry, self.current_lang)
                 if value:
                     return value
+            for language in FALLBACK_CHAIN:
+                for entry in (gui_entry, legacy_entry):
+                    value = self._translation_for(entry, language)
+                    if value:
+                        return value
             return key
-
-        if self._is_german(key):
-            entry = {"de": key}
-            for lang in SUPPORTED_LANGUAGES:
-                if lang != 'de':
-                    entry[lang] = ""
-            self.translations[key] = entry
-            try:
-                self._save_translations()
-            except OSError:
-                # z.B. schreibgeschütztes Installationsverzeichnis -- Übersetzen
-                # darf deshalb nie fehlschlagen
-                pass
-
         return key
+
+    def has_translation_source(self, source: str) -> bool:
+        """Return whether a string is present in either read-only GUI catalog."""
+        return source in self.ui_translations or source in self.translations
+
+    def ui(self, stable_key: str, source: str) -> str:
+        """Translate a GUI string by its stable key, falling back to source text."""
+        if stable_key in self.ui_keys:
+            return self.t(stable_key)
+        return self.t(source)
 
     def set_language(self, lang: str):
         if lang in SUPPORTED_LANGUAGES:

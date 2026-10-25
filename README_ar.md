@@ -1,4 +1,4 @@
-<!-- worldset: {"translated_from_sha256": "466a6a18b88506de47fa858aabc993da82eb017a6be4e93cbd9aea6ac61ec40f", "translator": "claude-haiku-5-5 with gpt-6-luna/max review and repairs", "translated_at": "2026-10-25T08:23:37.463722+00:00", "reviewer": "Root independent source/literal/encoding checks"} -->
+<!-- worldset: {"translated_from_sha256": "5156cab29500f95cbddd18a51dac493ccd36033b452d6cee3bd12f1ad5893194", "translator": "claude-haiku-5-5 with gpt-6-luna/max review and repairs", "translated_at": "2026-10-25T08:23:37.463722+00:00", "reviewer": "Root independent source/literal/encoding checks"} -->
 <img src="assets/banner.png" width="100%" alt="NoteSpaceLLM Banner">
 
 # NoteSpaceLLM
@@ -95,7 +95,7 @@ graph TD
 - **التصدير متعدد الصيغ**: الإخراج بصيغ MD وPDF وDOCX وHTML وTXT
 - **تصدير المطالبات**: حفظ سياق التقرير كمطالبة Markdown لسير عمل النماذج اللغوية الخارجية
 - **ملفات تعريف اتصال Ollama**: يمكن إعادة استخدام إعدادات الموفّر على مستوى التطبيق عبر المشاريع
-- **دعم اللغات**: لا تتيح واجهة سطح المكتب اختيار لغة من قِبل المستخدم، وواجهتها ألمانية في الغالب حالياً. تتضمن واجهة Web/PWA Companion محدِّد لغة واجهة دائم يشمل الألمانية والإنجليزية والإسبانية والصينية المبسطة واليابانية والروسية والفرنسية والهندية والعربية والبنغالية والبرتغالية. يُدرج حقل لغة المشروع في عمليات تصدير مساحات العمل؛ ولا يُربط بواجهة سطح المكتب أو بمحدِّد لغة التقارير.
+- **دعم اللغات**: توفّر واجهتا سطح المكتب وWeb/PWA Companion محددَي لغة محفوظَين للإنجليزية والألمانية والإسبانية والصينية المبسطة واليابانية والروسية والفرنسية والهندية والعربية والبنغالية والبرتغالية. يستخدم عرض العربية تخطيطًا من اليمين إلى اليسار. حقل لغة المشروع بيانات وصفية تُضمَّن في تصدير مساحة العمل؛ ولا يغيّر لغة الواجهة ولا يحدد لغة التقارير المُنشأة.
 - **واجهة آمنة للأحرف الخاصة**: تستخدم سلاسل واجهة المستخدم الألمانية الأحرف الخاصة بصيغتها الأصلية؛ ويتجنب الماسح الخاص بالترجمة الإيجابيات الكاذبة الإنجليزية
 - **ملفات التعريف**: مجموعات قابلة لإعادة الاستخدام من صيغ الإخراج
 
@@ -244,7 +244,7 @@ node --test tests/library.test.mjs
 NoteSpaceLLM/
 ├── main.py                 # Entry point
 ├── requirements.txt        # Dependencies
-├── translator.py           # Translation-catalog scan/helper; no desktop language switch
+├── translator.py           # Translation system and catalog scanner used by the desktop UI
 ├── locales/                # Catalog inputs for the translation helper
 ├── src/
 │   ├── core/              # Core functionality

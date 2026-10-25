@@ -1,4 +1,4 @@
-<!-- worldset: {"translated_from_sha256": "466a6a18b88506de47fa858aabc993da82eb017a6be4e93cbd9aea6ac61ec40f", "translator": "claude-haiku-5-5 with gpt-6-luna/max review and repairs", "translated_at": "2026-10-25T08:23:38.290430+00:00", "reviewer": "Root independent source/literal/encoding checks"} -->
+<!-- worldset: {"translated_from_sha256": "5156cab29500f95cbddd18a51dac493ccd36033b452d6cee3bd12f1ad5893194", "translator": "claude-haiku-5-5 with gpt-6-luna/max review and repairs", "translated_at": "2026-10-25T08:23:38.290430+00:00", "reviewer": "Root independent source/literal/encoding checks"} -->
 <img src="assets/banner.png" width="100%" alt="NoteSpaceLLM Banner">
 
 # NoteSpaceLLM
@@ -105,7 +105,7 @@ graph TD
 - **মাল্টি-ফরম্যাট রপ্তানি**: MD, PDF, DOCX, HTML, TXT-এ আউটপুট
 - **প্রম্পট রপ্তানি**: বাহ্যিক LLM ওয়ার্কফ্লোর জন্য প্রতিবেদনের প্রসঙ্গ Markdown প্রম্পট হিসেবে সংরক্ষণ করুন
 - **Ollama সংযোগ প্রোফাইল**: অ্যাপ-ব্যাপী প্রদানকারী সেটিংস বিভিন্ন প্রকল্পে পুনর্ব্যবহার করা যায়
-- **ভাষা সমর্থন**: ডেস্কটপ GUI-তে কোনো ব্যবহারকারী-নির্বাচনযোগ্য ভাষা নেই; এর ইন্টারফেস বর্তমানে মূলত জার্মান। Web/PWA Companion-এ জার্মান, ইংরেজি, স্পেনীয়, সরলীকৃত চীনা, জাপানি, রুশ, ফরাসি, হিন্দি, আরবি, বাংলা ও পর্তুগিজ ভাষার জন্য একটি স্থায়ী UI-ভাষা নির্বাচক রয়েছে। প্রকল্পের ভাষা ক্ষেত্রটি ওয়ার্কস্পেস রপ্তানিতে অন্তর্ভুক্ত থাকে; এটি ডেস্কটপ UI বা প্রতিবেদন-ভাষা নির্বাচকের সাথে সংযুক্ত নয়।
+- **ভাষা সমর্থন**: ডেস্কটপ ও Web/PWA Companion ইন্টারফেসে ইংরেজি, জার্মান, স্প্যানিশ, সরলীকৃত চীনা, জাপানি, রুশ, ফরাসি, হিন্দি, আরবি, বাংলা ও পর্তুগিজের জন্য সংরক্ষিত ভাষা নির্বাচক রয়েছে। আরবি ডান-থেকে-বামে বিন্যাস ব্যবহার করে। প্রকল্পের ভাষা-ক্ষেত্রটি ওয়ার্কস্পেস রপ্তানিতে মেটাডেটা হিসেবে অন্তর্ভুক্ত হয়; এটি ইন্টারফেসের ভাষা বদলায় না বা তৈরি প্রতিবেদনের ভাষা নির্ধারণ করে না।
 - **Umlaut-নিরাপদ UI**: জার্মান UI স্ট্রিংয়ে স্থানীয় umlaut ব্যবহৃত হয়; অনুবাদ স্ক্যানার ইংরেজি মিথ্যা পজিটিভ এড়ায়
 - **প্রোফাইল**: পুনর্ব্যবহারযোগ্য আউটপুট-ফরম্যাট সমন্বয়
 
@@ -257,7 +257,7 @@ GitHub Actions-এ অতিরিক্ত সোর্স স্মোক চ�
 NoteSpaceLLM/
 ├── main.py                 # Entry point
 ├── requirements.txt        # Dependencies
-├── translator.py           # Translation-catalog scan/helper; no desktop language switch
+├── translator.py           # Translation system and catalog scanner used by the desktop UI
 ├── locales/                # Catalog inputs for the translation helper
 ├── src/
 │   ├── core/              # Core functionality

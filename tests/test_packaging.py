@@ -201,6 +201,10 @@ def test_sdist_wheel_and_installed_src_runtime_contract(tmp_path: Path):
         assert "src/__init__.py" in wheel_names
         assert "src/rag/engine.py" in wheel_names
         assert "src/core/workspace_exporter.py" in wheel_names
+        assert "translator.py" in wheel_names
+        assert "locales/__init__.py" in wheel_names
+        assert "locales/gui_translations.json" in wheel_names
+        assert "locales/translations.json" in wheel_names
         assert any(name.endswith(".dist-info/licenses/LICENSE") for name in wheel_names)
         metadata_path = next(name for name in wheel_names if name.endswith(".dist-info/METADATA"))
         metadata = archive.read(metadata_path).decode("utf-8")
@@ -225,6 +229,9 @@ def test_sdist_wheel_and_installed_src_runtime_contract(tmp_path: Path):
             "setup_environment.py",
             "MANIFEST.in",
             "web_companion/index.html",
+            "translator.py",
+            "locales/__init__.py",
+            "locales/gui_translations.json",
         ):
             assert expected in sdist_names, f"sdist omitted {expected}"
         assert not any("synthetic-local-state-sentinel" in name for name in sdist_names)
@@ -262,6 +269,13 @@ def test_sdist_wheel_and_installed_src_runtime_contract(tmp_path: Path):
             (
                 "import src; import src.core.workspace_exporter; "
                 "import src.rag.engine; import src.rag.embeddings; "
+                "from src.gui.i18n import create_translator; "
+                "from PySide6.QtCore import QSettings; "
+                "from translator import SUPPORTED_LANGUAGES; "
+                "from pathlib import Path; import locales; "
+                "translator=create_translator(QSettings('BACH','NoteSpaceLLM'), Path(locales.__file__).parent.parent); "
+                "assert len(SUPPORTED_LANGUAGES)==11; "
+                "assert translator.has_translation_source('Sprache:'); "
                 "print(src.__file__)"
             ),
         ],

@@ -7,6 +7,8 @@ include pyproject.toml requirements.txt setup.py setup_environment.py MANIFEST.i
 include main.py notespacellm_launcher.py manage_translations.py translator.py
 include run.bat start.bat build_exe.bat NoteSpaceLLM.ico store_package.json
 include locales/translations.json
+include locales/gui_translations.json
+include locales/__init__.py
 include scripts/check_store_readiness.py
 recursive-include .github/workflows *.yml *.yaml
 graft src

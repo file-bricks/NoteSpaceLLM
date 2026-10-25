@@ -1,4 +1,4 @@
-<!-- worldset: {"translated_from_sha256": "466a6a18b88506de47fa858aabc993da82eb017a6be4e93cbd9aea6ac61ec40f", "translator": "claude-haiku-5-5 with gpt-6-luna/max review and repairs", "translated_at": "2026-10-25T08:23:40.327891+00:00", "reviewer": "Root independent source/literal/encoding checks"} -->
+<!-- worldset: {"translated_from_sha256": "5156cab29500f95cbddd18a51dac493ccd36033b452d6cee3bd12f1ad5893194", "translator": "claude-haiku-5-5 with gpt-6-luna/max review and repairs", "translated_at": "2026-10-25T08:23:40.327891+00:00", "reviewer": "Root independent source/literal/encoding checks"} -->
 <img src="assets/banner.png" width="100%" alt="NoteSpaceLLM Banner">
 
 # NoteSpaceLLM
@@ -102,7 +102,7 @@ graph TD
 - **मल्टी-फ़ॉर्मेट एक्सपोर्ट**: MD, PDF, DOCX, HTML, TXT में आउटपुट
 - **प्रॉम्प्ट एक्सपोर्ट**: बाहरी LLM वर्कफ़्लो के लिए रिपोर्ट संदर्भ को Markdown प्रॉम्प्ट के रूप में सहेजें
 - **Ollama कनेक्शन प्रोफ़ाइल**: ऐप-व्यापी प्रदाता सेटिंग्स को प्रोजेक्ट्स में पुनः उपयोग किया जा सकता है
-- **भाषा समर्थन**: डेस्कटॉप GUI में उपयोगकर्ता-चयन योग्य कोई भाषा नहीं है; इसका इंटरफ़ेस वर्तमान में मुख्यतः जर्मन है। Web/PWA Companion में जर्मन, अंग्रेज़ी, स्पैनिश, सरलीकृत चीनी, जापानी, रूसी, फ़्रेंच, हिंदी, अरबी, बंगाली और पुर्तगाली के लिए एक स्थायी UI-भाषा चयनकर्ता है। प्रोजेक्ट भाषा फ़ील्ड वर्कस्पेस एक्सपोर्ट में शामिल है; यह डेस्कटॉप UI या रिपोर्ट-भाषा चयनकर्ता से जुड़ा नहीं है।
+- **भाषा समर्थन**: डेस्कटॉप और Web/PWA Companion इंटरफ़ेस में अंग्रेज़ी, जर्मन, स्पेनिश, सरलीकृत चीनी, जापानी, रूसी, फ़्रेंच, हिंदी, अरबी, बांग्ला और पुर्तगाली के लिए सहेजे जाने वाला भाषा चयन उपलब्ध है। अरबी में दाएँ-से-बाएँ लेआउट का उपयोग होता है। प्रोजेक्ट का भाषा फ़ील्ड कार्यक्षेत्र निर्यात में मेटाडेटा के रूप में शामिल होता है; यह इंटरफ़ेस की भाषा नहीं बदलता और जनरेट की गई रिपोर्टों की भाषा तय नहीं करता।
 - **Umlaut-सुरक्षित UI**: जर्मन UI स्ट्रिंग्स मूल umlauts का उपयोग करती हैं; अनुवाद स्कैनर अंग्रेज़ी के गलत सकारात्मक परिणामों से बचता है
 - **प्रोफ़ाइल**: पुन: उपयोग योग्य आउटपुट-फ़ॉर्मेट संयोजन
 
@@ -255,7 +255,7 @@ GitHub Actions में अतिरिक्त source smokes चलते ह
 NoteSpaceLLM/
 ├── main.py                 # Entry point
 ├── requirements.txt        # Dependencies
-├── translator.py           # Translation-catalog scan/helper; no desktop language switch
+├── translator.py           # Translation system and catalog scanner used by the desktop UI
 ├── locales/                # Catalog inputs for the translation helper
 ├── src/
 │   ├── core/              # Core functionality

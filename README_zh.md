@@ -1,4 +1,4 @@
-<!-- worldset: {"translated_from_sha256": "466a6a18b88506de47fa858aabc993da82eb017a6be4e93cbd9aea6ac61ec40f", "translator": "claude-haiku-5-5 with gpt-6-luna/max review and repairs", "translated_at": "2026-10-25T08:23:44.659191+00:00", "reviewer": "Root independent source/literal/encoding checks"} -->
+<!-- worldset: {"translated_from_sha256": "5156cab29500f95cbddd18a51dac493ccd36033b452d6cee3bd12f1ad5893194", "translator": "claude-haiku-5-5 with gpt-6-luna/max review and repairs", "translated_at": "2026-10-25T08:23:44.659191+00:00", "reviewer": "Root independent source/literal/encoding checks"} -->
 <img src="assets/banner.png" width="100%" alt="NoteSpaceLLM Banner">
 
 # NoteSpaceLLM
@@ -100,7 +100,7 @@ graph TD
 - **多格式导出**：输出为 MD、PDF、DOCX、HTML、TXT
 - **提示词导出**：将报告上下文保存为 Markdown 提示词，用于外部 LLM 工作流
 - **Ollama 连接配置**：应用级提供方设置可在多个项目间复用
-- **语言支持**：桌面 GUI 没有用户可选的语言；其界面目前主要为德语。Web/PWA 伴侣应用提供持久化的界面语言选择器，支持德语、英语、西班牙语、简体中文、日语、俄语、法语、印地语、阿拉伯语、孟加拉语和葡萄牙语。项目语言字段会包含在工作区导出中；它并未与桌面界面或报告语言选择器关联。
+- **语言支持**桌面界面和 Web/PWA Companion 均提供持久保存的语言选择器，支持英语、德语、西班牙语、简体中文、日语、俄语、法语、印地语、阿拉伯语、孟加拉语和葡萄牙语。阿拉伯语界面采用从右向左的布局。项目语言字段是工作区导出的元数据；它不会切换界面语言，也不会决定生成报告的语言。
 - **德语变音符号兼容界面**：德语界面文本使用原生字符；翻译扫描器可避免将英语文本误报为问题
 - **配置文件**：可复用的输出格式组合
 
@@ -248,7 +248,7 @@ GitHub Actions 中运行以下额外的源码冒烟测试:
 NoteSpaceLLM/
 ├── main.py                 # Entry point
 ├── requirements.txt        # Dependencies
-├── translator.py           # Translation-catalog scan/helper; no desktop language switch
+├── translator.py           # Translation system and catalog scanner used by the desktop UI
 ├── locales/                # Catalog inputs for the translation helper
 ├── src/
 │   ├── core/              # Core functionality

@@ -36,6 +36,23 @@ if PYSIDE_AVAILABLE:
     from PySide6.QtCore import QThread, Signal
 
     from .worker_utils import retain_until_finished, stop_workers
+    from .i18n import (
+        LANGUAGE_NAMES,
+        SUPPORTED_LANGUAGES,
+        LocalizedFileDialog as QFileDialog,
+        LocalizedInputDialog as QInputDialog,
+        LocalizedLabel,
+        LocalizedMessageBox as QMessageBox,
+        LocalizedStatusBar,
+        TranslatableLabel,
+        create_translator,
+        make_ui_settings,
+        persist_ui_language,
+        translate_widget_tree,
+        mark_combo_items_translatable,
+        tr,
+    )
+    QLabel = TranslatableLabel
 
     class AnalysisWorker(QThread):
         """Worker thread for batch sub-query analysis."""
@@ -226,12 +243,16 @@ if PYSIDE_AVAILABLE:
             },
         ]
 
-        def __init__(self, parent=None):
+        def __init__(self, parent=None, translator=None):
             super().__init__(parent)
+            self._translator = translator
+            self._step_title_labels = []
             self.setWindowTitle("Pipeline-Übersicht")
             self.setMinimumSize(560, 560)
             self.resize(620, 640)
             self._setup_ui()
+            if translator:
+                self.retranslate_ui()
 
         def _setup_ui(self):
             layout = QVBoxLayout(self)
@@ -335,12 +356,13 @@ if PYSIDE_AVAILABLE:
             # Title row
             title_row = QHBoxLayout()
             icon_label = QLabel(f"{step['icon']} {step['title']}")
+            self._step_title_labels.append((icon_label, step["icon"], step["title"]))
             icon_label.setStyleSheet(
                 f"font-weight: 700; font-size: 13px; color: #1a1a2e;"
             )
             title_row.addWidget(icon_label)
             if step["optional"]:
-                badge = QLabel("optional")
+                badge = QLabel(tr(self._translator, "optional"))
                 badge.setStyleSheet(
                     "background: #fff3cd; color: #856404; padding: 1px 7px; "
                     "border-radius: 10px; font-size: 10px; font-weight: 600;"
@@ -358,6 +380,13 @@ if PYSIDE_AVAILABLE:
 
             row.addWidget(content, stretch=1)
             return card
+
+        def retranslate_ui(self):
+            if not self._translator:
+                return
+            translate_widget_tree(self, self._translator)
+            for label, icon, source in self._step_title_labels:
+                label.setText(f"{icon} {tr(self._translator, source)}")
 
 
 class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
@@ -384,11 +413,22 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
     +--------------------------------------------------+
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        *,
+        settings=None,
+        translator=None,
+        project_manager=None,
+        start_background_tasks: bool = True,
+    ):
         if not PYSIDE_AVAILABLE:
             raise ImportError("PySide6 is required. Install with: pip install PySide6")
 
         super().__init__()
+
+        self._settings = settings or make_ui_settings()
+        self._translator = translator or create_translator(self._settings)
+        self._start_background_tasks = start_background_tasks
 
         # Initialize components
         from ..core.document_manager import DocumentManager
@@ -397,10 +437,13 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         from ..core.text_extractor import TextExtractor
 
         # Project management
-        self._projects_dir = Path.home() / "NoteSpaceLLM" / "projects"
-        self._projects_dir.mkdir(parents=True, exist_ok=True)
-
-        self._project_manager = ProjectManager(self._projects_dir)
+        if project_manager is None:
+            self._projects_dir = Path.home() / "NoteSpaceLLM" / "projects"
+            self._projects_dir.mkdir(parents=True, exist_ok=True)
+            self._project_manager = ProjectManager(self._projects_dir)
+        else:
+            self._projects_dir = None
+            self._project_manager = project_manager
         self._current_project: Optional[Project] = None
 
         # Core services
@@ -421,7 +464,8 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         # bei Remote-Ollama oder langsamer Netzwerkverbindung)
         self._rag_engine = None
         self._rag_engine_ready = False
-        QTimer.singleShot(0, self._init_rag_engine)
+        if self._start_background_tasks:
+            QTimer.singleShot(0, self._init_rag_engine)
 
         # Setup UI
         self._setup_window()
@@ -429,12 +473,14 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         self._setup_toolbar()
         self._setup_panels()
         self._setup_statusbar()
+        self._apply_ui_language()
 
         # Connect signals
         self._connect_signals()
 
         # Create new project by default
-        QTimer.singleShot(100, self._create_default_project)
+        if self._start_background_tasks:
+            QTimer.singleShot(100, self._create_default_project)
 
     def _setup_window(self):
         """Configure the main window."""
@@ -633,23 +679,23 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         main_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left: Document panel
-        self.document_panel = DocumentPanel()
+        self.document_panel = DocumentPanel(translator=self._translator)
         main_splitter.addWidget(self.document_panel)
 
         # Center: Workflow + Chat
         center_splitter = QSplitter(Qt.Orientation.Vertical)
 
-        self.workflow_panel = WorkflowPanel()
+        self.workflow_panel = WorkflowPanel(translator=self._translator)
         center_splitter.addWidget(self.workflow_panel)
 
-        self.chat_panel = ChatPanel()
+        self.chat_panel = ChatPanel(translator=self._translator)
         center_splitter.addWidget(self.chat_panel)
 
         center_splitter.setSizes([400, 300])
         main_splitter.addWidget(center_splitter)
 
         # Right: Output panel
-        self.output_panel = OutputPanel()
+        self.output_panel = OutputPanel(translator=self._translator)
         main_splitter.addWidget(self.output_panel)
 
         # Set splitter sizes
@@ -659,12 +705,23 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
 
     def _setup_statusbar(self):
         """Set up the status bar."""
-        self.statusbar = QStatusBar()
+        self.statusbar = LocalizedStatusBar(self._translator, self)
         self.setStatusBar(self.statusbar)
         self.statusbar.showMessage("Bereit")
 
+        # UI locale is an application preference; it is separate from project data.
+        self._language_label = QLabel("Sprache:")
+        self._language_combo = QComboBox()
+        for code in SUPPORTED_LANGUAGES:
+            self._language_combo.addItem(LANGUAGE_NAMES[code], code)
+        current_index = self._language_combo.findData(self._translator.get_language())
+        self._language_combo.setCurrentIndex(max(0, current_index))
+        self._language_combo.currentIndexChanged.connect(self._on_language_changed)
+        self.statusbar.addPermanentWidget(self._language_label)
+        self.statusbar.addPermanentWidget(self._language_combo)
+
         # Permanent pipeline phase indicator (right side of statusbar)
-        self._pipeline_label = QLabel("📄 Keine Dokumente")
+        self._pipeline_label = LocalizedLabel("📄 Keine Dokumente", self._translator)
         self._pipeline_label.setStyleSheet("color: #888; font-size: 10px; padding: 0 8px;")
         self._pipeline_label.setToolTip(
             "Aktuelle Pipeline-Phase:\n"
@@ -674,6 +731,40 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             "🎯 Bereit → Bericht erstellen"
         )
         self.statusbar.addPermanentWidget(self._pipeline_label)
+
+    def _on_language_changed(self, index: int):
+        if index < 0:
+            return
+        language = self._language_combo.itemData(index)
+        if not isinstance(language, str) or language == self._translator.get_language():
+            return
+        if not persist_ui_language(self._settings, self._translator, language):
+            old_index = self._language_combo.findData(self._translator.get_language())
+            self._language_combo.blockSignals(True)
+            self._language_combo.setCurrentIndex(max(0, old_index))
+            self._language_combo.blockSignals(False)
+            self.statusbar.showMessage("Spracheinstellung konnte nicht gespeichert werden.")
+            return
+        self._apply_ui_language()
+
+    def _apply_ui_language(self):
+        """Retranslate application-owned UI text while leaving data fields untouched."""
+        direction = (
+            Qt.LayoutDirection.RightToLeft
+            if self._translator.get_language() == "ar"
+            else Qt.LayoutDirection.LeftToRight
+        )
+        self.setLayoutDirection(direction)
+        translate_widget_tree(self, self._translator)
+        for panel_name in ("document_panel", "workflow_panel", "chat_panel", "output_panel"):
+            panel = getattr(self, panel_name, None)
+            retranslate = getattr(panel, "retranslate_ui", None)
+            if callable(retranslate):
+                retranslate()
+        if hasattr(self, "statusbar"):
+            self.statusbar.retranslate()
+        if hasattr(self, "_current_project"):
+            self._update_pipeline_phase()
 
     def _connect_signals(self):
         """Connect panel signals."""
@@ -951,7 +1042,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
             lambda text: clear_key_check.setChecked(False) if text else None
         )
 
-        credential_status_label = QLabel("")
+        credential_status_label = LocalizedLabel("", self._translator)
         credential_status_label.setWordWrap(True)
         credential_status_label.setStyleSheet("color: #666; font-size: 10px;")
         provider_layout.addRow("Schlüsselstatus:", credential_status_label)
@@ -1042,7 +1133,7 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         model_combo.setEditable(True)
         model_combo.setMinimumWidth(300)
 
-        status_label = QLabel("")
+        status_label = LocalizedLabel("", self._translator)
         status_label.setStyleSheet("color: #666; font-size: 11px;")
 
         refresh_btn = QPushButton("Modelle laden")
@@ -1277,6 +1368,9 @@ class MainWindow(QMainWindow if PYSIDE_AVAILABLE else object):
         _refresh_profiles()
         _refresh_credential_status(selected_profile[0])
         load_models_for_provider(app_cfg.llm_provider)
+
+        # Translate app-owned dialog chrome and Qt standard action buttons.
+        translate_widget_tree(dialog, self._translator)
 
         # ===== Dialog Accept =====
         if dialog.exec() == QDialog.DialogCode.Accepted:
@@ -1984,7 +2078,7 @@ Verwende Markdown-Formatierung."""
 
     def _show_pipeline_help(self):
         """Öffnet den Pipeline-Hilfe-Dialog."""
-        dialog = _PipelineHelpDialog(self)
+        dialog = _PipelineHelpDialog(self, self._translator)
         dialog.exec()
 
     def _export_workspace(self):

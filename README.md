@@ -104,7 +104,7 @@ graph TD
 - **Multi-format export**: Output to MD, PDF, DOCX, HTML, TXT
 - **Prompt export**: Save the report context as a Markdown prompt for external LLM workflows
 - **Ollama connection profiles**: App-wide provider settings can be reused across projects
-- **Language support**: The desktop GUI has no user-selectable language; its interface is currently primarily German. The Web/PWA Companion has a persistent UI-language selector for German, English, Spanish, Simplified Chinese, Japanese, Russian, French, Hindi, Arabic, Bengali and Portuguese. The project language field is included in workspace exports; it is not wired to a desktop UI or report-language selector.
+- **Language support**: The desktop and Web/PWA Companion interfaces provide persistent language selectors for English, German, Spanish, Simplified Chinese, Japanese, Russian, French, Hindi, Arabic, Bengali, and Portuguese. Arabic uses a right-to-left layout. The project language field is workspace-export metadata; it does not switch the interface language or determine the language of generated reports.
 - **Umlaut-safe UI**: German UI strings use native umlauts; the translation scanner avoids English false positives
 - **Profiles**: Reusable output-format combinations
 
@@ -270,7 +270,7 @@ Additional source smokes run in GitHub Actions:
 NoteSpaceLLM/
 ├── main.py                 # Entry point
 ├── requirements.txt        # Dependencies
-├── translator.py           # Translation-catalog scan/helper; no desktop language switch
+├── translator.py           # Translation system and catalog scanner used by the desktop UI
 ├── locales/                # Catalog inputs for the translation helper
 ├── src/
 │   ├── core/              # Core functionality

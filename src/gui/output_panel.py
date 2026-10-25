@@ -20,7 +20,7 @@ try:
         QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QLabel,
         QPushButton, QComboBox, QFileDialog, QGroupBox, QCheckBox,
         QLineEdit, QFormLayout, QProgressBar, QTabWidget,
-        QMessageBox, QSplitter
+        QMessageBox, QSplitter, QInputDialog
     )
     from PySide6.QtCore import Qt, Signal
     from PySide6.QtGui import QFont, QTextCharFormat, QSyntaxHighlighter
@@ -30,6 +30,18 @@ except ImportError:
     class QWidget: pass
     class Signal:
         def __init__(self, *args): pass
+
+if PYSIDE_AVAILABLE:
+    from .i18n import (
+        LocalizedFileDialog as QFileDialog,
+        LocalizedInputDialog as QInputDialog,
+        LocalizedLabel,
+        TranslatableLabel,
+        LocalizedMessageBox as QMessageBox,
+        mark_combo_items_translatable,
+        translate_widget_tree,
+    )
+    QLabel = TranslatableLabel
 
 
 class MarkdownHighlighter(QSyntaxHighlighter if PYSIDE_AVAILABLE else object):
@@ -94,15 +106,18 @@ class OutputPanel(QWidget if PYSIDE_AVAILABLE else object):
         export_requested = Signal(list, str)  # formats, directory
         prompt_export_requested = Signal()  # Prompt als .md exportieren
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, translator=None):
         if not PYSIDE_AVAILABLE:
             raise ImportError("PySide6 is required. Install with: pip install PySide6")
 
         super().__init__(parent)
+        self._translator = translator
         self._current_content = ""
         self._output_directory = Path.home() / "Documents"
 
         self._setup_ui()
+        if self._translator:
+            self.retranslate_ui()
 
     def _setup_ui(self):
         """Set up the user interface."""
@@ -197,7 +212,16 @@ class OutputPanel(QWidget if PYSIDE_AVAILABLE else object):
         profile_layout = QFormLayout(profile_group)
 
         self.profile_combo = QComboBox()
-        self.profile_combo.addItems(["Standard", "Vollständig", "Nur Markdown", "Nur PDF", "Akademisch"])
+        profiles = [
+            ("Standard", "standard"),
+            ("Vollständig", "complete"),
+            ("Nur Markdown", "markdown"),
+            ("Nur PDF", "pdf"),
+            ("Akademisch", "academic"),
+        ]
+        for label, profile_id in profiles:
+            self.profile_combo.addItem(label, profile_id)
+        mark_combo_items_translatable(self.profile_combo, [label for label, _ in profiles])
         self.profile_combo.currentTextChanged.connect(self._on_profile_changed)
 
         self.save_profile_btn = QPushButton("Als Profil speichern")
@@ -261,7 +285,7 @@ class OutputPanel(QWidget if PYSIDE_AVAILABLE else object):
         layout.addLayout(export_bar)
 
         # Status
-        self.status_label = QLabel("Bereit zum Exportieren")
+        self.status_label = LocalizedLabel("Bereit zum Exportieren", self._translator)
         self.status_label.setStyleSheet("color: #888; font-size: 10px;")
         layout.addWidget(self.status_label)
 
@@ -269,6 +293,11 @@ class OutputPanel(QWidget if PYSIDE_AVAILABLE else object):
         """Set the report content."""
         self._current_content = content
         self.preview_edit.setPlainText(content)
+
+    def retranslate_ui(self):
+        if self._translator:
+            translate_widget_tree(self, self._translator)
+            self.status_label.retranslate()
 
     def append_content(self, text: str):
         """Append text to the content (for streaming)."""
@@ -310,22 +339,21 @@ class OutputPanel(QWidget if PYSIDE_AVAILABLE else object):
     def _on_profile_changed(self, profile_name: str):
         """Handle profile selection change."""
         profiles = {
-            "Standard": ["md", "pdf"],
-            "Vollständig": ["md", "pdf", "docx", "html"],
-            "Nur Markdown": ["md"],
-            "Nur PDF": ["pdf"],
-            "Akademisch": ["md", "pdf", "docx"]
+            "standard": ["md", "pdf"],
+            "complete": ["md", "pdf", "docx", "html"],
+            "markdown": ["md"],
+            "pdf": ["pdf"],
+            "academic": ["md", "pdf", "docx"],
         }
 
-        formats = profiles.get(profile_name, ["md"])
+        profile_id = self.profile_combo.currentData()
+        formats = profiles.get(profile_id, profiles.get(profile_name, ["md"]))
 
         for fmt, cb in self.format_checks.items():
             cb.setChecked(fmt in formats)
 
     def _save_profile(self):
         """Save current format selection as profile."""
-        from PySide6.QtWidgets import QInputDialog
-
         name, ok = QInputDialog.getText(self, "Profil speichern", "Profilname:")
         if ok and name:
             # Add to combo

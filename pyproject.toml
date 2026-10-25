@@ -90,9 +90,16 @@ dev = [
     "ruff>=0.9.0",
 ]
 
+[tool.setuptools]
+py-modules = ["translator"]
+include-package-data = true
+
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*"]
+include = ["src*", "locales*"]
+
+[tool.setuptools.package-data]
+locales = ["*.json"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"
