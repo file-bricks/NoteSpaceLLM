@@ -1,10 +1,12 @@
+import { ADDITIONAL_UI_TEXT } from "./ui-locales.js";
+
 const DEFAULT_APP = Object.freeze({
   name: "NoteSpaceLLM",
   version: "unbekannt",
   exported_at: ""
 });
 
-const SUPPORTED_UI_LOCALES = Object.freeze(["de", "en", "es", "zh-Hans", "ja", "ru"]);
+const SUPPORTED_UI_LOCALES = Object.freeze(["de", "en", "es", "zh-Hans", "ja", "ru", "fr", "hi", "ar", "bn", "pt"]);
 
 const UI_TEXT = Object.freeze({
   de: Object.freeze({
@@ -561,6 +563,33 @@ const UI_TEXT = Object.freeze({
   })
 });
 
+function renderUiTemplate(template, values) {
+  return template.replace(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (placeholder, name) =>
+    Object.prototype.hasOwnProperty.call(values, name) ? String(values[name]) : placeholder
+  );
+}
+
+function bindAdditionalUiText(values) {
+  return Object.freeze({
+    ...values,
+    cacheHintWithTitle: (title) => renderUiTemplate(values.cacheHintWithTitle, { title }),
+    selectedDocuments: (selected, total) => renderUiTemplate(values.selectedDocuments, { selected, total }),
+    excerptCount: (count) => renderUiTemplate(values.excerptCount, { count }),
+    documentCount: (count) => renderUiTemplate(values.documentCount, { count }),
+    workspaceLoaded: (sourceLabel, title) => renderUiTemplate(values.workspaceLoaded, { sourceLabel, title }),
+    notesExported: (filename) => renderUiTemplate(values.notesExported, { filename }),
+    workspaceLoadErrorSchema: (schemaVersion) => renderUiTemplate(values.workspaceLoadErrorSchema, { schemaVersion }),
+    untitledDocument: (index) => renderUiTemplate(values.untitledDocument, { index: index + 1 }),
+    reviewHeadingWithTitle: (title) => renderUiTemplate(values.reviewHeadingWithTitle, { title })
+  });
+}
+
+const ADDITIONAL_UI_TEXT_BOUND = Object.freeze(
+  Object.fromEntries(
+    Object.entries(ADDITIONAL_UI_TEXT).map(([locale, values]) => [locale, bindAdditionalUiText(values)])
+  )
+);
+
 const DEFAULT_WORKSPACE = Object.freeze({
   id: "",
   title: "Unbenannter Workspace",
@@ -604,6 +633,21 @@ function normalizeUiLocaleCandidate(value) {
   if (candidate.startsWith("ru")) {
     return "ru";
   }
+  if (candidate.startsWith("fr")) {
+    return "fr";
+  }
+  if (candidate.startsWith("hi")) {
+    return "hi";
+  }
+  if (candidate.startsWith("ar")) {
+    return "ar";
+  }
+  if (candidate.startsWith("bn")) {
+    return "bn";
+  }
+  if (candidate.startsWith("pt")) {
+    return "pt";
+  }
   return "";
 }
 
@@ -622,7 +666,8 @@ export function getSupportedUiLocales() {
 }
 
 export function getUiText(locale = "de") {
-  return UI_TEXT[resolveUiLocale(locale)];
+  const resolvedLocale = resolveUiLocale(locale);
+  return ADDITIONAL_UI_TEXT_BOUND[resolvedLocale] || UI_TEXT[resolvedLocale];
 }
 
 function toDocumentId(index) {
@@ -873,6 +918,81 @@ export function getDemoWorkspace(locale = "de") {
       reportTitle: "Синтетический отчет",
       reportContent: "# Синтез\n\n- Ключевой тезис A подтверждается двумя источниками.\n- Открытый пробел: сравнительные данные за 2024 год все еще отсутствуют.",
       assistantMessage: "Суммируй доказательную базу по главному тезису."
+    },
+    fr: {
+      title: "Démo : notes de recherche",
+      question: "Quelles affirmations centrales étayent le plus solidement le rapport ?",
+      firstName: "report-draft.md",
+      firstPath: "reports/report-draft.md",
+      firstExcerpt: "Les éléments les plus probants proviennent de la combinaison de la source primaire et d’une vérification croisée explicite.",
+      firstSource: "Section 2",
+      secondName: "literature.pdf",
+      secondPath: "sources/literature.pdf",
+      secondExcerpt: "Plusieurs études pointent le même obstacle méthodologique.",
+      secondSource: "Page 14",
+      reportTitle: "Rapport de synthèse",
+      reportContent: "# Synthèse\n\n- L’affirmation centrale A est étayée par deux sources.\n- Lacune restante : les données comparatives pour 2024 manquent encore.",
+      assistantMessage: "Résumez les éléments qui étayent l’affirmation principale."
+    },
+    hi: {
+      title: "डेमो: शोध नोट्स",
+      question: "कौन से मुख्य दावे रिपोर्ट को सबसे मज़बूती से आधार देते हैं?",
+      firstName: "report-draft.md",
+      firstPath: "reports/report-draft.md",
+      firstExcerpt: "सबसे मज़बूत साक्ष्य प्राथमिक स्रोत को स्पष्ट क्रॉस-चेक के साथ जोड़ने से मिलता है।",
+      firstSource: "अनुभाग 2",
+      secondName: "literature.pdf",
+      secondPath: "sources/literature.pdf",
+      secondExcerpt: "कई अध्ययन उसी पद्धतिगत बाधा की ओर संकेत करते हैं।",
+      secondSource: "पृष्ठ 14",
+      reportTitle: "संश्लेषण रिपोर्ट",
+      reportContent: "# संश्लेषण\n\n- मुख्य दावा A को दो स्रोतों का समर्थन प्राप्त है।\n- शेष अंतर: 2024 के तुलनात्मक आँकड़े अब भी उपलब्ध नहीं हैं।",
+      assistantMessage: "मुख्य दावे के साक्ष्य-आधार का सारांश दें।"
+    },
+    ar: {
+      title: "عرض توضيحي: ملاحظات بحثية",
+      question: "ما الادعاءات المحورية التي تدعم التقرير بأقوى صورة؟",
+      firstName: "report-draft.md",
+      firstPath: "reports/report-draft.md",
+      firstExcerpt: "تأتي أقوى الأدلة من الجمع بين المصدر الأساسي والتحقق المتقاطع الصريح.",
+      firstSource: "القسم 2",
+      secondName: "literature.pdf",
+      secondPath: "sources/literature.pdf",
+      secondExcerpt: "تشير عدة دراسات إلى العائق المنهجي نفسه.",
+      secondSource: "الصفحة 14",
+      reportTitle: "تقرير تركيبي",
+      reportContent: "# خلاصة\n\n- يدعم مصدران الادعاء المحوري A.\n- فجوة قائمة: لا تزال البيانات المقارنة لعام 2024 غير متاحة.",
+      assistantMessage: "لخّص قاعدة الأدلة للادعاء الرئيسي."
+    },
+    bn: {
+      title: "ডেমো: গবেষণা নোট",
+      question: "কোন মূল দাবিগুলো প্রতিবেদনটিকে সবচেয়ে শক্তভাবে সমর্থন করে?",
+      firstName: "report-draft.md",
+      firstPath: "reports/report-draft.md",
+      firstExcerpt: "প্রাথমিক উৎসের সঙ্গে স্পষ্টভাবে যাচাই করা তুলনা মিলিয়ে দেখলে সবচেয়ে শক্তিশালী প্রমাণ পাওয়া যায়।",
+      firstSource: "বিভাগ ২",
+      secondName: "literature.pdf",
+      secondPath: "sources/literature.pdf",
+      secondExcerpt: "একাধিক গবেষণায় একই পদ্ধতিগত বাধার কথা উঠে এসেছে।",
+      secondSource: "পৃষ্ঠা ১৪",
+      reportTitle: "সংশ্লেষ প্রতিবেদন",
+      reportContent: "# সংশ্লেষ\n\n- দুটি উৎস মূল দাবি A-কে সমর্থন করে।\n- অনিষ্পন্ন ঘাটতি: ২০২৪ সালের তুলনামূলক তথ্য এখনও অনুপস্থিত।",
+      assistantMessage: "মূল দাবির প্রমাণভিত্তি সংক্ষেপে বলুন।"
+    },
+    pt: {
+      title: "Demonstração: notas de investigação",
+      question: "Que alegações centrais sustentam mais fortemente o relatório?",
+      firstName: "report-draft.md",
+      firstPath: "reports/report-draft.md",
+      firstExcerpt: "A evidência mais forte resulta da combinação da fonte primária com uma verificação cruzada explícita.",
+      firstSource: "Secção 2",
+      secondName: "literature.pdf",
+      secondPath: "sources/literature.pdf",
+      secondExcerpt: "Vários estudos apontam para o mesmo obstáculo metodológico.",
+      secondSource: "Página 14",
+      reportTitle: "Relatório de síntese",
+      reportContent: "# Síntese\n\n- A alegação central A é sustentada por duas fontes.\n- Lacuna em aberto: continuam a faltar dados comparativos de 2024.",
+      assistantMessage: "Resuma a base de evidências da alegação principal."
     }
   }[resolvedLocale];
 

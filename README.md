@@ -9,14 +9,13 @@
 [![Umbrella: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-blue.svg)](https://github.com/open-bricks)
 [![LLM Context: llms.txt](https://img.shields.io/badge/LLM%20Context-llms.txt-blue.svg)](llms.txt)
 
-[English](README.md) | [Deutsch](README_de.md)
+[English](README.md) | [Deutsch](README_de.md) | [Español](README_es.md) | [简体中文](README_zh.md) | [日本語](README_ja.md) | [Русский](README_ru.md) | [Français](README_fr.md) | [हिन्दी](README_hi.md) | [العربية](README_ar.md) | [বাংলা](README_bn.md) | [Português](README_pt.md)
 
 > **Local-first document notebook for research and report generation with configurable local or remote language models.**
 
 > [!NOTE]
 > **For AI Agents & Automated Workflows:**
 > NoteSpaceLLM provides a machine-readable architecture and feature overview in [`llms.txt`](llms.txt).
-> The Python and Web Companion test suites are configured to use isolated local data and avoid external provider calls.
 
 NoteSpaceLLM is a local-first PySide6 desktop app for working with PDFs,
 Word files, Markdown, mail exports, notes, and research folders. It keeps
@@ -96,7 +95,7 @@ graph TD
 ## Features
 
 - **Document management**: Add files and directories via drag & drop
-- **Auto-indexing**: New documents are processed and indexed immediately for RAG
+- **Automatic extraction and indexing**: New documents are processed right away and prepared for RAG.
 - **Selective analysis**: Check/uncheck documents to include or exclude from reports
 - **Sub-queries**: Right-click a document for targeted document-specific research
 - **Workflow visualization**: Graphical overview of the report pipeline
@@ -105,7 +104,7 @@ graph TD
 - **Multi-format export**: Output to MD, PDF, DOCX, HTML, TXT
 - **Prompt export**: Save the report context as a Markdown prompt for external LLM workflows
 - **Ollama connection profiles**: App-wide provider settings can be reused across projects
-- **Language behavior**: The desktop interface is currently primarily German. The Web/PWA Companion has a six-language UI (de, en, es, zh, ja, ru); the report-language setting changes generated content, not the desktop UI.
+- **Language support**: The desktop GUI has no user-selectable language; its interface is currently primarily German. The Web/PWA Companion has a persistent UI-language selector for German, English, Spanish, Simplified Chinese, Japanese, Russian, French, Hindi, Arabic, Bengali and Portuguese. The project language field is included in workspace exports; it is not wired to a desktop UI or report-language selector.
 - **Umlaut-safe UI**: German UI strings use native umlauts; the translation scanner avoids English false positives
 - **Profiles**: Reusable output-format combinations
 
@@ -349,90 +348,6 @@ own license is AGPL-3.0-only.
 
 [KnowledgeDigest](https://github.com/file-bricks/KnowledgeDigest) is a separate local knowledge database with SQLite/FTS5 search and optional LLM summaries; it is not integrated with NoteSpaceLLM.
 
----
-
-## Deutsch
-
-Eine lokale Dokumenten- und Rechercheanwendung mit konfigurierbaren lokalen oder externen Sprachmodellen.
-
-### Features
-
-- **Dokumentenverwaltung**: Dateien und Verzeichnisse per Drag & Drop hinzufügen
-- **Automatische Extraktion & Auto-Indexierung**: Neue Dokumente werden direkt verarbeitet und für RAG vorbereitet
-- **Selektive Auswahl**: Dokumente für Berichterstellung auswählen/abwählen
-- **Detailrecherchen**: Rechtsklick für dokumentspezifische Analysen (Sub-Queries)
-- **Workflow-Visualisierung**: Grafische Darstellung des Berichtsprozesses
-- **Chat-Interface**: Interaktives Chatten über die Dokumente mit LLM
-- **Claude Code Integration**: Wahlweise strukturierte API-Antworten oder Übergabe an eine interaktive Claude-Code-Session
-- **Multi-Format-Export**: Ausgabe in MD, PDF, DOCX, HTML, TXT
-- **Prompt-Export**: Berichtskontext als Markdown-Prompt für externe LLM-Workflows exportieren
-- **Ollama-Verbindungsprofile**: Appweite Provider-Einstellungen können in mehreren Projekten verwendet werden
-- **Sprachoberflächen**: Die Desktop-Oberfläche ist derzeit überwiegend deutsch. Der Web/PWA-Companion bietet UI-Texte in Deutsch, Englisch, Spanisch, Chinesisch, Japanisch und Russisch; die Berichtssprache ändert nicht die Desktop-Oberfläche.
-- **Umlaut-sichere Oberfläche**: Deutsche UI-Texte verwenden echte Umlaute; der Übersetzungs-Scan vermeidet englische False Positives
-- **Profile**: Wiederverwendbare Ausgabeformat-Kombinationen
-
-### Installation
-
-```bash
-cd NoteSpaceLLM
-pip install -r requirements.txt
-python main.py
-```
-
-Unter Windows alternativ per `start.bat`. Build: `build_exe.bat`
-
-### LLM-Konfiguration
-
-#### Ollama (Lokal — Empfohlen)
-
-1. [Ollama installieren](https://ollama.ai)
-2. Modell herunterladen: `ollama pull llama3`
-3. In der App: Menü > LLM > Ollama verwenden
-
-#### Ollama (Remote-Server)
-
-Konfigurierbare Server-URL und Modell werden in den appweiten LLM-Einstellungen
-oder im ausgewählten Verbindungsprofil verwaltet, nicht pro Projekt. Kompatibel
-mit [ellmos-stack](https://github.com/ellmos-ai/ellmos-stack).
-
-Gespeicherte API-Schlüssel verwendet die App über den nativen Zugangsdienst des
-Betriebssystems. `NOTESPACELLM_OLLAMA_API_KEY` überschreibt den gespeicherten
-Schlüssel, wird aber nie gespeichert. Alte Klartextschlüssel werden erst nach
-einer ausdrücklich gestarteten Migration verwendet. Ein entfernter Ollama-Server
-erhält Dokumenttext für Embeddings sowie Prompts und Kontext für die Generierung;
-der API-Schlüssel wird als Bearer-Header an die konfigurierte URL gesendet. HTTP
-verschlüsselt diese Daten nicht.
-
-#### OpenAI / Anthropic (Claude)
-
-```bash
-export OPENAI_API_KEY="..."
-export ANTHROPIC_API_KEY="..."
-```
-
-### Verwendung
-
-1. Dokumente hinzufügen (Drag & Drop oder Buttons)
-2. Dokumente auswählen (Checkboxen)
-3. Optional: Detailrecherchen per Rechtsklick
-4. Hauptfragestellung eingeben
-5. Workflow/Berichtsart wählen
-6. „Bericht erstellen" klicken
-7. Ergebnis exportieren (MD, PDF, DOCX, HTML, TXT)
-8. Optional: „Prompt exportieren" für externe LLM-Workflows
-
-### Plattformstrategie
-
-Desktop-App als autoritative Vollversion. Web/PWA-Companion für Android, iOS und Browser über `notespacellm-workspace-v1.json`. Details im [Exportformat](EXPORTFORMAT.md).
-
-## Verwandtes Projekt
-
-[KnowledgeDigest](https://github.com/file-bricks/KnowledgeDigest) ist eine eigenständige lokale Wissensdatenbank mit SQLite/FTS5-Suche und optionalen LLM-Zusammenfassungen; sie ist nicht in NoteSpaceLLM integriert.
-
----
-
-## Hinweise / Notes
-
-Die Bedingungen der Projektlizenz stehen in [LICENSE](LICENSE). Es gibt keine Zusage für laufende Wartung oder Verfügbarkeit.
+## License and maintenance notice
 
 See [LICENSE](LICENSE) for the project's license terms. The maintainers do not promise ongoing maintenance or availability.

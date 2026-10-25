@@ -41,6 +41,9 @@ URL: `http://127.0.0.1:8765`
 | I3 | iOS | Workspace importieren | Bericht und Dokumentauszüge werden lokal angezeigt |
 | I4 | iOS | Workspace importieren, Safari/PWA schließen, offline erneut öffnen | PWA-Shell startet; Workspace wird nicht wiederhergestellt und muss erneut importiert werden |
 | I5 | iOS | Review-Notizen exportieren | Markdown-Export wird gestartet; falls iOS Download begrenzt, Share-/Datei-Dialog prüfen |
+| L1 | Browser | Sprachwahl öffnen und alle Einträge prüfen | Deutsch, English, Español, 中文, 日本語, Русский, Français, हिन्दी, العربية, বাংলা und Português stehen zur Auswahl |
+| L2 | Browser | Sprache wechseln, neu laden und erneut öffnen | UI-Sprache bleibt gespeichert; importierte Workspace-Daten bleiben nicht erhalten |
+| L3 | Browser | Arabisch auswählen | `<html lang="ar" dir="rtl">`; UI wird rechts nach links dargestellt |
 
 ## Checkliste pro Lauf
 
@@ -51,6 +54,8 @@ URL: `http://127.0.0.1:8765`
 - [ ] Cache-Hinweis zeigt, dass keine Workspace-Payload dauerhaft gespeichert ist
 - [ ] Review-Notizen bleiben getrennt vom Workspace lokal erhalten
 - [ ] Ein erneuter Start verlangt den Dateiimport; lokale UI-Sprache bleibt erhalten
+- [ ] Sprachwahl enthält elf Oberflächensprachen; `zh` wird als `zh-Hans` geführt
+- [ ] Arabisch setzt RTL, alle anderen UI-Sprachen bleiben LTR
 
 ## Bekannte Grenzen
 
