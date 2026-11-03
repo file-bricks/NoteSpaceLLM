@@ -3,6 +3,27 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-11-03]
+
+### Added
+- **Multi-Target-Architektur & Portierungsplan (`PORTIERUNGSPLAN.md`):** Umfassender Plattformvertrag für Windows Desktop (PySide6), Windows Store (MSIX Desktop Bridge), Web/PWA Companion (`web_companion/`), Mobile (Android/iOS) und Source-Smokes (macOS/Linux).
+- **Windows Store Packaging-Staging (Target 1 / TW-NSLLM-01):**
+  - `releases/windowsstore/store_settings.json` mit kanonischer Identität `Geiger.NoteSpaceLLM`, Publisher-DN `CN=52596601-BAB4-4F3F-B182-E8F3F273B202` und richtlinienkonformen Keywords (Policy 10.1.3, maximal 7 Begriffe je Sprache DE/EN).
+  - Ausführliche Dokumente `BUILD.md` und `WACK_PROTOCOL.md` für Build- und Zertifizierungsprozesse.
+  - Lokalisierte Store-Listings `store_listing_de.md` und `store_listing_en.md` inklusive 100-Zeichen-Kurzbeschreibung, Features und Copyright.
+  - Generierung aller geforderten Store- und Kachel-Assets (`StoreLogo.png` 50x50, `Square44x44Logo.png`, `Square50x50Logo.png`, `Square150x150Logo.png`, `Wide310x150Logo.png`, `Square310x310Logo.png`, `icon_*.png`).
+  - Generierung von 4 hochauflösenden 16:9 Screenshots (1920x1080) unter `releases/windowsstore/screenshots/` (01-04).
+  - Desktop Bridge AppxManifest `store_package/NoteSpaceLLM/AppxManifest.xml` mit `runFullTrust` und `internetClient`.
+  - WACK-Runner `scripts/run_windows_wack.py` (6 PASS / 0 FAIL / 0 WARN) und Testreports (`wack_preflight_20261103.json/.xml`).
+  - 21-Punkte Store-Readiness Linter `scripts/check_store_readiness.py` (0 Findings PASS).
+  - Dokumente `WINDOWS_STORE_PREP.md`, `STORE_LISTING.md` und `SUPPORT.md`.
+
+### Tests
+- `tests/test_store_readiness.py` von 6 auf 14 Tests ausgebaut (14/14 grün).
+- Gesamte Pytest-Suite: 126 bestanden, 3 übersprungen (100% grün).
+- Web/PWA-Companion-Suite: 67/67 Tests bestanden (`npm test`).
+- Ruff-Linter und Compileall fehlerfrei.
+
 ## [Unreleased — 2026-08-01]
 
 ### Tests

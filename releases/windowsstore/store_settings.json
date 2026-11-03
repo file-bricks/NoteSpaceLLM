@@ -1,0 +1,54 @@
+{
+  "app_name": "NoteSpace LLM Pro",
+  "publisher": "CN=52596601-BAB4-4F3F-B182-E8F3F273B202",
+  "publisher_display": "Lukas Geiger",
+  "identity_name": "Geiger.NoteSpaceLLM",
+  "version": "1.0.0.0",
+  "package_version": "1.0.0.0",
+  "executable": "NoteSpaceLLM.exe",
+  "exe_name": "NoteSpaceLLM",
+  "msix_name": "NoteSpaceLLM.msix",
+  "output_dir": "C:/_Local_DEV/codex_build/notespacellm-store",
+  "makeappx_path": "C:/Program Files (x86)/Windows Kits/10/App Certification Kit/makeappx.exe",
+  "signtool_path": "C:/Program Files (x86)/Windows Kits/10/App Certification Kit/signtool.exe",
+  "pfx_path": "",
+  "pfx_password": "",
+  "timestamp_url": "http://timestamp.digicert.com",
+  "license_files": [
+    "../../LICENSE"
+  ],
+  "license": "AGPL-3.0",
+  "enable_i18n": true,
+  "languages": [
+    "de-DE",
+    "en-US"
+  ],
+  "capabilities": "runFullTrust, internetClient",
+  "privacy_url": "https://github.com/doc-bricks/NoteSpaceLLM/blob/master/PRIVACY_POLICY.md",
+  "support_url": "https://github.com/doc-bricks/NoteSpaceLLM/issues",
+  "category": "Productivity",
+  "age_rating": "3+",
+  "target_platform": "Windows.Desktop",
+  "architecture": "x64",
+  "wack_passed": true,
+  "description_de": "Lokale Notiz-, Dokumenten- und Research-App mit RAG-Vektorsuche, PDF-Integration, LLM-Assistent (Ollama/OpenAI/Claude) und Multi-Format Exporter.",
+  "description_en": "Local-first note-taking and document research workstation with RAG vector search, PDF support, LLM assistant, and multi-format reports.",
+  "keywords_de": [
+    "Notizen",
+    "Dokumentenanalyse",
+    "Lokale KI",
+    "RAG-Suche",
+    "PDF-Zusammenfassung",
+    "Forschungsassistent",
+    "Wissensdatenbank"
+  ],
+  "keywords_en": [
+    "notes",
+    "document analysis",
+    "local AI",
+    "RAG search",
+    "PDF summary",
+    "research assistant",
+    "knowledge base"
+  ]
+}

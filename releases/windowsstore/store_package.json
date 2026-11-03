@@ -1,0 +1,19 @@
+{
+  "app_name": "NoteSpace LLM Pro",
+  "publisher": "CN=52596601-BAB4-4F3F-B182-E8F3F273B202",
+  "publisher_display": "Geiger",
+  "identity_name": "Geiger.NoteSpaceLLM",
+  "version": "1.0.0.0",
+  "description": "Lokale Notiz-, Dokumenten- und Research-App mit RAG-Vektorsuche, PDF-Integration, LLM-Assistent (Ollama/OpenAI/Claude) und Multi-Format Exporter.",
+  "executable": "NoteSpaceLLM.exe",
+  "capabilities": "runFullTrust",
+  "category": "Productivity",
+  "age_rating": "3+",
+  "privacy_url": "PRIVACY_POLICY.md",
+  "support_url": "README.md",
+  "logo": "assets/banner.svg",
+  "languages": [
+    "de-DE",
+    "en-US"
+  ]
+}

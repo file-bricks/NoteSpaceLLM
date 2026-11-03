@@ -55,7 +55,7 @@ ehthumbs.db
 /webservice_SpaceNot/
 
 # Lokale Release-Builds
-/releases/
+/releases/*
 !/releases/windowsstore/
 *.exe
 *.msi
@@ -80,6 +80,5 @@ docs/
 *.swo
 *~
 DECISIONS.md
-PORTIERUNGSPLAN.md
 TODO.md
 DONE.md
