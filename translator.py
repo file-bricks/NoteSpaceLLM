@@ -38,7 +38,11 @@ class TranslationSystem:
         self.current_lang = default_lang if default_lang in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
 
         if app_dir is None:
-            app_dir = Path.cwd()
+            default_dir = Path(__file__).resolve().parent
+            if (default_dir / "locales" / "translations.json").exists():
+                app_dir = default_dir
+            else:
+                app_dir = Path.cwd()
         self.app_dir = Path(app_dir)
 
         self.translations_file = self.app_dir / "locales" / "translations.json"
@@ -189,12 +193,12 @@ class TranslationSystem:
         if lang and lang in SUPPORTED_LANGUAGES:
             return {lang: [k for k, v in self.translations.items() if not v.get(lang)]}
         missing = {}
-        for l in SUPPORTED_LANGUAGES:
-            if l == 'de':
+        for lang_item in SUPPORTED_LANGUAGES:
+            if lang_item == 'de':
                 continue
-            m = [k for k, v in self.translations.items() if not v.get(l)]
+            m = [k for k, v in self.translations.items() if not v.get(lang_item)]
             if m:
-                missing[l] = m
+                missing[lang_item] = m
         return missing
 
 

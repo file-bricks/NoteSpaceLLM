@@ -6,8 +6,13 @@ Tests für UX-Verbesserungen (2026-06-01):
 """
 
 import sys
+from pathlib import Path
 import pytest
 from unittest.mock import MagicMock, patch
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+MAIN_WINDOW_PY = REPO_ROOT / "src" / "gui" / "main_window.py"
+OUTPUT_PANEL_PY = REPO_ROOT / "src" / "gui" / "output_panel.py"
 
 try:
     from PySide6.QtWidgets import QApplication, QAction, QLabel, QPushButton
@@ -33,8 +38,7 @@ class TestToolbarTooltips:
     def test_setup_toolbar_action_tooltips_defined(self):
         """_setup_toolbar setzt Tooltips auf alle 5 Actions."""
         import ast
-        with open("src/gui/main_window.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = MAIN_WINDOW_PY.read_text(encoding="utf-8")
 
         # Prüfen ob setToolTip in _setup_toolbar aufgerufen wird
         # Mindestens 5 setToolTip-Aufrufe im Toolbar-Bereich
@@ -48,8 +52,7 @@ class TestToolbarTooltips:
 
     def test_toolbar_tooltips_mention_step_numbers(self):
         """Tooltips erklären Pipeline-Reihenfolge (Schritt 1/2/3)."""
-        with open("src/gui/main_window.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = MAIN_WINDOW_PY.read_text(encoding="utf-8")
 
         toolbar_start = source.index("def _setup_toolbar(self):")
         toolbar_end = source.index("def _setup_panels(self):")
@@ -60,8 +63,7 @@ class TestToolbarTooltips:
 
     def test_bericht_erstellen_tooltip_mentions_auto_extract(self):
         """'Bericht erstellen'-Tooltip erklärt automatische Extraktion."""
-        with open("src/gui/main_window.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = MAIN_WINDOW_PY.read_text(encoding="utf-8")
 
         toolbar_start = source.index("def _setup_toolbar(self):")
         toolbar_end = source.index("def _setup_panels(self):")
@@ -77,8 +79,7 @@ class TestPipelinePhaseLabel:
 
     def test_pipeline_label_added_to_statusbar(self):
         """_setup_statusbar legt _pipeline_label als permanentes Widget an."""
-        with open("src/gui/main_window.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = MAIN_WINDOW_PY.read_text(encoding="utf-8")
 
         statusbar_start = source.index("def _setup_statusbar(self):")
         statusbar_end = source.index("def _connect_signals(self):")
@@ -91,8 +92,7 @@ class TestPipelinePhaseLabel:
 
     def test_pipeline_label_has_tooltip(self):
         """_pipeline_label erklärt alle 4 Pipeline-Phasen im Tooltip."""
-        with open("src/gui/main_window.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = MAIN_WINDOW_PY.read_text(encoding="utf-8")
 
         statusbar_start = source.index("def _setup_statusbar(self):")
         statusbar_end = source.index("def _connect_signals(self):")
@@ -105,7 +105,7 @@ class TestPipelinePhaseLabel:
     def test_update_pipeline_phase_no_project(self):
         """_update_pipeline_phase läuft ohne Projekt ohne Exception."""
         import importlib.util
-        spec = importlib.util.spec_from_file_location("mw2", "src/gui/main_window.py")
+        spec = importlib.util.spec_from_file_location("mw2", str(MAIN_WINDOW_PY))
         mod = importlib.util.module_from_spec(spec)
         with patch.dict('sys.modules', {
             'langchain_chroma': MagicMock(),
@@ -124,7 +124,7 @@ class TestPipelinePhaseLabel:
     def test_update_pipeline_phase_with_unextracted_docs(self):
         """Pipeline-Label zeigt 'extrahieren' wenn Docs ohne Text vorhanden."""
         import importlib.util
-        spec = importlib.util.spec_from_file_location("mw3", "src/gui/main_window.py")
+        spec = importlib.util.spec_from_file_location("mw3", str(MAIN_WINDOW_PY))
         mod = importlib.util.module_from_spec(spec)
         with patch.dict('sys.modules', {
             'langchain_chroma': MagicMock(),
@@ -153,7 +153,7 @@ class TestPipelinePhaseLabel:
     def test_update_pipeline_phase_with_extracted_docs(self):
         """Pipeline-Label zeigt 'Bericht erstellen' wenn alle Docs extrahiert."""
         import importlib.util
-        spec = importlib.util.spec_from_file_location("mw4", "src/gui/main_window.py")
+        spec = importlib.util.spec_from_file_location("mw4", str(MAIN_WINDOW_PY))
         mod = importlib.util.module_from_spec(spec)
         with patch.dict('sys.modules', {
             'langchain_chroma': MagicMock(),
@@ -184,16 +184,14 @@ class TestOutputPanelUX:
 
     def test_prompt_export_button_label_is_clear(self):
         """'LLM-Prompt exportieren' statt altem 'Prompt exportieren'."""
-        with open("src/gui/output_panel.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = OUTPUT_PANEL_PY.read_text(encoding="utf-8")
 
         assert '"LLM-Prompt exportieren"' in source or "'LLM-Prompt exportieren'" in source, \
             "Button-Label soll 'LLM-Prompt exportieren' heißen"
 
     def test_prompt_export_button_old_label_gone(self):
         """Alter Label-Text 'Prompt exportieren' nicht mehr als Button-Titel vorhanden."""
-        with open("src/gui/output_panel.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = OUTPUT_PANEL_PY.read_text(encoding="utf-8")
 
         # Suche nach QPushButton("Prompt exportieren") — nicht mehr erlaubt
         import re
@@ -203,8 +201,7 @@ class TestOutputPanelUX:
 
     def test_prompt_export_button_has_informative_tooltip(self):
         """Tooltip erklärt dass es der an das LLM gesendete Prompt ist."""
-        with open("src/gui/output_panel.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = OUTPUT_PANEL_PY.read_text(encoding="utf-8")
 
         tooltip_start = source.index("prompt_export_btn.setToolTip(")
         tooltip_end = source.index(")", tooltip_start + 40)

@@ -1,5 +1,7 @@
 <img src="assets/banner.svg" width="100%" alt="NoteSpaceLLM Banner">
 
+[English](README.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [简体中文](README_zh.md) · [日本語](README_ja.md) · [Русский](README_ru.md)
+
 # NoteSpaceLLM
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)

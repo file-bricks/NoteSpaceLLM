@@ -11,8 +11,12 @@ Verifiziert:
 
 import re
 import ast
+from pathlib import Path
 import pytest
 from unittest.mock import patch
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+MAIN_WINDOW_PY = REPO_ROOT / "src" / "gui" / "main_window.py"
 
 
 class TestPipelineHelpDialogSteps:
@@ -20,10 +24,7 @@ class TestPipelineHelpDialogSteps:
 
     def _get_steps(self):
         """Lädt STEPS-Daten direkt aus dem Quelltext (kein GUI-Import nötig)."""
-        import ast
-        import re
-        with open("src/gui/main_window.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = MAIN_WINDOW_PY.read_text(encoding="utf-8")
         # STEPS-Liste aus Quelltext extrahieren
         match = re.search(r'STEPS\s*=\s*(\[.*?\])\s*\n\s*def ', source, re.DOTALL)
         if not match:
@@ -102,8 +103,7 @@ class TestPipelineHelpDialogSteps:
 
     def test_toolbar_help_button_defined_in_setup_toolbar(self):
         """'?' Hilfe-Button ist in _setup_toolbar definiert."""
-        with open("src/gui/main_window.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = MAIN_WINDOW_PY.read_text(encoding="utf-8")
         toolbar_start = source.index("def _setup_toolbar(self):")
         toolbar_end = source.index("def _setup_panels(self):")
         toolbar_code = source[toolbar_start:toolbar_end]
@@ -114,14 +114,12 @@ class TestPipelineHelpDialogSteps:
 
     def test_pipeline_help_method_exists_in_main_window(self):
         """_show_pipeline_help Methode existiert in MainWindow."""
-        with open("src/gui/main_window.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = MAIN_WINDOW_PY.read_text(encoding="utf-8")
         assert "def _show_pipeline_help(self):" in source, \
             "_show_pipeline_help Methode fehlt in MainWindow"
 
     def test_pipeline_help_dialog_class_exists(self):
         """_PipelineHelpDialog Klasse ist definiert."""
-        with open("src/gui/main_window.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = MAIN_WINDOW_PY.read_text(encoding="utf-8")
         assert "class _PipelineHelpDialog" in source, \
             "_PipelineHelpDialog Klasse fehlt"

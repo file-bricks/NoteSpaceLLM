@@ -4,7 +4,13 @@
   "publisher_display": "Geiger",
   "identity_name": "Geiger.NoteSpaceLLM",
   "version": "1.0.0.0",
-  "description": "Lokale Notiz-, Dokumenten- und Research-App mit RAG-Vektorsuche, PDF-Integration, LLM-Assistent (Ollama/OpenAI/Claude) und Multi-Format Exporter.",
+  "description": "Lokale Notiz- & Dokumentenanalyse mit RAG-Vektorsuche, PDF-Integration und KI-Assistent.",
+  "description_de": "Lokale Notiz- & Dokumentenanalyse mit RAG-Vektorsuche, PDF-Integration und KI-Assistent.",
+  "description_en": "Local-first note-taking and document research with RAG vector search, PDF support, and AI.",
+  "description_es": "Toma de notas e investigación local con búsqueda vectorial RAG, soporte PDF y asistente IA.",
+  "description_zh": "基于本地RAG向量检索、PDF集成与AI助手的笔记与文档研究工作站。",
+  "description_ja": "ローカルRAGベクトル検索、PDF対応、AIアシスタント搭載のノート・文書研究。",
+  "description_ru": "Локальные заметки и анализ документов с RAG-поиском, поддержкой PDF и ИИ.",
   "executable": "NoteSpaceLLM.exe",
   "capabilities": "runFullTrust",
   "category": "Productivity",
@@ -14,6 +20,64 @@
   "logo": "assets/banner.svg",
   "languages": [
     "de-DE",
-    "en-US"
+    "en-US",
+    "es-ES",
+    "zh-CN",
+    "ja-JP",
+    "ru-RU"
+  ],
+  "keywords_de": [
+    "Notizen",
+    "Dokumentenanalyse",
+    "Lokale KI",
+    "RAG-Suche",
+    "PDF-Zusammenfassung",
+    "Forschungsassistent",
+    "Wissensdatenbank"
+  ],
+  "keywords_en": [
+    "notes",
+    "document analysis",
+    "local AI",
+    "RAG search",
+    "PDF summary",
+    "research assistant",
+    "knowledge base"
+  ],
+  "keywords_es": [
+    "notas",
+    "análisis documental",
+    "IA local",
+    "búsqueda RAG",
+    "resumen PDF",
+    "asistente de investigación",
+    "base de conocimiento"
+  ],
+  "keywords_zh": [
+    "笔记",
+    "文档分析",
+    "本地AI",
+    "RAG搜索",
+    "PDF摘要",
+    "研究助手",
+    "知识库"
+  ],
+  "keywords_ja": [
+    "ノート",
+    "文書分析",
+    "ローカルAI",
+    "RAG検索",
+    "PDF要約",
+    "研究アシスタント",
+    "ナレッジベース"
+  ],
+  "keywords_ru": [
+    "заметки",
+    "анализ документов",
+    "локальный ИИ",
+    "RAG поиск",
+    "PDF выжимка",
+    "исследовательский помощник",
+    "база знаний"
   ]
 }

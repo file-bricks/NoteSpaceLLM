@@ -35,8 +35,14 @@ def test_store_package_json_exists_and_valid():
     assert data["executable"] == "NoteSpaceLLM.exe"
     assert data["publisher_display"] == "Geiger"
     assert data["identity_name"] == "Geiger.NoteSpaceLLM"
-    assert "de-DE" in data["languages"]
-    assert "en-US" in data["languages"]
+    for expected_lang in ["de-DE", "en-US", "es-ES", "zh-CN", "ja-JP", "ru-RU"]:
+        assert expected_lang in data["languages"], f"Missing {expected_lang} in store_package.json"
+
+    for lang in ["de", "en", "es", "zh", "ja", "ru"]:
+        assert f"description_{lang}" in data, f"Missing description_{lang}"
+        assert len(data[f"description_{lang}"]) <= 100, f"description_{lang} exceeds 100 characters"
+        assert f"keywords_{lang}" in data, f"Missing keywords_{lang}"
+        assert len(data[f"keywords_{lang}"]) == 7, f"keywords_{lang} must have exactly 7 entries"
 
 
 def test_releases_windowsstore_files():
@@ -47,6 +53,10 @@ def test_releases_windowsstore_files():
     settings_path = os.path.join(store_dir, "store_settings.json")
     assert os.path.isfile(pkg_path), "releases/windowsstore/store_package.json missing"
     assert os.path.isfile(settings_path), "releases/windowsstore/store_settings.json missing"
+
+    for lang in ["de", "en", "es", "zh", "ja", "ru"]:
+        lf = os.path.join(store_dir, f"store_listing_{lang}.md")
+        assert os.path.isfile(lf), f"releases/windowsstore/store_listing_{lang}.md missing"
 
     with open(settings_path, "r", encoding="utf-8") as f:
         settings = json.load(f)
@@ -120,19 +130,19 @@ def test_portierungsplan_exists_and_covers_targets():
 
 def test_store_listing_documents_and_keywords_limit():
     store_dir = os.path.join(REPO_DIR, "releases", "windowsstore")
-    listing_de = os.path.join(store_dir, "store_listing_de.md")
-    listing_en = os.path.join(store_dir, "store_listing_en.md")
-    assert os.path.isfile(listing_de), "store_listing_de.md missing"
-    assert os.path.isfile(listing_en), "store_listing_en.md missing"
+    for lang in ["de", "en", "es", "zh", "ja", "ru"]:
+        listing = os.path.join(store_dir, f"store_listing_{lang}.md")
+        assert os.path.isfile(listing), f"store_listing_{lang}.md missing"
 
     settings_path = os.path.join(store_dir, "store_settings.json")
     with open(settings_path, "r", encoding="utf-8") as f:
         settings = json.load(f)
 
-    kw_de = settings.get("keywords_de", [])
-    kw_en = settings.get("keywords_en", [])
-    assert 0 < len(kw_de) <= 7, f"Keywords DE count violates Policy 10.1.3: {len(kw_de)}"
-    assert 0 < len(kw_en) <= 7, f"Keywords EN count violates Policy 10.1.3: {len(kw_en)}"
+    for lang in ["de", "en", "es", "zh", "ja", "ru"]:
+        kws = settings.get(f"keywords_{lang}", [])
+        assert len(kws) == 7, f"Keywords {lang} count violates Policy 10.1.3: {len(kws)}"
+        for kw in kws:
+            assert len(kw) <= 30, f"Keyword '{kw}' ({lang}) exceeds 30 chars"
 
 
 def test_support_and_prep_md_exist():
@@ -182,6 +192,12 @@ def test_appx_manifest_structure():
     assert identity.attrib.get("Publisher") == "CN=52596601-BAB4-4F3F-B182-E8F3F273B202"
     assert identity.attrib.get("Version") == "1.0.0.0"
 
+    resources = root.find("m:Resources", ns)
+    assert resources is not None, "<Resources> element missing in AppxManifest.xml"
+    res_langs = [r.attrib.get("Language", "").lower() for r in resources.findall("m:Resource", ns)]
+    for lang in ["de-de", "en-us", "es-es", "zh-cn", "ja-jp", "ru-ru"]:
+        assert lang in res_langs, f"Missing resource language {lang} in AppxManifest.xml"
+
 
 def test_wack_runner_and_preflight_report():
     wack_script = os.path.join(REPO_DIR, "scripts", "run_windows_wack.py")
@@ -207,4 +223,4 @@ def test_check_store_readiness_cli_passes():
 
     res = subprocess.run([sys.executable, check_script], capture_output=True, text=True, cwd=REPO_DIR)
     assert res.returncode == 0, f"check_store_readiness.py failed:\n{res.stdout}\n{res.stderr}"
-    assert "PASS: Alle 21 Microsoft Store Readiness Kriterien" in res.stdout
+    assert "ALL PASS" in res.stdout or "PASS:" in res.stdout

@@ -13,7 +13,7 @@
     <DisplayName>NoteSpace LLM Pro</DisplayName>
     <PublisherDisplayName>Geiger</PublisherDisplayName>
     <Logo>icons\StoreLogo.png</Logo>
-    <Description>Lokale Notiz-, Dokumenten- und Research-App mit RAG-Vektorsuche, PDF-Integration, LLM-Assistent (Ollama/OpenAI/Claude) und Multi-Format Exporter.</Description>
+    <Description>Lokale Notiz- &amp; Dokumentenanalyse mit RAG-Vektorsuche, PDF-Integration und KI-Assistent.</Description>
   </Properties>
 
   <Dependencies>
@@ -23,6 +23,10 @@
   <Resources>
     <Resource Language="de-de" />
     <Resource Language="en-us" />
+    <Resource Language="es-es" />
+    <Resource Language="zh-cn" />
+    <Resource Language="ja-jp" />
+    <Resource Language="ru-ru" />
   </Resources>
 
   <Capabilities>

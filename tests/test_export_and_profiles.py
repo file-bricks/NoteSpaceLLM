@@ -113,10 +113,13 @@ class TestAppConfigProfiles:
 class TestExportDialogLogic:
     """Export-Dateinamen-Logik (Source-Code-Analyse)."""
 
+    def _get_main_window_source(self) -> str:
+        fpath = Path(__file__).resolve().parents[1] / "src" / "gui" / "main_window.py"
+        return fpath.read_text(encoding="utf-8")
+
     def test_export_uses_save_dialog_for_single_format(self):
         """_on_export_requested muss QFileDialog.getSaveFileName für 1 Format nutzen."""
-        with open("src/gui/main_window.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = self._get_main_window_source()
 
         export_start = source.index("def _on_export_requested(self")
         export_end = source.index("\n    def ", export_start + 10)
@@ -127,8 +130,7 @@ class TestExportDialogLogic:
 
     def test_export_uses_inputdialog_for_multi_format(self):
         """_on_export_requested muss QInputDialog für mehrere Formate nutzen."""
-        with open("src/gui/main_window.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = self._get_main_window_source()
 
         export_start = source.index("def _on_export_requested(self")
         export_end = source.index("\n    def ", export_start + 10)
@@ -139,8 +141,7 @@ class TestExportDialogLogic:
 
     def test_export_cancellable_returns_early(self):
         """Wenn User Dialog abbricht (filepath=''), wird Export abgebrochen."""
-        with open("src/gui/main_window.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = self._get_main_window_source()
 
         export_start = source.index("def _on_export_requested(self")
         export_end = source.index("\n    def ", export_start + 10)
@@ -152,8 +153,7 @@ class TestExportDialogLogic:
 
     def test_export_rename_button_in_profile_dialog(self):
         """LLM-Settings-Dialog hat Umbenennen-Button für Profile."""
-        with open("src/gui/main_window.py", "r", encoding="utf-8") as f:
-            source = f.read()
+        source = self._get_main_window_source()
 
         llm_settings_start = source.index("def _llm_settings(self):")
         llm_settings_end = source.index("\n    def _show_about", llm_settings_start)

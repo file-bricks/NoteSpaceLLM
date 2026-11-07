@@ -19,7 +19,17 @@
     - Unit-Testsuite `tests/test_deep_research_service.py` erstellt und verifiziert (5/5 grün).
 [ ] [SYNC] Aktuellen NoteSpace-Stand in die BACH-On-Board-Kopie synchronisieren (TW-NSLLM-04)
 [ ] [ENTSCHEIDUNG] Lizenz- und Distributionslinie nach dem PDF-Backend-Umbau klären (TW-NSLLM-05)
-[ ] [DOKU] Aufgaben-, README- und Architekturstatus mit dem aktuellen Stand synchronisieren (TW-NSLLM-06)
+[x] [DOKU] Aufgaben-, README- und Architekturstatus mit dem aktuellen Stand synchronisieren (TW-NSLLM-06) -- DONE 2026-11-07
+[x] [I18N/STORE] Windows Store Packaging & Tier-2 6-Sprachen-Harmonisierung nach Policy P-006 (DE, EN, ES, ZH, JA, RU) (TW-NSLLM-07) -- DONE 2026-11-07
+    - `store_package.json`: Sprachenfeld auf 6 Tier-2 Zielsprachen (`de-DE`, `en-US`, `es-ES`, `zh-CN`, `ja-JP`, `ru-RU`) erweitert; Kurzbeschreibungen <= 100 Zeichen; je 7 richtlinienkonforme Keywords gem. Partner Center 10.1.3 (<= 30 Zeichen, keine Markennamen).
+    - `releases/windowsstore/store_settings.json`: Synchronisiert mit allen 6 Sprachen, Kurzbeschreibungen und Keywords.
+    - `store_package/NoteSpaceLLM/AppxManifest.xml`: Mehrsprachige Ressourcen-Deklaration um alle 6 `<Resource Language="..."/>` Tags (`de-de`, `en-us`, `es-es`, `zh-cn`, `ja-jp`, `ru-ru`) erweitert.
+    - `STORE_LISTING.md`: Dedizierte Abschnitte für `## Español (es-ES)`, `## 简体中文 (zh-CN)`, `## 日本語 (ja-JP)` und `## Русский (ru-RU)` mit Produkttitel, Kurzbeschreibung, Features und 7 Keywords.
+    - `releases/windowsstore/`: Staging-Dateien `store_listing_es.md`, `store_listing_zh.md`, `store_listing_ja.md`, `store_listing_ru.md` angelegt; `store_listing_de.md` und `store_listing_en.md` auf <= 100 Zeichen harmonisiert.
+    - `scripts/check_store_readiness.py`: Auf 88 automatisierte Prüfungen ausgebaut (alle 6 Sprachen, Manifest-Ressourcen, Listings, Keywords und Assets; 100% ALL PASS).
+    - `manage_translations.py`: CLI-Flags (`--check`, `--stats`, `--scan`, `--dir`) integriert; `locales/translations.json` auf 40 Keys mit 100% Parität über 6 Sprachen ausgebaut; `translator.py` gehärtet.
+    - Multilinguale Einstiegs-READMEs (`README_de.md`, `README_es.md`, `README_zh.md`, `README_ja.md`, `README_ru.md`) mit reziproker 6-Sprachen-Kopfzeile etabliert.
+    - `tests/test_store_materials.py` (9 Tests) neu implementiert; `tests/test_store_readiness.py` erweitert; `tests/conftest.py` angelegt; Gesamtsuite: 135 passed, 3 skipped (100% grün).
 
 [x] [BUG/MITTEL] tests/test_pdf_backends.py::test_pypdfium2_renders_png schlug in einer
     reinen requirements.txt-Umgebung fehl (= exakt der Weg, den .github/workflows/tests.yml

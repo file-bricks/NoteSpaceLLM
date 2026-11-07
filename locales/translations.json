@@ -58,9 +58,265 @@
   "Workflow bearbeiten": {
     "de": "Workflow bearbeiten",
     "en": "Edit Workflow",
-    "es": "Editar flujo de travail",
+    "es": "Editar flujo de trabajo",
     "zh": "编辑工作流",
     "ja": "ワークフローを編集",
     "ru": "Редактировать рабочий процесс"
+  },
+  "Datei öffnen": {
+    "de": "Datei öffnen",
+    "en": "Open File",
+    "es": "Abrir archivo",
+    "zh": "打开文件",
+    "ja": "ファイルを開く",
+    "ru": "Открыть файл"
+  },
+  "Dokumente": {
+    "de": "Dokumente",
+    "en": "Documents",
+    "es": "Documentos",
+    "zh": "文档",
+    "ja": "ドキュメント",
+    "ru": "Документы"
+  },
+  "Notizen": {
+    "de": "Notizen",
+    "en": "Notes",
+    "es": "Notas",
+    "zh": "笔记",
+    "ja": "ノート",
+    "ru": "Заметки"
+  },
+  "RAG-Suche": {
+    "de": "RAG-Suche",
+    "en": "RAG Search",
+    "es": "Búsqueda RAG",
+    "zh": "RAG检索",
+    "ja": "RAG検索",
+    "ru": "RAG-поиск"
+  },
+  "Bericht erstellen": {
+    "de": "Bericht erstellen",
+    "en": "Create Report",
+    "es": "Crear informe",
+    "zh": "生成报告",
+    "ja": "レポート作成",
+    "ru": "Создать отчет"
+  },
+  "Deep Research": {
+    "de": "Deep Research",
+    "en": "Deep Research",
+    "es": "Investigación profunda",
+    "zh": "深度研究",
+    "ja": "ディープリサーチ",
+    "ru": "Глубокое исследование"
+  },
+  "Einstellungen": {
+    "de": "Einstellungen",
+    "en": "Settings",
+    "es": "Configuración",
+    "zh": "设置",
+    "ja": "設定",
+    "ru": "Настройки"
+  },
+  "Abbrechen": {
+    "de": "Abbrechen",
+    "en": "Cancel",
+    "es": "Cancelar",
+    "zh": "取消",
+    "ja": "キャンセル",
+    "ru": "Отмена"
+  },
+  "Speichern": {
+    "de": "Speichern",
+    "en": "Save",
+    "es": "Guardar",
+    "zh": "保存",
+    "ja": "保存",
+    "ru": "Сохранить"
+  },
+  "Laden": {
+    "de": "Laden",
+    "en": "Load",
+    "es": "Cargar",
+    "zh": "加载",
+    "ja": "読み込み",
+    "ru": "Загрузить"
+  },
+  "Hilfe": {
+    "de": "Hilfe",
+    "en": "Help",
+    "es": "Ayuda",
+    "zh": "帮助",
+    "ja": "ヘルプ",
+    "ru": "Справка"
+  },
+  "Beenden": {
+    "de": "Beenden",
+    "en": "Exit",
+    "es": "Salir",
+    "zh": "退出",
+    "ja": "終了",
+    "ru": "Выход"
+  },
+  "Aktualisieren": {
+    "de": "Aktualisieren",
+    "en": "Refresh",
+    "es": "Actualizar",
+    "zh": "刷新",
+    "ja": "更新",
+    "ru": "Обновить"
+  },
+  "Textextraktion": {
+    "de": "Textextraktion",
+    "en": "Text Extraction",
+    "es": "Extracción de texto",
+    "zh": "文本提取",
+    "ja": "テキスト抽出",
+    "ru": "Извлечение текста"
+  },
+  "Vektor-Index": {
+    "de": "Vektor-Index",
+    "en": "Vector Index",
+    "es": "Índice vectorial",
+    "zh": "向量索引",
+    "ja": "ベクトルインデックス",
+    "ru": "Векторный индекс"
+  },
+  "Volltextsuche": {
+    "de": "Volltextsuche",
+    "en": "Full-Text Search",
+    "es": "Búsqueda de texto completo",
+    "zh": "全文搜索",
+    "ja": "全文検索",
+    "ru": "Полнотекстовый поиск"
+  },
+  "Projekt öffnen": {
+    "de": "Projekt öffnen",
+    "en": "Open Project",
+    "es": "Abrir proyecto",
+    "zh": "打开项目",
+    "ja": "プロジェクトを開く",
+    "ru": "Открыть проект"
+  },
+  "Projekt schließen": {
+    "de": "Projekt schließen",
+    "en": "Close Project",
+    "es": "Cerrar proyecto",
+    "zh": "关闭项目",
+    "ja": "プロジェクトを閉じる",
+    "ru": "Закрыть проект"
+  },
+  "Neues Projekt": {
+    "de": "Neues Projekt",
+    "en": "New Project",
+    "es": "Nuevo proyecto",
+    "zh": "新建项目",
+    "ja": "新規プロジェクト",
+    "ru": "Новый проект"
+  },
+  "Dokument hinzufügen": {
+    "de": "Dokument hinzufügen",
+    "en": "Add Document",
+    "es": "Añadir documento",
+    "zh": "添加文档",
+    "ja": "ドキュメントを追加",
+    "ru": "Добавить документ"
+  },
+  "Dokument entfernen": {
+    "de": "Dokument entfernen",
+    "en": "Remove Document",
+    "es": "Eliminar documento",
+    "zh": "移除文档",
+    "ja": "ドキュメントを削除",
+    "ru": "Удалить документ"
+  },
+  "Workspace exportieren": {
+    "de": "Workspace exportieren",
+    "en": "Export Workspace",
+    "es": "Exportar espacio de trabajo",
+    "zh": "导出工作区",
+    "ja": "ワークスペースをエクスポート",
+    "ru": "Экспортировать рабочее пространство"
+  },
+  "LLM-Prompt exportieren": {
+    "de": "LLM-Prompt exportieren",
+    "en": "Export LLM Prompt",
+    "es": "Exportar prompt de LLM",
+    "zh": "导出 LLM 提示词",
+    "ja": "LLMプロンプトをエクスポート",
+    "ru": "Экспортировать промпт LLM"
+  },
+  "Lokale KI": {
+    "de": "Lokale KI",
+    "en": "Local AI",
+    "es": "IA local",
+    "zh": "本地AI",
+    "ja": "ローカルAI",
+    "ru": "Локальный ИИ"
+  },
+  "PDF-Zusammenfassung": {
+    "de": "PDF-Zusammenfassung",
+    "en": "PDF Summary",
+    "es": "Resumen PDF",
+    "zh": "PDF摘要",
+    "ja": "PDF要約",
+    "ru": "PDF выжимка"
+  },
+  "Forschungsassistent": {
+    "de": "Forschungsassistent",
+    "en": "Research Assistant",
+    "es": "Asistente de investigación",
+    "zh": "研究助手",
+    "ja": "研究アシスタント",
+    "ru": "Исследовательский помощник"
+  },
+  "Wissensdatenbank": {
+    "de": "Wissensdatenbank",
+    "en": "Knowledge Base",
+    "es": "Base de conocimiento",
+    "zh": "知识库",
+    "ja": "ナレッジベース",
+    "ru": "База знаний"
+  },
+  "Status": {
+    "de": "Status",
+    "en": "Status",
+    "es": "Estado",
+    "zh": "状态",
+    "ja": "ステータス",
+    "ru": "Статус"
+  },
+  "Datenschutz": {
+    "de": "Datenschutz",
+    "en": "Privacy",
+    "es": "Privacidad",
+    "zh": "隐私保护",
+    "ja": "プライバシー",
+    "ru": "Конфиденциальность"
+  },
+  "Erfolg": {
+    "de": "Erfolg",
+    "en": "Success",
+    "es": "Éxito",
+    "zh": "成功",
+    "ja": "成功",
+    "ru": "Успех"
+  },
+  "Warnung": {
+    "de": "Warnung",
+    "en": "Warning",
+    "es": "Advertencia",
+    "zh": "警告",
+    "ja": "警告",
+    "ru": "Предупреждение"
+  },
+  "Bereit": {
+    "de": "Bereit",
+    "en": "Ready",
+    "es": "Listo",
+    "zh": "就绪",
+    "ja": "準備完了",
+    "ru": "Готово"
   }
 }

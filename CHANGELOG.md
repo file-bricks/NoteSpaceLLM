@@ -3,6 +3,33 @@
 Alle wesentlichen Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [Unreleased — 2026-11-07]
+
+### Added
+- **Tier-2 6-Sprachen Store-Packaging nach Policy P-006 (DE, EN, ES, ZH, JA, RU) (TW-NSLLM-07):**
+  - `store_package.json`: Sprachenfeld auf alle 6 Zielsprachen (`de-DE`, `en-US`, `es-ES`, `zh-CN`, `ja-JP`, `ru-RU`) erweitert; Kurzbeschreibungen (`description_de/en/es/zh/ja/ru`) strikt <= 100 Zeichen validiert; je exakt 7 richtlinienkonforme Keywords nach Microsoft Partner Center Policy 10.1.3 (<= 30 Zeichen, keine geschützten Markennamen wie Windows, Microsoft, Google, Adobe, OpenAI) hinterlegt.
+  - `releases/windowsstore/store_settings.json`: Synchronisiert mit allen 6 Sprachen, Kurzbeschreibungen und Keywords.
+  - `store_package/NoteSpaceLLM/AppxManifest.xml`: Mehrsprachige Ressourcen-Deklaration um alle 6 `<Resource Language="..."/>` Tags (`de-de`, `en-us`, `es-es`, `zh-cn`, `ja-jp`, `ru-ru`) erweitert.
+  - `STORE_LISTING.md`: Vollständig um dedizierte Abschnitte für `## Español (es-ES)`, `## 简体中文 (zh-CN)`, `## 日本語 (ja-JP)` und `## Русский (ru-RU)` mit Produkttitel, Kurzbeschreibung (<= 100 Zeichen), Feature-Listen und je 7 Richtlinie-10.1.3-Keywords ausgebaut.
+  - `releases/windowsstore/`: Staging-Dateien `store_listing_es.md`, `store_listing_zh.md`, `store_listing_ja.md`, `store_listing_ru.md` angelegt; `store_listing_de.md` und `store_listing_en.md` auf <= 100 Zeichen Kurzbeschreibungen harmonisiert.
+  - `scripts/check_store_readiness.py`: Auf 88 automatisierte Prüfungen ausgebaut (alle 6 Sprachen, Manifest-Ressourcen, Listings, Keywords und Assets; 100% ALL PASS).
+- **Lokalisierungs- & Translation-CLI-Infrastruktur (`manage_translations.py` & `locales/translations.json`):**
+  - `manage_translations.py` um standardisierte CLI-Flags (`--check`, `--stats`, `--scan`, `--dir`) erweitert; CI-Gating-Flag `--check` verifiziert lückenlose Parität (Exit-Code 0/1).
+  - `locales/translations.json` auf 40 semantische Schlüssel mit 100% Parität über alle 6 Sprachen (DE, EN, ES, ZH, JA, RU) ausgebaut.
+  - `translator.py` um CWD-unabhängige Pfadauflösung gehärtet und Lint-Fehler behoben.
+- **Multilinguale Einstiegsdokumentation (Tier-2 Parität):**
+  - Vollständige Sprachfassungen `README_de.md`, `README_es.md`, `README_zh.md`, `README_ja.md`, `README_ru.md` mit 1:1 Parität zu `README.md` etabliert.
+  - Reziproke 6-Sprachen-Kopfzeile (`[English](README.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [简体中文](README_zh.md) · [日本語](README_ja.md) · [Русский](README_ru.md)`) in allen 6 README-Dateien verankert.
+  - Aufgabenstatus in `AUFGABEN.txt` synchronisiert (TW-NSLLM-06 & TW-NSLLM-07 erledigt).
+
+### Tests
+- `tests/test_store_materials.py` (9 Tests) neu implementiert (Verifikation von store_package.json, AppxManifest.xml, Staging-Listings, Keywords, Translations-Parität, Store-Readiness und README-Sprachleiste).
+- `tests/test_store_readiness.py` auf alle 6 Zielsprachen, Keywords und Manifest-Ressourcen erweitert (14/14 passed).
+- CWD-Unabhängigkeit in `tests/test_export_and_profiles.py`, `tests/test_pipeline_help_dialog.py`, `tests/test_ux_improvements.py` und neues `tests/conftest.py` etabliert.
+- Pytest-Gesamtsuite auf 135 passed, 3 skipped (100% grün) ausgebaut.
+- Web-Companion Node-Testsuite: 28/28 passed (`node --test tests/library.test.mjs`).
+- Ruff, Compileall und git diff --check 100% fehlerfrei.
+
 ## [Unreleased — 2026-11-03]
 
 ### Added
