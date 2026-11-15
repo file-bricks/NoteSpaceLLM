@@ -19,7 +19,17 @@ const ARRAY = 'ASSETS';
 const toFile = (asset) => asset.replace(/^\.\//, '');
 const TEXT = /\.(html|js|mjs|css|webmanifest|json|svg|txt|xml)$/i;
 
-const exists = (rel) => fs.existsSync(path.join(ROOT, rel));
+// Exakte Groß-/Kleinschreibung: Windows/macOS verbergen Abweichungen, ein Linux-Server liefert dann 404
+// (und cache.addAll() bricht die gesamte Installation des Service Workers ab).
+const exists = (rel) => {
+  const abs = path.resolve(ROOT, rel);
+  for (let cur = abs; cur !== ROOT && cur !== path.dirname(cur); cur = path.dirname(cur)) {
+    let names;
+    try { names = fs.readdirSync(path.dirname(cur)); } catch { continue; }
+    if (!names.includes(path.basename(cur))) return false;
+  }
+  return fs.existsSync(abs);
+};
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf-8');
 
 describe('Service-Worker-Cache', () => {
