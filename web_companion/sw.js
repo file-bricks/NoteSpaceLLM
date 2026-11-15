@@ -1,4 +1,7 @@
 const CACHE_NAME = "notespacellm-companion-v4";
+// Inhalts-Hash aller ASSETS-Dateien inkl. Manifest und Icons (web_companion/tests/sw_asset_hash.test.mjs prueft ihn):
+// aendert sich eine davon, CACHE_NAME erhoehen, sonst behalten installierte PWAs den alten Code.
+const ASSET_HASH = '37fb40ab6f8a'; // eslint-disable-line no-unused-vars
 const ASSETS = [
   "./",
   "./index.html",
